@@ -6,6 +6,11 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES"/>
+    <permission
+        android:name="com.example.googlemaps.permission.MAPS_RECEIVE"
+        android:protectionLevel="signature" />
+
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-feature
@@ -18,17 +23,29 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".MainActivity">
+
+        </activity>
+        <activity android:name=".SignupActivity">
+
+        </activity>
+        <service
+            android:name=".LocationService"
+            android:exported="false"/>
 
         <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyD7w0aCPZJdmX8pv7rgGO03DQJl-eSRC3g"/>
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyCqS2MtsYCbajcVvqJsnEW_PjnZYOv0jvY"/>
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 
 </manifest>
