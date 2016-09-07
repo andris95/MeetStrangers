@@ -127,4 +127,22 @@ public class User {
     public void setAvatarURL(String avatarURL) {
         this.avatarURL = avatarURL;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id='" + id + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", birthDate='" + birthDate + '\'' +
+                ", isMale=" + isMale +
+                ", status='" + status + '\'' +
+                ", phoneNumber='" + phoneNumber + '\'' +
+                ", linkInstagram='" + linkInstagram + '\'' +
+                ", linkFacebook='" + linkFacebook + '\'' +
+                ", linkTwitter='" + linkTwitter + '\'' +
+                ", avatarURL='" + avatarURL + '\'' +
+                '}';
+    }
 }

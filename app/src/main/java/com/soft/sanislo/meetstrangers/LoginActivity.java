@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -27,22 +28,30 @@ public class LoginActivity extends BaseActivity {
     private ProgressBar progressBar;
     private Button btnSignup, btnLogin, btnReset;
     private String email, password;
-    private OnCompleteListener onSignInListener;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        /*FirebaseAuth.AuthStateListener authStateListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+    private OnCompleteListener<AuthResult>  onSignInCompleteListener = new OnCompleteListener() {
+        @Override
+        public void onComplete(@NonNull Task task) {
+            if (task.isSuccessful()) {
                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                 startActivity(intent);
                 finish();
             }
-        };*/
+        }
+    };
 
-        Log.d("TAG", "onCreate: auth is null +" +(auth == null));
+    private OnFailureListener onSignInFailureListener = new OnFailureListener() {
+        @Override
+        public void onFailure(@NonNull Exception e) {
+            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+            progressBar.setVisibility(View.INVISIBLE);
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
         if (auth.getCurrentUser() != null) {
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
@@ -97,16 +106,8 @@ public class LoginActivity extends BaseActivity {
 
                 //authenticate user
                 Log.d("TAG", "onClick: auth is null" + (auth == null));
-                auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                    }
-                });
+                auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(onSignInCompleteListener)
+                        .addOnFailureListener(onSignInFailureListener);
             }
         });
 

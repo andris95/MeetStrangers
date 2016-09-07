@@ -1,6 +1,5 @@
 package com.soft.sanislo.meetstrangers;
 
-import android.*;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -28,12 +27,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.model.LocationModel;
+import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 
 import java.util.Calendar;
@@ -44,12 +44,14 @@ import java.util.Calendar;
 public class LocationService extends IntentService {
     public static final String REQUEST_CHECK_SETTINGS = "REQUEST_CHECK_SETTINGS";
     private static final long LOCATION_REQUEST_INTERVAL = 1000 * 5;
-    private static final String TAG = LocaleSpan.class.getSimpleName();
+    private static final String TAG = LocationService.class.getSimpleName();
 
     private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
+    private User mUser;
     private String uid;
+    private String avatarURL;
 
     private GoogleApiClient googleApiClient;
     private Location mLocation;
@@ -58,7 +60,7 @@ public class LocationService extends IntentService {
     private LocationListener locationListener;
     private LocationRequest locationRequest;
     private PendingResult<LocationSettingsResult> result;
-    private boolean isRequestUpdates;
+    private boolean isRequestingUpdates;
 
     public LocationService() {
         super(TAG);
@@ -68,10 +70,11 @@ public class LocationService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "onCreate: ");
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
-        Log.d(TAG, "LocationService: uid: " + uid);
+
 
         initListeners();
         if (googleApiClient == null) {
@@ -92,6 +95,18 @@ public class LocationService extends IntentService {
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
         Log.d(TAG, "onStart: ");
+        database.child("users").child(uid).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                mUser = dataSnapshot.getValue(User.class);
+                connectClient();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     @Override
@@ -104,6 +119,7 @@ public class LocationService extends IntentService {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy: ");
+        disconnectClient();
     }
 
     /**
@@ -137,9 +153,8 @@ public class LocationService extends IntentService {
                                     // All location settings are satisfied. The client can
                                     // initialize location requests here.
                                     Log.d(TAG, "onResult: SUCCESS");
-                                    LocationServices.FusedLocationApi.requestLocationUpdates(
-                                            googleApiClient, locationRequest, locationListener);
-                                    isRequestUpdates = true;
+                                    requestLocationUpdates();
+                                    isRequestingUpdates = true;
                                     break;
                                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                                     // Location settings are not satisfied, but this can be fixed
@@ -181,18 +196,24 @@ public class LocationService extends IntentService {
         };
 
         locationListener = new LocationListener() {
-            public void onLocationChanged(Location newLocation) {
+            public void onLocationChanged(final Location newLocation) {
                 // Called when a new location is found by the network location provider.
+
                 boolean isBetterLocation = LocationUtils.isBetterLocation(newLocation, mLocation);
                 if (isBetterLocation) {
                     Log.d(TAG, "onLocationChanged: isBetterLocation" + newLocation);
-                    LocationModel location = new LocationModel(mLocation.getLatitude(), mLocation.getLongitude(), Calendar.getInstance().getTimeInMillis());
+                    mLocation = newLocation;
+                    LocationModel location = new LocationModel(firebaseUser.getUid(),
+                            newLocation.getLatitude(), newLocation.getLongitude(),
+                            Calendar.getInstance().getTimeInMillis(),
+                            avatarURL);
 
+                    Log.d(TAG, "onLocationChanged: uid: " + firebaseUser.getUid());
                     database.child("locations").child(uid).setValue(location).addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
-                                Log.d(TAG, "onComplete: saved location " + mLocation);
+                                Log.d(TAG, "onComplete: saved location " + newLocation);
                             }
                         }
                     });
@@ -205,5 +226,34 @@ public class LocationService extends IntentService {
 
             public void onProviderDisabled(String provider) {}
         };
+    }
+
+    protected void requestLocationUpdates() {
+        LocationServices.FusedLocationApi.requestLocationUpdates(
+                googleApiClient, locationRequest, locationListener);
+    }
+
+    private void connectClient() {
+        Log.d(TAG, "connectClient: isConnected: " + googleApiClient.isConnected() + " isConnecting: " + googleApiClient.isConnecting());
+        if (!googleApiClient.isConnected() && !googleApiClient.isConnecting()) {
+            googleApiClient.connect();
+        }
+    }
+
+    private void disconnectClient() {
+        if (googleApiClient != null) {
+            if (googleApiClient.isConnected()) {
+                stopLocationUpdates();
+                googleApiClient.disconnect();
+            }
+        }
+    }
+
+    private void stopLocationUpdates() {
+        if (isRequestingUpdates) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(
+                    googleApiClient, locationListener);
+            Log.d(TAG, "stopLocationUpdates: ");
+        }
     }
 }
