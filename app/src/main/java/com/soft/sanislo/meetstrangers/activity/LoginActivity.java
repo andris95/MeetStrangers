@@ -1,11 +1,10 @@
-package com.soft.sanislo.meetstrangers;
+package com.soft.sanislo.meetstrangers.activity;
 
 
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,6 +19,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.soft.sanislo.meetstrangers.R;
 
 public class LoginActivity extends BaseActivity {
 
@@ -71,7 +71,6 @@ public class LoginActivity extends BaseActivity {
         btnLogin = (Button) findViewById(R.id.btn_login);
         btnReset = (Button) findViewById(R.id.btn_reset_password);
 
-
         btnSignup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -90,7 +89,6 @@ public class LoginActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 progressBar.setVisibility(View.VISIBLE);
-
                 email = inputEmail.getText().toString();
                 password = inputPassword.getText().toString();
 

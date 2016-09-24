@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers;
+package com.soft.sanislo.meetstrangers.service;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
-import android.text.style.LocaleSpan;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -75,7 +74,6 @@ public class LocationService extends IntentService {
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
 
-
         initListeners();
         if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(this)
@@ -99,6 +97,7 @@ public class LocationService extends IntentService {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 mUser = dataSnapshot.getValue(User.class);
+                avatarURL = mUser.getAvatarURL();
                 connectClient();
             }
 
@@ -112,6 +111,7 @@ public class LocationService extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: ");
+
         return super.onStartCommand(intent, flags, startId);
     }
 

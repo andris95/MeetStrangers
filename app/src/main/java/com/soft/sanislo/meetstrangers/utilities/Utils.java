@@ -1,13 +1,26 @@
 package com.soft.sanislo.meetstrangers.utilities;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.text.TextUtils;
 import android.widget.Toast;
+
+import com.soft.sanislo.meetstrangers.model.LocationModel;
+
+import java.util.Calendar;
 
 /**
  * Created by root on 05.09.16.
  */
 public class Utils {
+    private static final long TIME_ONE_MINUTE = 1000 * 60;
+    private static final long TIME_ONE_HOUR = TIME_ONE_MINUTE * 60;
+
     public static boolean validate(Context context, String email, String password) {
         if (!isValidEmail(email)) {
             Toast.makeText(context, "Enter email address!", Toast.LENGTH_SHORT).show();
@@ -29,6 +42,41 @@ public class Utils {
             return false;
         } else {
             return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
+        }
+    }
+
+    public static Bitmap getCroppedBitmap(Bitmap bitmap) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2,
+                bitmap.getWidth() / 2, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        return output;
+    }
+
+    public static String getLastOnline(LocationModel model) {
+        Calendar currentCalendar = Calendar.getInstance();
+        long currentMillis = currentCalendar.getTimeInMillis();
+        long markerMillis = model.getTimestamp();
+
+        long differenceInMillis = currentMillis - markerMillis;
+        if (differenceInMillis < TIME_ONE_MINUTE) {
+            return "Last active a few seconds ago";
+        } else if (differenceInMillis > TIME_ONE_MINUTE && differenceInMillis < TIME_ONE_HOUR) {
+            int minutes = (int) differenceInMillis / 1000 / 60;
+            return "Last active " + minutes + " ago";
+        } else {
+            return "unknown";
         }
     }
 }

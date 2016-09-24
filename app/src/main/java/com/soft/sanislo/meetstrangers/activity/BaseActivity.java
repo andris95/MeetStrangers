@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers;
+package com.soft.sanislo.meetstrangers.activity;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -23,9 +24,10 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
  */
 public abstract class BaseActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener {
+    private static final String TAG = BaseActivity.class.getSimpleName();
     protected String mProvider, mEncodedEmail;
     /* Client used to interact with Google APIs. */
-    protected GoogleApiClient mGoogleApiClient;
+    private GoogleApiClient mGoogleApiClient;
     protected FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseAuth firebaseAuth;
 
@@ -64,14 +66,12 @@ public abstract class BaseActivity extends AppCompatActivity implements
             mAuthListener = new FirebaseAuth.AuthStateListener() {
                 @Override
                 public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                    if (firebaseAuth == null) {
-                        /* Clear out shared preferences */
-                        SharedPreferences.Editor spe = sp.edit();
-                        /*spe.putString(Constants.KEY_ENCODED_EMAIL, null);
-                        spe.putString(Constants.KEY_PROVIDER, null);*/
-                        spe.commit();
-
+                    if (firebaseAuth.getCurrentUser() == null) {
+                        logout();
                         takeUserToLoginScreenOnUnAuth();
+                        Log.d(TAG, "onAuthStateChanged: log out");
+                    } else {
+                        Log.d(TAG, "onAuthStateChanged: ");
                     }
                 }
             };
@@ -109,8 +109,6 @@ public abstract class BaseActivity extends AppCompatActivity implements
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
     }
-
-
     /**
      * Logs out the user from their current session and starts LoginActivity.
      * Also disconnects the mGoogleApiClient if connected and provider is Google
@@ -119,8 +117,6 @@ public abstract class BaseActivity extends AppCompatActivity implements
 
         /* Logout if mProvider is not null */
         if (mProvider != null) {
-            ;
-
             if (mProvider.equals(Constants.GOOGLE_PROVIDER)) {
 
                 /* Logout from Google+ */

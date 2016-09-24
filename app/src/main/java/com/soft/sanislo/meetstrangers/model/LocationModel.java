@@ -2,6 +2,8 @@ package com.soft.sanislo.meetstrangers.model;
 
 import android.location.Location;
 
+import com.google.android.gms.maps.model.LatLng;
+
 /**
  * Created by root on 04.09.16.
  */
@@ -60,6 +62,18 @@ public class LocationModel {
 
     public void setIcon(String icon) {
         this.icon = icon;
+    }
+
+    public Location getLocation() {
+        Location location = new Location("");
+        location.setLongitude(lng);
+        location.setLatitude(lat);
+        return location;
+    }
+
+    public LatLng getLatLng() {
+        LatLng latLng = new LatLng(lat, lng);
+        return latLng;
     }
 
     @Override
