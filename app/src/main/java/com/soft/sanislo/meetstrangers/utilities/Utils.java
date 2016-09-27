@@ -8,6 +8,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.soft.sanislo.meetstrangers.model.LocationModel;
@@ -18,6 +19,7 @@ import java.util.Calendar;
  * Created by root on 05.09.16.
  */
 public class Utils {
+    public static final String TAG = Utils.class.getSimpleName();
     private static final long TIME_ONE_MINUTE = 1000 * 60;
     private static final long TIME_ONE_HOUR = TIME_ONE_MINUTE * 60;
 
@@ -78,5 +80,16 @@ public class Utils {
         } else {
             return "unknown";
         }
+    }
+
+    public static String getPostDate(long postTimestamp) {
+        String postDate;
+        Calendar currentCalendar = Calendar.getInstance();
+        Calendar postCalendar = Calendar.getInstance();
+        postCalendar.setTimeInMillis(postTimestamp);
+
+        int difference = currentCalendar.compareTo(postCalendar);
+        Log.d(TAG, "getPostDate: difference: " + difference);
+        return null;
     }
 }

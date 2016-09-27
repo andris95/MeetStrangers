@@ -4,6 +4,7 @@ package com.soft.sanislo.meetstrangers.activity;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -47,17 +48,13 @@ public class MainActivity extends BaseActivity {
     private FirebaseUser firebaseUser;
     private User user;
     private String uid;
-    private String avatarURL;
 
     private ValueEventListener userValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             user = dataSnapshot.getValue(User.class);
             if (user != null) {
-                Log.d(TAG, "onDataChange: userName " + user.getFullName());
-                avatarURL = user.getAvatarURL();
-                Log.d(TAG, "onDataChange: avatarURL " + avatarURL);
-                initDrawer();
+                initDrawer(user.getAvatarURL());
             }
         }
 
@@ -77,7 +74,6 @@ public class MainActivity extends BaseActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
-        Log.d(TAG, "onCreate: uid " + uid);
         database.child(Constants.F_USERS).child(uid).addValueEventListener(userValueEventListener);
     }
 
@@ -89,11 +85,9 @@ public class MainActivity extends BaseActivity {
         fragmentTransaction.commit();
     }
 
-    private void initDrawer() {
+    private void initDrawer(String avatarURL) {
         headerBuilder = new AccountHeaderBuilder()
                 .withActivity(this)
-                .addProfiles(new ProfileDrawerItem().withName(user.getFullName())
-                .withIcon(avatarURL))
                 .withHeaderBackground(R.drawable.drawer_header)
                 .withOnAccountHeaderProfileImageListener(new AccountHeader.OnAccountHeaderProfileImageListener() {
                     @Override
@@ -108,8 +102,10 @@ public class MainActivity extends BaseActivity {
                     public boolean onProfileImageLongClick(View view, IProfile profile, boolean current) {
                         return false;
                     }
-                })
-        ;
+                });
+        if (initProfileDrawerItem(user) != null) {
+            headerBuilder.addProfiles(initProfileDrawerItem(user));
+        }
         accountHeader = headerBuilder.build();
 
         PrimaryDrawerItem primaryItemMap = new PrimaryDrawerItem()
@@ -137,16 +133,32 @@ public class MainActivity extends BaseActivity {
                     @Override
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
                         // do something with the clicked item :D
-                        Log.d(TAG, "onItemClick: position clicked " + position);
-                        switch (position) {
-                            case 6:
-                                signOut();
-                                break;
-                        }
-                        return true;
+                        return onDrawerItemClick(view, position, drawerItem);
                     }
                 });
         drawer = drawerBuilder.build();
+    }
+
+    private boolean onDrawerItemClick(View view, int position, IDrawerItem drawerItem) {
+        Log.d(TAG, "onItemClick: position clicked " + position);
+        switch (position) {
+            case 6:
+                signOut();
+                break;
+        }
+        return true;
+    }
+
+    private ProfileDrawerItem initProfileDrawerItem(User user) {
+        if (user == null) {
+            return null;
+        }
+        ProfileDrawerItem profileDrawerItem = new ProfileDrawerItem()
+                .withName(user.getFullName());
+        if (!TextUtils.isEmpty(user.getAvatarURL())) {
+            profileDrawerItem.withIcon(user.getAvatarURL());
+        }
+        return profileDrawerItem;
     }
 
     private void signOut() {

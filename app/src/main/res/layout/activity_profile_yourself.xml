@@ -44,6 +44,7 @@
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/toolbar"
+                android:fitsSystemWindows="true"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
@@ -59,63 +60,27 @@
         >
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp">
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:id="@+id/ivProfileMarker"
-                android:src="@drawable/map_marker"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="16dp"
-                android:text="Pobeda street, 228"
-                android:textSize="18sp"
-                android:id="@+id/tvProfileLocation"
-                android:layout_toRightOf="@+id/ivProfileMarker"
-                android:layout_toEndOf="@+id/ivProfileMarker" />
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginLeft="16dp"
-                android:layout_below="@+id/ivProfileMarker"
-                android:id="@+id/ivProfileCLock"
-                android:src="@drawable/clock"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Last active 228 minutes ago"
-                android:textSize="18sp"
-                android:id="@+id/tvProfileLastActive"
-                android:layout_alignTop="@+id/ivProfileCLock"
-                android:layout_alignLeft="@+id/tvProfileLocation"
-                android:layout_alignStart="@+id/tvProfileLocation" />
-
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/btn_new_post"
-                android:layout_below="@+id/ivProfileCLock"
-                android:text="New post"
-                />
-
+            android:layout_height="wrap_content">
+            <include
+                layout="@layout/container_profile_yourself_info"
+                android:id="@+id/container_profile_yourself_info">
+            </include>
             <android.support.v7.widget.RecyclerView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/btn_new_post"
-                android:id="@+id/rv_posts">
+                android:layout_below="@+id/container_profile_yourself_info"
+                android:id="@+id/rv_posts"
+                android:background="@color/background">
             </android.support.v7.widget.RecyclerView>
         </RelativeLayout>
     </android.support.v4.widget.NestedScrollView>
 
-    <!--<android.support.design.widget.FloatingActionButton
-        android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
+    <android.support.design.widget.FloatingActionButton
+        android:layout_height="@dimen/_36sdp"
+        android:layout_width="@dimen/_36sdp"
+        android:src="@drawable/dots_horizontal"
         android:layout_margin="@dimen/activity_horizontal_margin"
-        app:layout_anchor="@id/main.appbar"
+        app:layout_anchor="@id/appbar"
         app:layout_anchorGravity="bottom|right|end"
-        />-->
+        />
 </android.support.design.widget.CoordinatorLayout>

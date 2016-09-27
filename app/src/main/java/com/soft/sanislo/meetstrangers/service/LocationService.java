@@ -22,8 +22,6 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -33,6 +31,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.model.LocationModel;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 
 import java.util.Calendar;
@@ -53,7 +52,7 @@ public class LocationService extends IntentService {
     private String avatarURL;
 
     private GoogleApiClient googleApiClient;
-    private Location mLocation;
+    private Location mCurrentLocation;
     private GoogleApiClient.ConnectionCallbacks connectionCallback;
     private GoogleApiClient.OnConnectionFailedListener connectionFailedListener;
     private LocationListener locationListener;
@@ -93,7 +92,7 @@ public class LocationService extends IntentService {
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
         Log.d(TAG, "onStart: ");
-        database.child("users").child(uid).addValueEventListener(new ValueEventListener() {
+        database.child(Constants.F_USERS).child(uid).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 mUser = dataSnapshot.getValue(User.class);
@@ -111,7 +110,6 @@ public class LocationService extends IntentService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: ");
-
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -154,25 +152,14 @@ public class LocationService extends IntentService {
                                     // initialize location requests here.
                                     Log.d(TAG, "onResult: SUCCESS");
                                     requestLocationUpdates();
-                                    isRequestingUpdates = true;
+
                                     break;
                                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                    // Location settings are not satisfied, but this can be fixed
-                                    // by showing the user a dialog.
-                                    /*try {
-                                        // Show the dialog by calling startResolutionForResult(),
-                                        // and check the result in onActivityResult().
-                                        status.startResolutionForResult(
-                                                this,
-                                                REQUEST_CHECK_SETTINGS);
-                                    } catch (IntentSender.SendIntentException e) {
-                                        // Ignore the error.
-                                        e.printStackTrace();
-                                    }
-                                    break;*/
+                                    Log.d(TAG, "onResult: RESOLUTION_REQUIRED");
                                 case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                                     // Location settings are not satisfied. However, we have no way
                                     // to fix the settings so we won't show the dialog.
+                                    Log.d(TAG, "onResult: SETTINGS_CHANGE_UNAVAILABLE");
                                     break;
                             }
                         }
@@ -199,24 +186,16 @@ public class LocationService extends IntentService {
             public void onLocationChanged(final Location newLocation) {
                 // Called when a new location is found by the network location provider.
 
-                boolean isBetterLocation = LocationUtils.isBetterLocation(newLocation, mLocation);
+                boolean isBetterLocation = LocationUtils.isBetterLocation(newLocation, mCurrentLocation);
                 if (isBetterLocation) {
                     Log.d(TAG, "onLocationChanged: isBetterLocation" + newLocation);
-                    mLocation = newLocation;
-                    LocationModel location = new LocationModel(firebaseUser.getUid(),
+                    mCurrentLocation = newLocation;
+                    LocationModel locationModel = new LocationModel(firebaseUser.getUid(),
                             newLocation.getLatitude(), newLocation.getLongitude(),
                             Calendar.getInstance().getTimeInMillis(),
                             avatarURL);
-
-                    Log.d(TAG, "onLocationChanged: uid: " + firebaseUser.getUid());
-                    database.child("locations").child(uid).setValue(location).addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            if (task.isSuccessful()) {
-                                Log.d(TAG, "onComplete: saved location " + newLocation);
-                            }
-                        }
-                    });
+                    Log.d(TAG, "onLocationChanged: " + locationModel);
+                    database.child(Constants.F_LOCATIONS).child(uid).setValue(locationModel);
                 }
             }
 
@@ -231,6 +210,7 @@ public class LocationService extends IntentService {
     protected void requestLocationUpdates() {
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 googleApiClient, locationRequest, locationListener);
+        isRequestingUpdates = true;
     }
 
     private void connectClient() {

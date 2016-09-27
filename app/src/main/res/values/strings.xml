@@ -34,4 +34,10 @@
     <string name="messages">Messages</string>
     <string name="friends">Friends</string>
     <string name="strangers">Strangers</string>
+
+    <string name="tab_location">Location</string>
+    <string name="tab_friends">Friends</string>
+    <string name="tab_camera">Camera</string>
+    <string name="tab_attachments">Attach</string>
+    <string name="tab_settings">Settings</string>
 </resources>

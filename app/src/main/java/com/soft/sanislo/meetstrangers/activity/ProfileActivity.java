@@ -43,6 +43,7 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.LocationModel;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import butterknife.BindView;
@@ -128,7 +129,8 @@ public class ProfileActivity extends BaseActivity {
             if (locationModel != null && !isAddressRequested) {
                 Intent intent = new Intent(getApplicationContext(), FetchAddressIntentService.class);
                 intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
-                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA, locationModel.getLocation());
+                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
+                        LocationUtils.getLocation(locationModel));
                 startService(intent);
                 isAddressRequested = true;
                 tvLastActive.setText(Utils.getLastOnline(locationModel));

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tabs>
+    <tab
+        id="@+id/tab_location"
+        icon="@drawable/map_marker"
+        title="@string/tab_location" />
+    <tab
+        id="@+id/tab_camera"
+        icon="@drawable/camera"
+        title="@string/tab_camera" />
+    <tab
+        id="@+id/tab_settings"
+        icon="@drawable/settings"
+        title="@string/tab_settings" />
+</tabs>

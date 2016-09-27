@@ -64,7 +64,7 @@ public class LocationModel {
         this.icon = icon;
     }
 
-    public Location getLocation() {
+    /*public Location getLocation() {
         Location location = new Location("");
         location.setLongitude(lng);
         location.setLatitude(lat);
@@ -74,7 +74,7 @@ public class LocationModel {
     public LatLng getLatLng() {
         LatLng latLng = new LatLng(lat, lng);
         return latLng;
-    }
+    }*/
 
     @Override
     public String toString() {

@@ -11,7 +11,7 @@ public final class Constants {
      */
     public static final String F_USERS = "users";
     public static final String F_LOCATIONS = "locations";
-    public static String F_POSTS = "posts";
+    public static final String F_POSTS = "posts";
 
     /**
      * Constants for Firebase object properties
@@ -21,7 +21,7 @@ public final class Constants {
     /**
      * Constants for Firebase URL
      */
-
+    public static final String STORAGE_BUCKET = "gs://meetstranger-142314.appspot.com";
 
     /**
      * Constants for bundles, extras and shared preferences keys

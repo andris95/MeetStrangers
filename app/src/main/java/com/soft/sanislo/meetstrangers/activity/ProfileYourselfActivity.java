@@ -1,8 +1,11 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.location.Address;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
@@ -15,18 +18,19 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
@@ -42,12 +46,14 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
+import com.soft.sanislo.meetstrangers.PostAdapter;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.LocationModel;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 
@@ -82,7 +88,7 @@ public class ProfileYourselfActivity extends BaseActivity {
     private User user;
     private String uid;
     private String avatarURL;
-    private FirebaseRecyclerAdapter<Post, PostViewHolder> mPostAdapter;
+    private PostAdapter mPostAdapter;
 
     private ResultReceiver mResultReceiver;
     private boolean isAddressRequested;
@@ -134,6 +140,7 @@ public class ProfileYourselfActivity extends BaseActivity {
 
         }
     };
+
     private ValueEventListener locationListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -141,7 +148,8 @@ public class ProfileYourselfActivity extends BaseActivity {
             if (locationModel != null && !isAddressRequested) {
                 Intent intent = new Intent(getApplicationContext(), FetchAddressIntentService.class);
                 intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
-                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA, locationModel.getLocation());
+                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
+                        LocationUtils.getLocation(locationModel));
                 startService(intent);
                 isAddressRequested = true;
                 tvLastActive.setText(Utils.getLastOnline(locationModel));
@@ -164,12 +172,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                 @Override
                 public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
                     Log.d(TAG, "onResult: likelyPlace size: " + likelyPlaces.toString());
-                    Status status = likelyPlaces.getStatus();
-                    int statusCode = status.getStatusCode();
-                    Log.d(TAG, "onResult: statusCOde " + statusCode);
-                    switch (statusCode) {
 
-                    }
                     for (PlaceLikelihood placeLikelihood : likelyPlaces) {
                         Log.i(TAG, String.format("Place '%s' has likelihood: %g",
                                 placeLikelihood.getPlace().getName(),
@@ -197,14 +200,13 @@ public class ProfileYourselfActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
         mPostRef = database.child(Constants.F_POSTS).child(uid);
 
         setContentView(R.layout.activity_profile_yourself);
+        themeNavAndStatusBar(this);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
@@ -222,15 +224,30 @@ public class ProfileYourselfActivity extends BaseActivity {
     }
 
     private void initPosts() {
-        rvPosts.setLayoutManager(new LinearLayoutManager(this));
-        mPostAdapter = new FirebaseRecyclerAdapter<Post, PostViewHolder>(Post.class, R.layout.item_post,
-                PostViewHolder.class, mPostRef) {
+        mPostAdapter = new PostAdapter(Post.class, R.layout.item_post,
+                PostViewHolder.class, mPostRef);
+        mPostAdapter.setOnClickListener(new PostAdapter.OnClickListener() {
             @Override
-            protected void populateViewHolder(PostViewHolder viewHolder, Post post, int position) {
-                viewHolder.setPostText(post);
-                viewHolder.setPostPhoto(post);
+            public void onClick(View view, int position) {
+                switch (view.getId()) {
+                    case R.id.iv_post_photo:
+                        Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_photo", Toast.LENGTH_SHORT).show();
+                        break;
+                    case R.id.iv_post_author_avatar:
+                        Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_author_avatar", Toast.LENGTH_SHORT).show();
+                        break;
+                    case R.id.tv_post_text:
+                        Toast.makeText(getApplicationContext(), "pos: " + position + ", tv_post_text", Toast.LENGTH_SHORT).show();
+
+                        break;
+                    default:
+                        break;
+                }
+
             }
-        };
+        });
+        rvPosts.setLayoutManager(new LinearLayoutManager(this));
+        rvPosts.setNestedScrollingEnabled(false);
         rvPosts.setAdapter(mPostAdapter);
     }
 
@@ -243,7 +260,6 @@ public class ProfileYourselfActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
         if (uid != null) {
-
             database.child(Constants.F_USERS).child(uid)
                     .addValueEventListener(userValueEventListener);
             database.child(Constants.F_LOCATIONS).child(uid)
@@ -289,5 +305,30 @@ public class ProfileYourselfActivity extends BaseActivity {
                 tvAddress.setText(errorMessage);
             }
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mPostAdapter.cleanup();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    public void themeNavAndStatusBar(Activity activity)
+    {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
+            return;
+
+        Window w = activity.getWindow();
+        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        w.setFlags(
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        w.setFlags(
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        w.setNavigationBarColor(activity.getResources().getColor(android.R.color.transparent));
+
+        w.setStatusBarColor(activity.getResources().getColor(android.R.color.transparent));
     }
 }

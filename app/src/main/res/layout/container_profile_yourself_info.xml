@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/_16sdp">
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ivProfileMarker"
+        android:src="@drawable/map_marker"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/_16sdp"
+        android:text="Pobeda street, 228"
+        android:textSize="18sp"
+        android:id="@+id/tvProfileLocation"
+        android:layout_toRightOf="@+id/ivProfileMarker"
+        android:layout_toEndOf="@+id/ivProfileMarker" />
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/_16sdp"
+        android:layout_below="@+id/ivProfileMarker"
+        android:id="@+id/ivProfileCLock"
+        android:src="@drawable/clock"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/_16sdp"
+        android:layout_marginTop="@dimen/_16sdp"
+        android:text="Last active 228 minutes ago"
+        android:textSize="18sp"
+        android:id="@+id/tvProfileLastActive"
+        android:layout_below="@+id/tvProfileLocation"
+        android:layout_toRightOf="@+id/ivProfileCLock"
+        android:layout_toEndOf="@+id/ivProfileCLock"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_new_post"
+        android:layout_below="@+id/ivProfileCLock"
+        android:text="New post"
+        />
+</RelativeLayout>

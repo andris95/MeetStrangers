@@ -47,16 +47,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int IMAGE_SIZE = 96;
 
-    private LocationListener locationListener;
     private GoogleMap mMap;
-    private Location mLocation;
-    private Marker mMarker;
-    private GoogleApiClient googleApiClient;
-    private GoogleApiClient.ConnectionCallbacks connectionCallback;
-    private GoogleApiClient.OnConnectionFailedListener connectionFailedListener;
-    private LocationRequest locationRequest;
-    private PendingResult<LocationSettingsResult> result;
-    private boolean isLocationListenerAttached;
     private boolean isCameraMoved;
 
     private DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
@@ -94,7 +85,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
             LocationModel locationModel = dataSnapshot.getValue(LocationModel.class);
-
             removeMarker(locationModel);
         }
 
@@ -169,7 +159,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     private void addMarker(final LocationModel locationModel) {
         String id = locationModel.getId();
         String title = locationModel.getId();
-        LatLng latLng = locationModel.getLatLng();
+        LatLng latLng = new LatLng(locationModel.getLat(), locationModel.getLng());
         MarkerOptions options = new MarkerOptions()
                 .position(latLng).title(title);
         final Marker marker;
@@ -215,12 +205,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
         locationReference.addChildEventListener(locationEventListener);
@@ -254,7 +238,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
         locationReference.addChildEventListener(locationEventListener);
-        isLocationListenerAttached = true;
     }
 
     @Override
