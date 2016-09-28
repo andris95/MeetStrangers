@@ -12,6 +12,7 @@ import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -26,7 +27,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -47,9 +48,9 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.soft.sanislo.meetstrangers.PostAdapter;
+import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.model.LocationModel;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
@@ -79,6 +80,8 @@ public class ProfileYourselfActivity extends BaseActivity {
     Button btnNewPost;
     @BindView(R.id.rv_posts)
     RecyclerView rvPosts;
+    @BindView(R.id.fab_profile)
+    FloatingActionButton fabProfile;
 
     private GoogleApiClient mGoogleApiClient;
     private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
@@ -144,15 +147,15 @@ public class ProfileYourselfActivity extends BaseActivity {
     private ValueEventListener locationListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            LocationModel locationModel = dataSnapshot.getValue(LocationModel.class);
-            if (locationModel != null && !isAddressRequested) {
+            LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
+            if (locationSnapshot != null && !isAddressRequested) {
                 Intent intent = new Intent(getApplicationContext(), FetchAddressIntentService.class);
                 intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
                 intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
-                        LocationUtils.getLocation(locationModel));
+                        LocationUtils.getLocation(locationSnapshot));
                 startService(intent);
                 isAddressRequested = true;
-                tvLastActive.setText(Utils.getLastOnline(locationModel));
+                tvLastActive.setText(Utils.getLastOnline(locationSnapshot));
             }
         }
 
@@ -330,5 +333,29 @@ public class ProfileYourselfActivity extends BaseActivity {
         w.setNavigationBarColor(activity.getResources().getColor(android.R.color.transparent));
 
         w.setStatusBarColor(activity.getResources().getColor(android.R.color.transparent));
+    }
+
+    @OnClick(R.id.fab_profile)
+    public void onClickFabProfile() {
+        new MaterialDialog.Builder(this)
+                .items(R.array.profile_options)
+                .itemsCallback(new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        Log.d(TAG, "onSelection: which: " + which);
+                        switch (which) {
+                            case 2:
+                                launchProfileEditActivity();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }).show();
+    }
+
+    private void launchProfileEditActivity() {
+        Intent intent = new Intent(getApplicationContext(), ProfileEditActivity.class);
+        startActivity(intent);
     }
 }

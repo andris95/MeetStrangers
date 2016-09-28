@@ -11,7 +11,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.soft.sanislo.meetstrangers.model.LocationModel;
+import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 
 import java.util.Calendar;
 
@@ -66,7 +66,7 @@ public class Utils {
         return output;
     }
 
-    public static String getLastOnline(LocationModel model) {
+    public static String getLastOnline(LocationSnapshot model) {
         Calendar currentCalendar = Calendar.getInstance();
         long currentMillis = currentCalendar.getTimeInMillis();
         long markerMillis = model.getTimestamp();

@@ -9,7 +9,7 @@ public class User {
     private String lastName;
     private String fullName;
     private String birthDate;
-    private boolean isMale;
+    private int gender;
     private String status;
     private String phoneNumber;
     private String linkInstagram;
@@ -19,12 +19,12 @@ public class User {
 
     public User() {}
 
-    public User(String firstName, String lastName, String birthDate, boolean isMale, String status, String phoneNumber, String linkInstagram, String linkFacebook, String linkTwitter) {
+    public User(String firstName, String lastName, String birthDate, int gender, String status, String phoneNumber, String linkInstagram, String linkFacebook, String linkTwitter) {
         this.firstName = firstName;
         this.lastName = lastName;
         fullName = firstName + " " + lastName;
         this.birthDate = birthDate;
-        this.isMale = isMale;
+        this.gender = gender;
         this.status = status;
         this.phoneNumber = phoneNumber;
         this.linkInstagram = linkInstagram;
@@ -70,14 +70,6 @@ public class User {
 
     public void setBirthDate(String birthDate) {
         this.birthDate = birthDate;
-    }
-
-    public boolean isMale() {
-        return isMale;
-    }
-
-    public void setMale(boolean male) {
-        isMale = male;
     }
 
     public String getStatus() {
@@ -128,6 +120,14 @@ public class User {
         this.avatarURL = avatarURL;
     }
 
+    public int getGender() {
+        return gender;
+    }
+
+    public void setGender(int gender) {
+        this.gender = gender;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -136,7 +136,7 @@ public class User {
                 ", lastName='" + lastName + '\'' +
                 ", fullName='" + fullName + '\'' +
                 ", birthDate='" + birthDate + '\'' +
-                ", isMale=" + isMale +
+                ", gender=" + gender +
                 ", status='" + status + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", linkInstagram='" + linkInstagram + '\'' +

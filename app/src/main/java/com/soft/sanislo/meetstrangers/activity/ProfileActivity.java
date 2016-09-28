@@ -38,9 +38,9 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
+import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.model.LocationModel;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
@@ -125,15 +125,15 @@ public class ProfileActivity extends BaseActivity {
     private ValueEventListener locationListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            LocationModel locationModel = dataSnapshot.getValue(LocationModel.class);
-            if (locationModel != null && !isAddressRequested) {
+            LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
+            if (locationSnapshot != null && !isAddressRequested) {
                 Intent intent = new Intent(getApplicationContext(), FetchAddressIntentService.class);
                 intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
                 intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
-                        LocationUtils.getLocation(locationModel));
+                        LocationUtils.getLocation(locationSnapshot));
                 startService(intent);
                 isAddressRequested = true;
-                tvLastActive.setText(Utils.getLastOnline(locationModel));
+                tvLastActive.setText(Utils.getLastOnline(locationSnapshot));
             }
         }
 

@@ -10,11 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.location.LocationListener;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -38,7 +33,7 @@ import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListene
 import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileYourselfActivity;
-import com.soft.sanislo.meetstrangers.model.LocationModel;
+import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.util.HashMap;
@@ -55,7 +50,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private String uid;
-    private HashMap<String, LocationModel> locationModelMap = new HashMap<>();
+    private HashMap<String, LocationSnapshot> locationModelMap = new HashMap<>();
     private HashMap<String, Marker> mMarkers = new HashMap<>();
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
@@ -69,23 +64,23 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     private ChildEventListener locationEventListener = new ChildEventListener() {
         @Override
         public void onChildAdded(DataSnapshot dataSnapshot, String previousChildName) {
-            LocationModel locationModel = dataSnapshot.getValue(LocationModel.class);
-            locationModelMap.put(locationModel.getId(), locationModel);
-            addMarker(locationModel);
+            LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
+            locationModelMap.put(locationSnapshot.getId(), locationSnapshot);
+            addMarker(locationSnapshot);
         }
 
         @Override
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
             Log.d(TAG, "onChildChanged: key: " + dataSnapshot.getKey());
-            LocationModel locationModel = dataSnapshot.getValue(LocationModel.class);
-            locationModelMap.put(locationModel.getId(), locationModel);
-            addMarker(locationModel);
+            LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
+            locationModelMap.put(locationSnapshot.getId(), locationSnapshot);
+            addMarker(locationSnapshot);
         }
 
         @Override
         public void onChildRemoved(DataSnapshot dataSnapshot) {
-            LocationModel locationModel = dataSnapshot.getValue(LocationModel.class);
-            removeMarker(locationModel);
+            LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
+            removeMarker(locationSnapshot);
         }
 
         @Override
@@ -147,19 +142,19 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         }
     }
 
-    private void moveCameraToMe(LocationModel locationModel) {
-        if (uid.equals(locationModel.getId())) {
+    private void moveCameraToMe(LocationSnapshot locationSnapshot) {
+        if (uid.equals(locationSnapshot.getId())) {
             Location location = new Location("");//provider name is unecessary
-            location.setLatitude(locationModel.getLat());//your coords of course
-            location.setLongitude(locationModel.getLng());
+            location.setLatitude(locationSnapshot.getLat());//your coords of course
+            location.setLongitude(locationSnapshot.getLng());
             moveCamera(location);
         }
     }
 
-    private void addMarker(final LocationModel locationModel) {
-        String id = locationModel.getId();
-        String title = locationModel.getId();
-        LatLng latLng = new LatLng(locationModel.getLat(), locationModel.getLng());
+    private void addMarker(final LocationSnapshot locationSnapshot) {
+        String id = locationSnapshot.getId();
+        String title = locationSnapshot.getId();
+        LatLng latLng = new LatLng(locationSnapshot.getLat(), locationSnapshot.getLng());
         MarkerOptions options = new MarkerOptions()
                 .position(latLng).title(title);
         final Marker marker;
@@ -171,11 +166,11 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         }
         mMarkers.put(id, marker);
 
-        loadImageOnMarker(marker, locationModel);
-        moveCameraToMe(locationModel);
+        loadImageOnMarker(marker, locationSnapshot);
+        moveCameraToMe(locationSnapshot);
     }
 
-    private void loadImageOnMarker(final Marker marker, final LocationModel locationModel) {
+    private void loadImageOnMarker(final Marker marker, final LocationSnapshot locationSnapshot) {
         SimpleImageLoadingListener imageLoadingListener = new SimpleImageLoadingListener() {
             @Override
             public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage)
@@ -184,23 +179,23 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
                 if (loadedImage != null) {
                     loadedImage = Utils.getCroppedBitmap(loadedImage);
                     marker.setIcon(BitmapDescriptorFactory.fromBitmap(loadedImage));
-                    mMarkers.put(locationModel.getId(), marker);
+                    mMarkers.put(locationSnapshot.getId(), marker);
                 }
             }
         };
         ImageSize imageSize = new ImageSize(IMAGE_SIZE, IMAGE_SIZE);
-        imageLoader.loadImage(locationModel.getIcon(), imageSize, displayImageOptions, imageLoadingListener, progressListener);
+        imageLoader.loadImage(locationSnapshot.getIcon(), imageSize, displayImageOptions, imageLoadingListener, progressListener);
 
     }
 
-    private void removeMarker(LocationModel locationModel) {
-        if (locationModelMap.containsKey(locationModel.getId())) {
-            locationModelMap.remove(locationModel.getId());
+    private void removeMarker(LocationSnapshot locationSnapshot) {
+        if (locationModelMap.containsKey(locationSnapshot.getId())) {
+            locationModelMap.remove(locationSnapshot.getId());
         }
-        if (mMarkers.containsKey(locationModel.getId())) {
-            Marker markerToRemove = mMarkers.get(locationModel.getId());
+        if (mMarkers.containsKey(locationSnapshot.getId())) {
+            Marker markerToRemove = mMarkers.get(locationSnapshot.getId());
             markerToRemove.remove();
-            mMarkers.remove(locationModel.getId());
+            mMarkers.remove(locationSnapshot.getId());
         }
     }
 

@@ -4,7 +4,7 @@ import android.location.Location;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
-import com.soft.sanislo.meetstrangers.model.LocationModel;
+import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 
 /**
  * Created by root on 02.09.16.
@@ -68,15 +68,15 @@ public class LocationUtils {
         return provider1.equals(provider2);
     }
 
-    public static Location getLocation(LocationModel locationModel) {
+    public static Location getLocation(LocationSnapshot locationSnapshot) {
         Location location = new Location("");
-        location.setLongitude(locationModel.getLng());
-        location.setLatitude(locationModel.getLat());
+        location.setLongitude(locationSnapshot.getLng());
+        location.setLatitude(locationSnapshot.getLat());
         return location;
     }
 
-    public static LatLng getLatLng(LocationModel locationModel) {
-        LatLng latLng = new LatLng(locationModel.getLat(), locationModel.getLng());
+    public static LatLng getLatLng(LocationSnapshot locationSnapshot) {
+        LatLng latLng = new LatLng(locationSnapshot.getLat(), locationSnapshot.getLng());
         return latLng;
     }
 }

@@ -44,6 +44,9 @@
         <activity
             android:name=".activity.NewPostActivity"
             android:configChanges="orientation|screenSize"/>
+        <activity
+            android:name=".activity.ProfileEditActivity"
+            android:configChanges="orientation|screenSize"/>
         <service
             android:name=".service.LocationService"
             android:exported="false"/>

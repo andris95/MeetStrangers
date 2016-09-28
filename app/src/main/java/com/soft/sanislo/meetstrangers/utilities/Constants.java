@@ -4,6 +4,8 @@ package com.soft.sanislo.meetstrangers.utilities;
  * Created by root on 04.09.16.
  */
 public final class Constants {
+    public static final int RC_PICK_IMAGE_GALLERY = 22228;
+    public static final int RC_PICK_IMAGE_CAMERA = 22229;
 
     /**
      * Constants related to locations in Firebase, such as the name of the node

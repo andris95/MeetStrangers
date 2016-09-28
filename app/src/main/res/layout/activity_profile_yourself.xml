@@ -80,6 +80,7 @@
         android:layout_width="@dimen/_36sdp"
         android:src="@drawable/dots_horizontal"
         android:layout_margin="@dimen/activity_horizontal_margin"
+        android:id="@+id/fab_profile"
         app:layout_anchor="@id/appbar"
         app:layout_anchorGravity="bottom|right|end"
         />

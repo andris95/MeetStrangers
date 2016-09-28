@@ -29,7 +29,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.soft.sanislo.meetstrangers.model.LocationModel;
+import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
@@ -190,12 +190,12 @@ public class LocationService extends IntentService {
                 if (isBetterLocation) {
                     Log.d(TAG, "onLocationChanged: isBetterLocation" + newLocation);
                     mCurrentLocation = newLocation;
-                    LocationModel locationModel = new LocationModel(firebaseUser.getUid(),
+                    LocationSnapshot locationSnapshot = new LocationSnapshot(firebaseUser.getUid(),
                             newLocation.getLatitude(), newLocation.getLongitude(),
                             Calendar.getInstance().getTimeInMillis(),
                             avatarURL);
-                    Log.d(TAG, "onLocationChanged: " + locationModel);
-                    database.child(Constants.F_LOCATIONS).child(uid).setValue(locationModel);
+                    Log.d(TAG, "onLocationChanged: " + locationSnapshot);
+                    database.child(Constants.F_LOCATIONS).child(uid).setValue(locationSnapshot);
                 }
             }
 

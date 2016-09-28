@@ -7,16 +7,16 @@ import com.google.android.gms.maps.model.LatLng;
 /**
  * Created by root on 04.09.16.
  */
-public class LocationModel {
+public class LocationSnapshot {
     private String mId;
     private double lat;
     private double lng;
     private long timestamp;
     private String icon;
 
-    public LocationModel() {}
+    public LocationSnapshot() {}
 
-    public LocationModel(String mId, double lat, double lng, long timestamp, String icon) {
+    public LocationSnapshot(String mId, double lat, double lng, long timestamp, String icon) {
         this.mId = mId;
         this.lat = lat;
         this.lng = lng;
@@ -78,7 +78,7 @@ public class LocationModel {
 
     @Override
     public String toString() {
-        return "LocationModel{" +
+        return "LocationSnapshot{" +
                 "mId='" + mId + '\'' +
                 ", lat=" + lat +
                 ", lng=" + lng +
