@@ -1,6 +1,7 @@
 package com.soft.sanislo.meetstrangers.view;
 
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -14,6 +15,9 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -24,6 +28,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     private static final String TAG = PostViewHolder.class.getSimpleName();
 
     private View mRootView;
+    private Post mPost;
 
     @BindView(R.id.iv_post_photo)
     ImageView ivPost;
@@ -40,6 +45,9 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.tv_post_date)
     TextView tvPostDate;
 
+    @BindView(R.id.iv_post_options)
+    ImageView ivPostOptions;
+
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder().build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private ImageLoadingProgressListener progressListener;
@@ -53,36 +61,45 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         tvPostText = (TextView) mRootView.findViewById(R.id.tv_post_text);
         tvPostAuthor = (TextView) mRootView.findViewById(R.id.tv_post_author);
         tvPostDate = (TextView) mRootView.findViewById(R.id.tv_post_date);
+        ivPostOptions = (ImageView) mRootView.findViewById(R.id.iv_post_options);
     }
 
-    public void setPostText(Post post) {
-        if (post.getText() != null) {
-            tvPostText.setText(post.getText());
+    public void setPostText() {
+        if (!TextUtils.isEmpty(mPost.getText())) {
+            tvPostText.setText(mPost.getText());
         } else {
             tvPostText.setVisibility(View.GONE);
         }
     }
 
-    public void setPostPhoto(Post post) {
-        imageLoader.displayImage(post.getPhotoURL(), ivPost, displayImageOptions, null, progressListener);
+    private void setPostDate() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
+        Date postDate = new Date(mPost.getTimestamp());
+        String postDateDisplay = dateFormat.format(postDate);
+        tvPostDate.setText(postDateDisplay);
     }
 
-    public void setPostAuthorAvatar(Post post) {
-        imageLoader.displayImage(post.getAuthorAvatarURL(), ivPostAuthorAvatar, displayImageOptions);
+    public void setPostPhoto() {
+        imageLoader.displayImage(mPost.getPhotoURL(), ivPost, displayImageOptions, null, progressListener);
+    }
+
+    public void setPostAuthorAvatar() {
+        imageLoader.displayImage(mPost.getAuthorAvatarURL(), ivPostAuthorAvatar, displayImageOptions);
     }
 
     public void populate(Post post, final PostAdapter.OnClickListener onClickListener, final int position) {
+        mPost = post;
         tvPostAuthor.setText(post.getAuthFullName());
-        tvPostDate.setText(post.getTimestamp() + "");
-        setPostText(post);
-        setPostAuthorAvatar(post);
-        setPostPhoto(post);
+        setPostText();
+        setPostAuthorAvatar();
+        setPostDate();
+        setPostPhoto();
 
         ivPost.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (onClickListener != null) {
-                    onClickListener.onClick(view, position);
+                    onClickListener.onClick(view, position, mPost);
                     Log.d(TAG, "onClick: position: " + position + " view: " + view.getId());
                 }
             }
@@ -91,7 +108,16 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View view) {
                 if (onClickListener != null) {
-                    onClickListener.onClick(view, position);
+                    onClickListener.onClick(view, position, mPost);
+                    Log.d(TAG, "onClick: position: " + position + " view: " + view.getId());
+                }
+            }
+        });
+        ivPostOptions.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (onClickListener != null) {
+                    onClickListener.onClick(view, position, mPost);
                     Log.d(TAG, "onClick: position: " + position + " view: " + view.getId());
                 }
             }

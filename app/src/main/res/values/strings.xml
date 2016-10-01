@@ -53,9 +53,15 @@
 
     <string name="pick_photo_camera">Create photo by camera</string>
     <string name="pick_photo_gallery">Pick photo from gallery</string>
-
     <string-array name="pick_photo">
         <item name="pick_camera">@string/pick_photo_camera</item>
         <item name="pick_gallery">@string/pick_photo_gallery</item>
+    </string-array>
+
+    <string name="post_opt_edit">Edit post</string>
+    <string name="post_opt_delete">Delete post</string>
+    <string-array name="post_options">
+        <!--<item name="opt_edit">@string/post_opt_edit</item>-->
+        <item name="opt_delete">@string/post_opt_delete</item>
     </string-array>
 </resources>

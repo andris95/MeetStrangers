@@ -23,6 +23,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,6 +41,8 @@ import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListe
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+
+import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -181,14 +184,54 @@ public class ProfileEditActivity extends BaseActivity {
         });
     }
 
+    /** Updates the information about user under users node*/
     private void updateUserData() {
         mUserDatabaseRef.setValue(mUser).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 Log.d(TAG, "onComplete: updateUser");
                 mNeedToUploadAvatar = false;
+                updatePostsDataAboutUser();
             }
         });
+    }
+
+    /** Updates the information about user under posts node*/
+    private void updatePostsDataAboutUser() {
+        final HashMap<String, Object> toUpdate = new HashMap<String, Object>();
+        toUpdate.put("authFullName", mUser.getFullName());
+        toUpdate.put("authorAvatarURL", mUser.getAvatarURL());
+
+        FirebaseDatabase.getInstance().getReference().child(Constants.F_POSTS).child(uid)
+                .addChildEventListener(new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        final String key = dataSnapshot.getKey();
+                        Log.d(TAG, "onChildAdded: post key: " + key);
+                        FirebaseDatabase.getInstance().getReference().child(Constants.F_POSTS)
+                                .child(uid).child(key).updateChildren(toUpdate);
+                    }
+
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+
+                    }
+
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     private void updateUser() {

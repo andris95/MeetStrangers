@@ -18,7 +18,8 @@ public final class Constants {
     /**
      * Constants for Firebase object properties
      */
-
+    public static final String POST_AUTH_AVATAR_URL = "authorAvatarURL";
+    public static final String POST_AUTH_FULL_NAME = "authFullName";
 
     /**
      * Constants for Firebase URL

@@ -35,6 +35,8 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -231,7 +233,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                 PostViewHolder.class, mPostRef);
         mPostAdapter.setOnClickListener(new PostAdapter.OnClickListener() {
             @Override
-            public void onClick(View view, int position) {
+            public void onClick(View view, int position, Post post) {
                 switch (view.getId()) {
                     case R.id.iv_post_photo:
                         Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_photo", Toast.LENGTH_SHORT).show();
@@ -241,8 +243,9 @@ public class ProfileYourselfActivity extends BaseActivity {
                         break;
                     case R.id.tv_post_text:
                         Toast.makeText(getApplicationContext(), "pos: " + position + ", tv_post_text", Toast.LENGTH_SHORT).show();
-
                         break;
+                    case R.id.iv_post_options:
+                        onClickPostOptions(post);
                     default:
                         break;
                 }
@@ -252,6 +255,33 @@ public class ProfileYourselfActivity extends BaseActivity {
         rvPosts.setLayoutManager(new LinearLayoutManager(this));
         rvPosts.setNestedScrollingEnabled(false);
         rvPosts.setAdapter(mPostAdapter);
+    }
+
+    private void onClickPostOptions(final Post post) {
+        new MaterialDialog.Builder(this)
+                .items(R.array.post_options)
+                .itemsCallback(new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        Log.d(TAG, "onSelection: which: " + which + " " + text.toString());
+                        switch (which) {
+                            case 0:
+                                removeUserPost(post.getPostID());
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }).show();
+    }
+
+    private void removeUserPost(String postKey) {
+        mPostRef.child(postKey).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "onComplete: removeUserPost");
+            }
+        });
     }
 
     @Override

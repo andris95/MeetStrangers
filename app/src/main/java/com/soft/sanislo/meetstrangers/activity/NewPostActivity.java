@@ -1,5 +1,6 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,19 +28,22 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.roughike.bottombar.BottomBar;
-import com.roughike.bottombar.BottomBarTab;
 import com.roughike.bottombar.OnTabSelectListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 
-import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -63,6 +67,7 @@ public class NewPostActivity extends BaseActivity {
 
     private DatabaseReference mDatabaseReference = FirebaseDatabase.getInstance().getReference();
     private FirebaseStorage mStorage = FirebaseStorage.getInstance();
+    private StorageReference storageRef = mStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
     private DatabaseReference postReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
@@ -70,7 +75,12 @@ public class NewPostActivity extends BaseActivity {
     private String uid;
 
     private Menu mMenu;
-    private String mPhotoPath;
+    //private String mPhotoPath;
+    private ArrayList<String> mPhotoPathList = new ArrayList<>();
+    private Queue<String> mTempPhotoPathQueue;
+    private StringBuilder photoPathsBuilder;
+
+    private Post newPost;
 
     private ValueEventListener userValueEventLisener = new ValueEventListener() {
         @Override
@@ -80,7 +90,7 @@ public class NewPostActivity extends BaseActivity {
 
         @Override
         public void onCancelled(DatabaseError databaseError) {
-
+            databaseError.toException().printStackTrace();
         }
     };
 
@@ -95,6 +105,7 @@ public class NewPostActivity extends BaseActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
+        postReference = mDatabaseReference.child(Constants.F_POSTS).child(uid);
 
         addSendPostEnabledListener();
         initBottomBar();
@@ -114,12 +125,15 @@ public class NewPostActivity extends BaseActivity {
     private void onSelectedCamera() {
         Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
         getIntent.setType("image/*");
+        getIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
-        Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        /*Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         pickIntent.setType("image/*");
+        pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);*/
 
         Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-        chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+        //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
+        //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {getIntent});
 
         startActivityForResult(chooserIntent, PICK_IMAGE);
     }
@@ -134,7 +148,7 @@ public class NewPostActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start,
                                       int count, int after) {
-                if (mPhotoPath == null) {
+                if (!mPhotoPathList.isEmpty()) {
                     if (!edtPostText.getText().toString().equals("")) {
                         mMenu.findItem(R.id.menu_send_post).setEnabled(true);
                     } else {
@@ -179,11 +193,20 @@ public class NewPostActivity extends BaseActivity {
                 Toast.makeText(getApplicationContext(), "Error choosing photo", Toast.LENGTH_SHORT).show();
                 return;
             }
-            mPhotoPath = data.getData().toString();
+
+            fetchClipData(data.getClipData());
             mMenu.findItem(R.id.menu_send_post).setEnabled(true);
-            Log.d(TAG, "onActivityResult: mPhotoPath: " + mPhotoPath);
         }
         Log.d(TAG, "onActivityResult: requestCode: " + requestCode + " resultCode: " + resultCode);
+    }
+
+    private void fetchClipData(ClipData clipData) {
+        for (int i = 0; i < clipData.getItemCount(); i++) {
+            Uri photoFileUri = clipData.getItemAt(i).getUri();
+            String photoFilePath = Utils.getPath(getApplicationContext(), photoFileUri);
+            mPhotoPathList.add(photoFilePath);
+            Log.d(TAG, "onActivityResult: photoFilePath: " + photoFilePath);
+        }
     }
 
     private void sendPost() {
@@ -191,64 +214,103 @@ public class NewPostActivity extends BaseActivity {
         String postText = edtPostText.getText().toString();
         String postKey = mDatabaseReference.child(Constants.F_POSTS).child(uid).push().getKey();
 
-        Post post = new Post(postText, uid, postKey, new Date().getTime());
-        post.setAuthFullName(user.getFullName());
-        post.setAuthorAvatarURL(user.getAvatarURL());
+        newPost = new Post(postText, uid, postKey, new Date().getTime());
+        newPost.setAuthFullName(user.getFullName());
+        newPost.setAuthorAvatarURL(user.getAvatarURL());
 
-        if (mPhotoPath != null) {
-            sendPostWithPhoto(post);
+        if (!mPhotoPathList.isEmpty()) {
+            uploadPostPhotos();
         } else {
-            sendPostJSONData(post);
+            sendPostJSONData();
         }
     }
 
-    private OnCompleteListener<Void> postCompleteListener = new OnCompleteListener<Void>() {
-        @Override
-        public void onComplete(@NonNull Task<Void> task) {
-            Toast.makeText(getApplicationContext(), "Posted successfully", Toast.LENGTH_SHORT).show();
-            progressBar.setVisibility(View.GONE);
-            finish();
-        }
-    };
+    private OnCompleteListener<Void> getPostCompleteListener() {
+        OnCompleteListener<Void> postCompleteListener = new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Toast.makeText(getApplicationContext(), "Posted successfully", Toast.LENGTH_SHORT).show();
+                progressBar.setVisibility(View.GONE);
+                finish();
+            }
+        };
+        return postCompleteListener;
+    }
+
     private OnFailureListener postFailureListener = new OnFailureListener() {
         @Override
         public void onFailure(@NonNull Exception e) {
+            progressBar.setVisibility(View.GONE);
             e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Posting failed, please try again later...", Toast.LENGTH_SHORT).show();
+            makeToast("Posting failed, please try again later...");
         }
     };
 
-    private void sendPostJSONData(Post post) {
-        mDatabaseReference.child(Constants.F_POSTS).child(uid).child(post.getPostID()).setValue(post)
-                .addOnCompleteListener(postCompleteListener).addOnFailureListener(postFailureListener);
+    private void sendPostJSONData() {
+        mDatabaseReference.child(Constants.F_POSTS)
+                .child(uid)
+                .child(newPost.getPostID())
+                .setValue(newPost)
+                .addOnCompleteListener(getPostCompleteListener())
+                .addOnFailureListener(postFailureListener);
     }
 
-    private void sendPostWithPhoto(final Post post) {
-        StorageReference storageRef = mStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
-        StorageReference postPhotoRef = storageRef.child(Constants.F_POSTS).child(uid)
-                .child(post.getPostID() + ".jpg");
-        Log.d(TAG, "sendPost: postPhotoRef path: " + postPhotoRef.getPath());
-
-        UploadTask uploadTask = postPhotoRef.putFile(Uri.parse(mPhotoPath));
-        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                post.setPhotoURL(taskSnapshot.getDownloadUrl().toString());
-                sendPostJSONData(post);
-            }
-        }).addOnFailureListener(postFailureListener);
-        uploadTask.addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG, "onProgress: " + taskSnapshot.getBytesTransferred() + " / " + taskSnapshot.getTotalByteCount());
-            }
-        });
+    private void uploadPostPhotos() {
+        if (!mPhotoPathList.isEmpty()) {
+            mTempPhotoPathQueue = new LinkedList<>();
+            mTempPhotoPathQueue.addAll(mPhotoPathList);
+            photoPathsBuilder = new StringBuilder();
+            uploadNextPhotoTask();
+        }
     }
+
+    private void uploadNextPhotoTask() {
+        if (mTempPhotoPathQueue.isEmpty()) {
+            newPost.setPhotoURLs(photoPathsBuilder.toString());
+            String[] photoPathsArray = photoPathsBuilder.toString().split("NEXTPHOTO");
+            Log.d(TAG, "uploadNextPhotoTask: " + Arrays.toString(photoPathsArray));
+            List<String> postPhotoList = new ArrayList<>();
+            for (String path : photoPathsArray) {
+                postPhotoList.add(path);
+            }
+            newPost.setPhotoURLList(postPhotoList);
+            sendPostJSONData();
+        } else {
+            String photoFileName = Utils.getFileName(getApplicationContext(),
+                    Uri.parse(mTempPhotoPathQueue.peek()));
+
+            StorageReference postPhotoRef = storageRef.child(Constants.F_POSTS)
+                    .child(uid)
+                    .child(newPost.getPostID())
+                    .child(photoFileName + ".jpg");
+            Uri photoUri = Uri.parse(mTempPhotoPathQueue.remove());
+            UploadTask uploadTask = postPhotoRef.putFile(photoUri);
+            uploadTask.addOnSuccessListener(photoUploadSuccessListener)
+                    .addOnFailureListener(photoUploadFailureListener);
+        }
+    }
+
+    private OnSuccessListener<UploadTask.TaskSnapshot> photoUploadSuccessListener = new OnSuccessListener<UploadTask.TaskSnapshot>() {
+        @Override
+        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+            photoPathsBuilder.append(taskSnapshot.getDownloadUrl());
+            photoPathsBuilder.append("NEXTPHOTO");
+            uploadNextPhotoTask();
+        }
+    };
+
+    private OnFailureListener photoUploadFailureListener = new OnFailureListener() {
+        @Override
+        public void onFailure(@NonNull Exception e) {
+            e.printStackTrace();
+        }
+    };
 
     @Override
     protected void onResume() {
         super.onResume();
-        mDatabaseReference.child(Constants.F_USERS).child(uid).addValueEventListener(userValueEventLisener);
+        mDatabaseReference.child(Constants.F_USERS).child(uid)
+                .addValueEventListener(userValueEventLisener);
     }
 
     @Override

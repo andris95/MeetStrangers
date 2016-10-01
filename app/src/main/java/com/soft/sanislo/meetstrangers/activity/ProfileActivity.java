@@ -67,10 +67,12 @@ public class ProfileActivity extends BaseActivity {
     private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
-    private User user;
-    private String loggedInUserUID;
-    private String uid;
-    private String avatarURL;
+    private User mAuthenticatedUser;
+    private String mAuthenticatedUserUID;
+
+    private User mDisplayedUser;
+    private String mDisplayedUserUID;
+    private String mAvatarURL;
 
     private ResultReceiver mResultReceiver;
     private boolean isAddressRequested;
@@ -83,16 +85,30 @@ public class ProfileActivity extends BaseActivity {
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private ImageLoadingProgressListener progressListener;
 
-    private ValueEventListener userValueEventListener = new ValueEventListener() {
+    /** ValueEventListener for current logged in mDisplayedUser*/
+    private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            user = dataSnapshot.getValue(User.class);
-            if (user != null) {
-                avatarURL = user.getAvatarURL();
-                collapsingoToolbar.setTitle(user.getFullName());
-                Log.d(TAG, "onDataChange: avatarURL " + user.getAvatarURL() + " " + user.getFullName());
+            mAuthenticatedUser = dataSnapshot.getValue(User.class);
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+    /** ValueEventListener for displayed mDisplayedUser*/
+    private ValueEventListener mDisplayedUserListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            mDisplayedUser = dataSnapshot.getValue(User.class);
+            if (mDisplayedUser != null) {
+                mAvatarURL = mDisplayedUser.getAvatarURL();
+                collapsingoToolbar.setTitle(mDisplayedUser.getFullName());
+                Log.d(TAG, "onDataChange: mAvatarURL " + mDisplayedUser.getAvatarURL() + " " + mDisplayedUser.getFullName());
                 mGoogleApiClient.connect();
-                imageLoader.displayImage(avatarURL, ivAvatar, new ImageLoadingListener() {
+                imageLoader.displayImage(mAvatarURL, ivAvatar, new ImageLoadingListener() {
                     @Override
                     public void onLoadingStarted(String imageUri, View view) {
 
@@ -190,8 +206,8 @@ public class ProfileActivity extends BaseActivity {
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        loggedInUserUID = firebaseUser.getUid();
-        uid = getIntent().getStringExtra(KEY_UID);
+        mAuthenticatedUserUID = firebaseUser.getUid();
+        mDisplayedUserUID = getIntent().getStringExtra(KEY_UID);
 
         setContentView(R.layout.activity_profile);
         ButterKnife.bind(this);
@@ -217,11 +233,12 @@ public class ProfileActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (uid != null) {
-
-            database.child(Constants.F_USERS).child(uid)
-                    .addValueEventListener(userValueEventListener);
-            database.child(Constants.F_LOCATIONS).child(uid)
+        if (mDisplayedUserUID != null) {
+            database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
+                    .addValueEventListener(mAuthenticatedUserListener);
+            database.child(Constants.F_USERS).child(mDisplayedUserUID)
+                    .addValueEventListener(mDisplayedUserListener);
+            database.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                     .addValueEventListener(locationListener);
         }
     }
@@ -230,9 +247,11 @@ public class ProfileActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         mGoogleApiClient.disconnect();
-        database.child(Constants.F_USERS).child(uid)
-                .removeEventListener(userValueEventListener);
-        database.child(Constants.F_LOCATIONS).child(uid)
+        database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
+                .removeEventListener(mAuthenticatedUserListener);
+        database.child(Constants.F_USERS).child(mDisplayedUserUID)
+                .removeEventListener(mDisplayedUserListener);
+        database.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                 .removeEventListener(locationListener);
     }
 

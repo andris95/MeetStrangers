@@ -38,6 +38,6 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
     }
 
     public interface OnClickListener {
-        void onClick(View view, int position);
+        void onClick(View view, int position, Post post);
     }
 }

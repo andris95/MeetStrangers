@@ -1,5 +1,7 @@
 package com.soft.sanislo.meetstrangers.model;
 
+import java.util.List;
+
 /**
  * Created by root on 24.09.16.
  */
@@ -13,6 +15,9 @@ public class Post {
     private long timestamp;
     private long likesCount;
     private long commentsCount;
+    private List<String> photoURLList;
+
+    private String photoURLs;
 
     public Post() {}
 
@@ -93,5 +98,21 @@ public class Post {
 
     public void setPhotoURL(String photoURL) {
         this.photoURL = photoURL;
+    }
+
+    public String getPhotoURLs() {
+        return photoURLs;
+    }
+
+    public List<String> getPhotoURLList() {
+        return photoURLList;
+    }
+
+    public void setPhotoURLList(List<String> photoURLList) {
+        this.photoURLList = photoURLList;
+    }
+
+    public void setPhotoURLs(String photoURLs) {
+        this.photoURLs = photoURLs;
     }
 }

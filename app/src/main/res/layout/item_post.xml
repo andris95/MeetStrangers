@@ -40,7 +40,7 @@
                 android:layout_width="@dimen/_24sdp"
                 android:layout_height="@dimen/_24sdp"
                 android:layout_centerVertical="true"
-                android:id="@+id/iv_post_more"
+                android:id="@+id/iv_post_options"
                 android:layout_alignParentRight="true"
                 android:src="@drawable/ic_more_vert_black_48dp"/>
         </RelativeLayout>
