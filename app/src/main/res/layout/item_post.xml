@@ -49,16 +49,17 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/rv_post_header"
             android:id="@+id/rv_post_body">
-            <ImageView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/iv_post_photo"
-                android:adjustViewBounds="true"/>
+                android:id="@+id/ll_post_photos"
+                android:orientation="vertical">
+            </LinearLayout>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_below="@+id/ll_post_photos"
                 android:padding="@dimen/_16sdp"
-                android:layout_below="@+id/iv_post_photo"
                 android:id="@+id/tv_post_text"
                 android:text="@string/lorem"/>
         </RelativeLayout>

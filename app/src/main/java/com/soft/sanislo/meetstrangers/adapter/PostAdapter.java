@@ -1,5 +1,6 @@
-package com.soft.sanislo.meetstrangers;
+package com.soft.sanislo.meetstrangers.adapter;
 
+import android.content.Context;
 import android.view.View;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
@@ -13,24 +14,23 @@ import com.soft.sanislo.meetstrangers.view.PostViewHolder;
  */
 public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
     private OnClickListener mOnClickListener;
+    private Context mContext;
 
-    public PostAdapter(Class<Post> modelClass, int modelLayout,
+    public PostAdapter(Context context, Class<Post> modelClass, int modelLayout,
                        Class<PostViewHolder> viewHolderClass, DatabaseReference ref) {
         super(modelClass, modelLayout, viewHolderClass, ref);
+        mContext = context;
     }
 
-    public PostAdapter(Class<Post> modelClass, int modelLayout,
+    public PostAdapter(Context context, Class<Post> modelClass, int modelLayout,
                        Class<PostViewHolder> viewHolderClass, Query ref) {
         super(modelClass, modelLayout, viewHolderClass, ref);
+        mContext = context;
     }
 
     @Override
     protected void populateViewHolder(PostViewHolder viewHolder, Post model, int position) {
-        viewHolder.populate(model, mOnClickListener, position);
-    }
-
-    public OnClickListener getOnClickListener() {
-        return mOnClickListener;
+        viewHolder.populate(mContext, model, mOnClickListener, position);
     }
 
     public void setOnClickListener(OnClickListener onClickListener) {

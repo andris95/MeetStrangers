@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/_8sdp">
+    <com.mikhaellopez.circularimageview.CircularImageView
+        android:layout_width="@dimen/_48sdp"
+        android:layout_height="@dimen/_48sdp"
+        android:id="@+id/iv_chat_author_avatar"
+        android:src="@drawable/lawrence"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tv_chat_message"
+        android:layout_toRightOf="@+id/iv_chat_author_avatar"
+        android:text="@string/lorem"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_chat_message"
+        android:layout_toRightOf="@+id/iv_chat_author_avatar"
+        android:text="12:28"/>
+</RelativeLayout>

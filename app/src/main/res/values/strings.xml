@@ -35,6 +35,8 @@
     <string name="friends">Friends</string>
     <string name="strangers">Strangers</string>
 
+    <string name="write_message">Write a message...</string>
+
     <string name="gender_male">Male</string>
     <string name="gender_female">Female</string>
 
@@ -44,11 +46,15 @@
     <string name="tab_attachments">Attach</string>
     <string name="tab_settings">Settings</string>
 
-    <string-array name="profile_options">
+    <string-array name="profile_yourself_options">
         <item name="opt_follow">Follow</item>
         <item name="opt_message">Message</item>
         <item name="opt_edit_profile">Edit profile</item>
         <item name="opt_show_on_map">Show on map</item>
+    </string-array>
+    
+    <string-array name="profile_stranger_options">
+        <item name="opt_chat">Chat</item>
     </string-array>
 
     <string name="pick_photo_camera">Create photo by camera</string>

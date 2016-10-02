@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -28,6 +29,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.roughike.bottombar.BottomBar;
@@ -38,6 +40,7 @@ import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -78,7 +81,8 @@ public class NewPostActivity extends BaseActivity {
     //private String mPhotoPath;
     private ArrayList<String> mPhotoPathList = new ArrayList<>();
     private Queue<String> mTempPhotoPathQueue;
-    private StringBuilder photoPathsBuilder;
+    private ArrayList<String> postPhotoURLList;
+    private MaterialDialog postUploadProgressDialog;
 
     private Post newPost;
 
@@ -193,8 +197,11 @@ public class NewPostActivity extends BaseActivity {
                 Toast.makeText(getApplicationContext(), "Error choosing photo", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            fetchClipData(data.getClipData());
+            if (data.getClipData() != null) {
+                fetchClipData(data.getClipData());
+            } else {
+                mPhotoPathList.add(data.getData().toString());
+            }
             mMenu.findItem(R.id.menu_send_post).setEnabled(true);
         }
         Log.d(TAG, "onActivityResult: requestCode: " + requestCode + " resultCode: " + resultCode);
@@ -203,9 +210,8 @@ public class NewPostActivity extends BaseActivity {
     private void fetchClipData(ClipData clipData) {
         for (int i = 0; i < clipData.getItemCount(); i++) {
             Uri photoFileUri = clipData.getItemAt(i).getUri();
-            String photoFilePath = Utils.getPath(getApplicationContext(), photoFileUri);
-            mPhotoPathList.add(photoFilePath);
-            Log.d(TAG, "onActivityResult: photoFilePath: " + photoFilePath);
+            mPhotoPathList.add(photoFileUri.toString());
+            Log.d(TAG, "onActivityResult: photoFilePath: " + photoFileUri.toString());
         }
     }
 
@@ -259,21 +265,14 @@ public class NewPostActivity extends BaseActivity {
         if (!mPhotoPathList.isEmpty()) {
             mTempPhotoPathQueue = new LinkedList<>();
             mTempPhotoPathQueue.addAll(mPhotoPathList);
-            photoPathsBuilder = new StringBuilder();
+            postPhotoURLList = new ArrayList<>();
             uploadNextPhotoTask();
         }
     }
 
     private void uploadNextPhotoTask() {
         if (mTempPhotoPathQueue.isEmpty()) {
-            newPost.setPhotoURLs(photoPathsBuilder.toString());
-            String[] photoPathsArray = photoPathsBuilder.toString().split("NEXTPHOTO");
-            Log.d(TAG, "uploadNextPhotoTask: " + Arrays.toString(photoPathsArray));
-            List<String> postPhotoList = new ArrayList<>();
-            for (String path : photoPathsArray) {
-                postPhotoList.add(path);
-            }
-            newPost.setPhotoURLList(postPhotoList);
+            newPost.setPhotoURLList(postPhotoURLList);
             sendPostJSONData();
         } else {
             String photoFileName = Utils.getFileName(getApplicationContext(),
@@ -286,6 +285,7 @@ public class NewPostActivity extends BaseActivity {
             Uri photoUri = Uri.parse(mTempPhotoPathQueue.remove());
             UploadTask uploadTask = postPhotoRef.putFile(photoUri);
             uploadTask.addOnSuccessListener(photoUploadSuccessListener)
+                    .addOnProgressListener(photoUploadProgressListener)
                     .addOnFailureListener(photoUploadFailureListener);
         }
     }
@@ -293,12 +293,16 @@ public class NewPostActivity extends BaseActivity {
     private OnSuccessListener<UploadTask.TaskSnapshot> photoUploadSuccessListener = new OnSuccessListener<UploadTask.TaskSnapshot>() {
         @Override
         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-            photoPathsBuilder.append(taskSnapshot.getDownloadUrl());
-            photoPathsBuilder.append("NEXTPHOTO");
+            postPhotoURLList.add(taskSnapshot.getDownloadUrl().toString());
             uploadNextPhotoTask();
         }
     };
-
+    private OnProgressListener<UploadTask.TaskSnapshot> photoUploadProgressListener = new OnProgressListener<UploadTask.TaskSnapshot>() {
+        @Override
+        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+            Log.d(TAG, "onProgress: " + taskSnapshot.getBytesTransferred() / (float) taskSnapshot.getTotalByteCount());
+        }
+    };
     private OnFailureListener photoUploadFailureListener = new OnFailureListener() {
         @Override
         public void onFailure(@NonNull Exception e) {

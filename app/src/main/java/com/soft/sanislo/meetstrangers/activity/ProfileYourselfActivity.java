@@ -49,7 +49,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
-import com.soft.sanislo.meetstrangers.PostAdapter;
+import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
@@ -99,10 +99,9 @@ public class ProfileYourselfActivity extends BaseActivity {
     private boolean isAddressRequested;
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
-            /*.showImageOnLoading(R.drawable.ic_stub) // resource or drawable
-            .showImageForEmptyUri(R.drawable.ic_empty) // resource or drawable
-            .showImageOnFail(R.drawable.ic_error) // resource or drawable
-            */.build();
+            .cacheInMemory(true)
+            .cacheOnDisk(true)
+            .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private ImageLoadingProgressListener progressListener;
 
@@ -115,7 +114,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                 collapsingToolbar.setTitle(user.getFullName());
                 Log.d(TAG, "onDataChange: avatarURL " + user.getAvatarURL() + " " + user.getFullName());
                 mGoogleApiClient.connect();
-                imageLoader.displayImage(avatarURL, ivAvatar, new ImageLoadingListener() {
+                imageLoader.displayImage(avatarURL, ivAvatar, displayImageOptions, new ImageLoadingListener() {
                     @Override
                     public void onLoadingStarted(String imageUri, View view) {
 
@@ -229,15 +228,15 @@ public class ProfileYourselfActivity extends BaseActivity {
     }
 
     private void initPosts() {
-        mPostAdapter = new PostAdapter(Post.class, R.layout.item_post,
-                PostViewHolder.class, mPostRef);
+        mPostAdapter = new PostAdapter(getApplicationContext(),
+                Post.class,
+                R.layout.item_post,
+                PostViewHolder.class,
+                mPostRef);
         mPostAdapter.setOnClickListener(new PostAdapter.OnClickListener() {
             @Override
             public void onClick(View view, int position, Post post) {
                 switch (view.getId()) {
-                    case R.id.iv_post_photo:
-                        Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_photo", Toast.LENGTH_SHORT).show();
-                        break;
                     case R.id.iv_post_author_avatar:
                         Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_author_avatar", Toast.LENGTH_SHORT).show();
                         break;
@@ -246,10 +245,15 @@ public class ProfileYourselfActivity extends BaseActivity {
                         break;
                     case R.id.iv_post_options:
                         onClickPostOptions(post);
+                        break;
                     default:
                         break;
                 }
-
+                try {
+                    Log.d(TAG, "onClick: " + view.getTag());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
         rvPosts.setLayoutManager(new LinearLayoutManager(this));
@@ -368,7 +372,7 @@ public class ProfileYourselfActivity extends BaseActivity {
     @OnClick(R.id.fab_profile)
     public void onClickFabProfile() {
         new MaterialDialog.Builder(this)
-                .items(R.array.profile_options)
+                .items(R.array.profile_yourself_options)
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
                     public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {

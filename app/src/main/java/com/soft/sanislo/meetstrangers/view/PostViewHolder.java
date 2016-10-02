@@ -1,19 +1,22 @@
 package com.soft.sanislo.meetstrangers.view;
 
+import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
-import com.soft.sanislo.meetstrangers.PostAdapter;
+import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,9 +32,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
 
     private View mRootView;
     private Post mPost;
-
-    @BindView(R.id.iv_post_photo)
-    ImageView ivPost;
+    private Context mContext;
+    private PostAdapter.OnClickListener mOnClickListener;
 
     @BindView(R.id.iv_post_author_avatar)
     ImageView ivPostAuthorAvatar;
@@ -48,20 +50,27 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.iv_post_options)
     ImageView ivPostOptions;
 
-    private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder().build();
+    @BindView(R.id.ll_post_photos)
+    LinearLayout llPostPhotos;
+
+    private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
+            .cacheInMemory(true)
+            .cacheOnDisk(true)
+            .showImageOnLoading(R.drawable.placeholder)
+            .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
-    private ImageLoadingProgressListener progressListener;
 
     public PostViewHolder(View itemView) {
         super(itemView);
         mRootView = itemView;
-        //ButterKnife.populate(mRootView);
-        ivPost = (ImageView) mRootView.findViewById(R.id.iv_post_photo);
+        //ButterKnife.bind(mContext, mRootView);
+
         ivPostAuthorAvatar = (ImageView) mRootView.findViewById(R.id.iv_post_author_avatar);
         tvPostText = (TextView) mRootView.findViewById(R.id.tv_post_text);
         tvPostAuthor = (TextView) mRootView.findViewById(R.id.tv_post_author);
         tvPostDate = (TextView) mRootView.findViewById(R.id.tv_post_date);
         ivPostOptions = (ImageView) mRootView.findViewById(R.id.iv_post_options);
+        llPostPhotos = (LinearLayout) mRootView.findViewById(R.id.ll_post_photos);
     }
 
     public void setPostText() {
@@ -79,31 +88,49 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         tvPostDate.setText(postDateDisplay);
     }
 
-    public void setPostPhoto() {
-        imageLoader.displayImage(mPost.getPhotoURL(), ivPost, displayImageOptions, null, progressListener);
-    }
-
     public void setPostAuthorAvatar() {
         imageLoader.displayImage(mPost.getAuthorAvatarURL(), ivPostAuthorAvatar, displayImageOptions);
     }
 
-    public void populate(Post post, final PostAdapter.OnClickListener onClickListener, final int position) {
+    public void setPostPhotosList() {
+        int counter = 0;
+        for (String url : mPost.getPhotoURLList()) {
+            Log.d(TAG, "setPostPhotosList: url: " + url);
+            ImageView ivPhoto = new ImageView(mContext);
+            ivPhoto.setAdjustViewBounds(true);
+            ivPhoto.setLayoutParams(new RecyclerView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            ));
+            ivPhoto.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (mOnClickListener != null) {
+                        mOnClickListener.onClick(view, 0, mPost);
+                    }
+                }
+            });
+            ivPhoto.setTag(counter);
+            llPostPhotos.addView(ivPhoto);
+            imageLoader.displayImage(url, ivPhoto);
+            counter++;
+        }
+    }
+
+    public void populate(Context context,
+                         Post post,
+                         final PostAdapter.OnClickListener onClickListener,
+                         final int position) {
         mPost = post;
+        mContext = context;
+        mOnClickListener = onClickListener;
+
         tvPostAuthor.setText(post.getAuthFullName());
         setPostText();
         setPostAuthorAvatar();
         setPostDate();
-        setPostPhoto();
+        setPostPhotosList();
 
-        ivPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (onClickListener != null) {
-                    onClickListener.onClick(view, position, mPost);
-                    Log.d(TAG, "onClick: position: " + position + " view: " + view.getId());
-                }
-            }
-        });
         ivPostAuthorAvatar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -119,6 +146,14 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
                 if (onClickListener != null) {
                     onClickListener.onClick(view, position, mPost);
                     Log.d(TAG, "onClick: position: " + position + " view: " + view.getId());
+                }
+            }
+        });
+        llPostPhotos.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (onClickListener != null) {
+                    onClickListener.onClick(view, position, mPost);
                 }
             }
         });

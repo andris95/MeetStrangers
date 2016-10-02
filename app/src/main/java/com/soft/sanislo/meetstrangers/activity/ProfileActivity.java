@@ -9,6 +9,7 @@ import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -18,6 +19,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
@@ -46,8 +48,13 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by root on 08.09.16.
@@ -62,6 +69,8 @@ public class ProfileActivity extends BaseActivity {
     @BindView(R.id.tvProfileLastActive) TextView tvLastActive;
     @BindView(R.id.tvProfileLocation) TextView tvAddress;
     @BindView(R.id.pbProfileAvatar) ProgressBar pbAvatar;
+    @BindView(R.id.fab_profile)
+    FloatingActionButton fabProfile;
 
     private GoogleApiClient mGoogleApiClient;
     private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
@@ -228,6 +237,34 @@ public class ProfileActivity extends BaseActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @OnClick(R.id.fab_profile)
+    public void onClickFabProfile() {
+        String[] profileOptions = getResources().getStringArray(R.array.profile_stranger_options);
+        ArrayList<String> options = new ArrayList<>(Arrays.asList(profileOptions));
+
+        new MaterialDialog.Builder(this)
+                .items(options)
+                .itemsCallback(new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
+                        Log.d(TAG, "onSelection: which: " + which);
+                        switch (which) {
+                            case 0:
+                                launchChatActivity();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }).show();
+    }
+
+    private void launchChatActivity() {
+        Intent intent = new Intent(ProfileActivity.this, ChatActivity.class);
+        intent.putExtra(ChatActivity.KEY_CHAT_PARTER_UID, mDisplayedUserUID);
+        startActivity(intent);
     }
 
     @Override
