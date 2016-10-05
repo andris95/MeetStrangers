@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "568185669722",
+    "firebase_url": "https://meetstranger-142314.firebaseio.com",
+    "project_id": "meetstranger-142314",
+    "storage_bucket": "meetstranger-142314.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:568185669722:android:68a621048b24b8a6",
+        "android_client_info": {
+          "package_name": "com.soft.sanislo.meetstrangers"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "568185669722-4o18jpcsav47fa23e8tten89h7j48ji5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtOpb4b_OmRAJQqQx7xAa41FmknGwoubw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
