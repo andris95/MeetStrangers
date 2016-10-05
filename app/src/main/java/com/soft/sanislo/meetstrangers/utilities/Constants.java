@@ -15,6 +15,7 @@ public final class Constants {
     public static final String F_LOCATIONS = "locations";
     public static final String F_POSTS = "posts";
     public static final String F_CHATS = "chats";
+    public static final String F_CHATS_HEADERS = "chats_headers";
 
     /**
      * Constants for Firebase object properties

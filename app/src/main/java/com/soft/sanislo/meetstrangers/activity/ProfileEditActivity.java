@@ -47,6 +47,7 @@ import java.util.HashMap;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 
 /**
  * Created by root on 27.09.16.
@@ -66,6 +67,9 @@ public class ProfileEditActivity extends BaseActivity {
 
     @BindView(R.id.edt_last_name)
     EditText edtLastName;
+
+    @BindView(R.id.pb_user_avatar)
+    MaterialProgressBar pbUserAvatar;
 
     private static final String TAG = ProfileEditActivity.class.getSimpleName();
 
@@ -92,7 +96,7 @@ public class ProfileEditActivity extends BaseActivity {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             mUser = dataSnapshot.getValue(User.class);
-            imageLoader.displayImage(mUser.getAvatarURL(), ivAvatar, displayImageOptions);
+            displayUserAvatar(mUser.getAvatarURL());
             edtFirstName.setText(mUser.getFirstName());
             edtLastName.setText(mUser.getLastName());
             if (mUser.getGender() == 0) {
@@ -131,7 +135,7 @@ public class ProfileEditActivity extends BaseActivity {
                 .child(Constants.F_USERS).child(uid);
         mFirebaseStorage = FirebaseStorage.getInstance();
         mUserStorageRef = mFirebaseStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET)
-                .child(Constants.F_USERS);
+                .child(Constants.F_USERS).child(uid);
     }
 
     @Override
@@ -260,35 +264,38 @@ public class ProfileEditActivity extends BaseActivity {
         if (resultCode == RESULT_OK && requestCode == Constants.RC_PICK_IMAGE_GALLERY) {
             if (data == null) {
                 Log.d(TAG, "onActivityResult: data null");
-                Toast.makeText(getApplicationContext(), "Error choosing photo", Toast.LENGTH_SHORT).show();
+                makeToast("Error choosing photo");
                 return;
             }
-            imageLoader.displayImage(data.getData().toString(), ivAvatar, displayImageOptions, new ImageLoadingListener() {
-                @Override
-                public void onLoadingStarted(String imageUri, View view) {
-
-                }
-
-                @Override
-                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                    Log.d(TAG, "onLoadingFailed: " + failReason.toString());
-                }
-
-                @Override
-                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-
-                }
-
-                @Override
-                public void onLoadingCancelled(String imageUri, View view) {
-
-                }
-            });
             mAvatarPhotoPath = data.getData().toString();
             mNeedToUploadAvatar = true;
-            Log.d(TAG, "onActivityResult: mAvatarPhotoPath: " + mAvatarPhotoPath);
+            displayUserAvatar(mAvatarPhotoPath);
         }
-        Log.d(TAG, "onActivityResult: requestCode: " + requestCode + " resultCode: " + resultCode);
+    }
+
+    private void displayUserAvatar(String url) {
+        imageLoader.displayImage(url, ivAvatar, displayImageOptions, new ImageLoadingListener() {
+            @Override
+            public void onLoadingStarted(String imageUri, View view) {
+                pbUserAvatar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                Log.d(TAG, "onLoadingFailed: " + failReason.toString());
+                pbUserAvatar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                pbUserAvatar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onLoadingCancelled(String imageUri, View view) {
+
+            }
+        });
     }
 
     @OnClick(R.id.iv_avatar)

@@ -8,17 +8,15 @@ public class ChatMessage {
     private String message;
     private String authorUID;
     private String recipientUID;
-    private String authorAvatarURL;
     private long timestamp;
 
     public ChatMessage() {}
 
-    public ChatMessage(String chatMessageKey, String message, String authorUID, String recipientUID, String authorAvatarURL, long timestamp) {
+    public ChatMessage(String chatMessageKey, String message, String authorUID, String recipientUID, long timestamp) {
         this.chatMessageKey = chatMessageKey;
         this.message = message;
         this.authorUID = authorUID;
         this.recipientUID = recipientUID;
-        this.authorAvatarURL = authorAvatarURL;
         this.timestamp = timestamp;
     }
 
@@ -44,14 +42,6 @@ public class ChatMessage {
 
     public void setRecipientUID(String recipientUID) {
         this.recipientUID = recipientUID;
-    }
-
-    public String getAuthorAvatarURL() {
-        return authorAvatarURL;
-    }
-
-    public void setAuthorAvatarURL(String authorAvatarURL) {
-        this.authorAvatarURL = authorAvatarURL;
     }
 
     public long getTimestamp() {

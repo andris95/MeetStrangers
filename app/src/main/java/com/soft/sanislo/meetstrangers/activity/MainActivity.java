@@ -142,11 +142,19 @@ public class MainActivity extends BaseActivity {
     private boolean onDrawerItemClick(View view, int position, IDrawerItem drawerItem) {
         Log.d(TAG, "onItemClick: position clicked " + position);
         switch (position) {
+            case 2:
+                startChatHeaderActivity();
+                break;
             case 6:
                 signOut();
                 break;
         }
         return true;
+    }
+
+    private void startChatHeaderActivity() {
+        Intent intent = new Intent(getApplicationContext(), ChatHeaderActivity.class);
+        startActivity(intent);
     }
 
     private ProfileDrawerItem initProfileDrawerItem(User user) {
