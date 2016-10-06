@@ -27,7 +27,6 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
@@ -41,6 +40,7 @@ import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListe
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.util.HashMap;
 
@@ -131,7 +131,7 @@ public class ProfileEditActivity extends BaseActivity {
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
 
-        mUserDatabaseRef = FirebaseDatabase.getInstance().getReference()
+        mUserDatabaseRef = Utils.getDatabase().getReference()
                 .child(Constants.F_USERS).child(uid);
         mFirebaseStorage = FirebaseStorage.getInstance();
         mUserStorageRef = mFirebaseStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET)
@@ -206,13 +206,13 @@ public class ProfileEditActivity extends BaseActivity {
         toUpdate.put("authFullName", mUser.getFullName());
         toUpdate.put("authorAvatarURL", mUser.getAvatarURL());
 
-        FirebaseDatabase.getInstance().getReference().child(Constants.F_POSTS).child(uid)
+        Utils.getDatabase().getReference().child(Constants.F_POSTS).child(uid)
                 .addChildEventListener(new ChildEventListener() {
                     @Override
                     public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                         final String key = dataSnapshot.getKey();
                         Log.d(TAG, "onChildAdded: post key: " + key);
-                        FirebaseDatabase.getInstance().getReference().child(Constants.F_POSTS)
+                        Utils.getDatabase().getReference().child(Constants.F_POSTS)
                                 .child(uid).child(key).updateChildren(toUpdate);
                     }
 

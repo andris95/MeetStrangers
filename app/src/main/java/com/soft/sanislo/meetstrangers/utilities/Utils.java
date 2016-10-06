@@ -20,6 +20,7 @@ import android.util.Log;
 import android.util.TimeUtils;
 import android.widget.Toast;
 
+import com.google.firebase.database.FirebaseDatabase;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 
 import java.io.File;
@@ -33,6 +34,16 @@ public class Utils {
     public static final String TAG = Utils.class.getSimpleName();
     private static final long TIME_ONE_MINUTE = 1000 * 60;
     private static final long TIME_ONE_HOUR = TIME_ONE_MINUTE * 60;
+
+    private static FirebaseDatabase mDatabase;
+
+    public static FirebaseDatabase getDatabase() {
+        if (mDatabase == null) {
+            mDatabase = FirebaseDatabase.getInstance();
+            mDatabase.setPersistenceEnabled(true);
+        }
+        return mDatabase;
+    }
 
     public static boolean validate(Context context, String email, String password) {
         if (!isValidEmail(email)) {

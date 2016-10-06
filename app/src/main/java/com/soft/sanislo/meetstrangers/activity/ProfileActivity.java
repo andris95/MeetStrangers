@@ -33,7 +33,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -73,7 +72,7 @@ public class ProfileActivity extends BaseActivity {
     FloatingActionButton fabProfile;
 
     private GoogleApiClient mGoogleApiClient;
-    private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference database = Utils.getDatabase().getReference();
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User mAuthenticatedUser;

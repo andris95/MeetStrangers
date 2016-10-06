@@ -28,7 +28,7 @@ public class SignupActivity extends BaseActivity {
     private Button btnSignIn, btnSignUp, btnResetPassword;
     private ProgressBar progressBar;
     private FirebaseAuth auth;
-    private FirebaseDatabase database = FirebaseDatabase.getInstance();
+    private FirebaseDatabase database = Utils.getDatabase().getInstance();
     private DatabaseReference reference = database.getReference();
 
     private String email, password;

@@ -14,7 +14,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
@@ -30,6 +29,7 @@ import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 public class MainActivity extends BaseActivity {
     public static final String REQUEST_CHECK_SETTINGS = "REQUEST_CHECK_SETTINGS";
@@ -43,7 +43,7 @@ public class MainActivity extends BaseActivity {
     private DrawerBuilder drawerBuilder;
     private Drawer drawer;
 
-    private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference database = Utils.getDatabase().getReference();
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User user;

@@ -26,7 +26,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
@@ -68,7 +67,7 @@ public class NewPostActivity extends BaseActivity {
     private static final String TAG = NewPostActivity.class.getSimpleName();
     private static final int PICK_IMAGE = 30000;
 
-    private DatabaseReference mDatabaseReference = FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference mDatabaseReference = Utils.getDatabase().getReference();
     private FirebaseStorage mStorage = FirebaseStorage.getInstance();
     private StorageReference storageRef = mStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
     private DatabaseReference postReference;

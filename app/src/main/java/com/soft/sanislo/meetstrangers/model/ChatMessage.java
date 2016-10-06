@@ -4,7 +4,7 @@ package com.soft.sanislo.meetstrangers.model;
  * Created by root on 02.10.16.
  */
 public class ChatMessage {
-    private String chatMessageKey;
+    private String key;
     private String message;
     private String authorUID;
     private String recipientUID;
@@ -13,7 +13,7 @@ public class ChatMessage {
     public ChatMessage() {}
 
     public ChatMessage(String chatMessageKey, String message, String authorUID, String recipientUID, long timestamp) {
-        this.chatMessageKey = chatMessageKey;
+        this.key = chatMessageKey;
         this.message = message;
         this.authorUID = authorUID;
         this.recipientUID = recipientUID;
@@ -52,11 +52,11 @@ public class ChatMessage {
         this.timestamp = timestamp;
     }
 
-    public String getChatMessageKey() {
-        return chatMessageKey;
+    public String getKey() {
+        return key;
     }
 
-    public void setChatMessageKey(String chatMessageKey) {
-        this.chatMessageKey = chatMessageKey;
+    public void setKey(String key) {
+        this.key = key;
     }
 }

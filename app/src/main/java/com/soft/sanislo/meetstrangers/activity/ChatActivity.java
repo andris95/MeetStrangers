@@ -2,6 +2,7 @@ package com.soft.sanislo.meetstrangers.activity;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,6 +25,7 @@ import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.ChatHeader;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
 
 import java.util.Date;
@@ -45,7 +47,7 @@ public class ChatActivity extends BaseActivity {
 
     public static final String KEY_CHAT_PARTER_UID = "KEY_CHAT_PARTER_UID";
 
-    private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference mDatabaseRef;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User mAuthenticatedUser;
@@ -84,12 +86,15 @@ public class ChatActivity extends BaseActivity {
         }
     };
     private static final String TAG = ChatActivity.class.getSimpleName();
+    private ChatMessage mChatMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         ButterKnife.bind(this);
+
+        mDatabaseRef = Utils.getDatabase().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         mAuthenticatedUserUID = firebaseUser.getUid();
@@ -98,7 +103,7 @@ public class ChatActivity extends BaseActivity {
         mChatMessageAdapter = new ChatMessageAdapter(ChatMessage.class,
                 R.layout.item_chat_message,
                 ChatMessageViewHolder.class,
-                database.child(Constants.F_CHATS)
+                mDatabaseRef.child(Constants.F_CHATS)
                         .child(mAuthenticatedUserUID).child(mChatPartnerUID),
                 this);
         rvChat.setLayoutManager(new LinearLayoutManager(this));
@@ -107,41 +112,38 @@ public class ChatActivity extends BaseActivity {
 
     @OnClick(R.id.iv_send_message)
     public void onClickSendMessage() {
+        mChatMessage = createChatMessage();
+        pushChatMessage(mAuthenticatedUserUID, mChatPartnerUID, null);
+        pushChatMessage(mChatPartnerUID, mAuthenticatedUserUID, new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                updateChatHeader();
+            }
+        });
+        edtChatMessage.setText("");
+    }
+
+    private void pushChatMessage(String firstUserUID, String secondUserUID,
+                                 OnCompleteListener<Void> onCompleteListener) {
+        mDatabaseRef.child(Constants.F_CHATS)
+                .child(firstUserUID)
+                .child(secondUserUID)
+                .child(mChatMessage.getKey())
+                .setValue(mChatMessage).addOnCompleteListener(onCompleteListener);
+    }
+
+    private ChatMessage createChatMessage() {
         Date sendDate = new Date();
         String chatMessageKey = sendDate.getTime() + "";
         String message = edtChatMessage.getText().toString();
 
         ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setChatMessageKey(chatMessageKey);
+        chatMessage.setKey(chatMessageKey);
         chatMessage.setMessage(message);
         chatMessage.setTimestamp(sendDate.getTime());
         chatMessage.setAuthorUID(mAuthenticatedUserUID);
         chatMessage.setRecipientUID(mChatPartnerUID);
-
-        database.child(Constants.F_CHATS)
-                .child(mAuthenticatedUserUID)
-                .child(mChatPartnerUID)
-                .child(chatMessageKey)
-                .setValue(chatMessage)
-        .addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                Log.d(TAG, "onComplete: complete");
-                updateChatHeader();
-                edtChatMessage.setText("");
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                e.printStackTrace();
-                Log.d(TAG, "onFailure: ");
-            }
-        });
-        database.child(Constants.F_CHATS)
-                .child(mChatPartnerUID)
-                .child(mAuthenticatedUserUID)
-                .child(chatMessageKey)
-                .setValue(chatMessage);
+        return chatMessage;
     }
 
     private void updateChatHeader() {
@@ -151,31 +153,33 @@ public class ChatActivity extends BaseActivity {
                 mChatPartnerUser.getAvatarURL(),
                 new Date().getTime());
 
-        database.child(Constants.F_CHATS_HEADERS)
-                .child(mAuthenticatedUserUID)
-                .child(mChatPartnerUID)
-                .setValue(chatHeader);
-        database.child(Constants.F_CHATS_HEADERS)
-                .child(mChatPartnerUID)
-                .child(mAuthenticatedUserUID)
+        setChatHeader(chatHeader, mAuthenticatedUserUID, mChatPartnerUID);
+        setChatHeader(chatHeader, mChatPartnerUID, mAuthenticatedUserUID);
+    }
+
+    private void setChatHeader(ChatHeader chatHeader, String firstUserUID, String secondUserUID) {
+        mDatabaseRef.child(Constants.F_CHATS_HEADERS)
+                .child(firstUserUID)
+                .child(secondUserUID)
                 .setValue(chatHeader);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        database.child(Constants.F_USERS)
+        mDatabaseRef.child(Constants.F_USERS)
                 .child(mAuthenticatedUserUID).addValueEventListener(mAuthenticatedUserListener);
-        database.child(Constants.F_USERS)
+        mDatabaseRef.child(Constants.F_USERS)
                 .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        database.child(Constants.F_USERS)
+        mDatabaseRef.child(Constants.F_USERS)
                 .child(mAuthenticatedUserUID).removeEventListener(mAuthenticatedUserListener);
-        database.child(Constants.F_USERS)
+        mDatabaseRef.child(Constants.F_USERS)
                 .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
+        //mChatMessageAdapter.cleanup();
     }
 }
