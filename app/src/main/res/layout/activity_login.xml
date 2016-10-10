@@ -23,12 +23,12 @@
             android:layout_height="wrap_content">
 
             <EditText
-                android:id="@+id/email"
+                android:id="@+id/edt_email"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
                 android:hint="@string/hint_email"
-                android:text="andras@gmail.com"
+                android:text="andrras@gmail.com"
                 android:inputType="textEmailAddress" />
         </android.support.design.widget.TextInputLayout>
 
@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
                 android:hint="@string/hint_password"
-                android:text="aaaaaa"
+                android:text="qqqqqq"
                 android:inputType="textPassword"
                 />
         </android.support.design.widget.TextInputLayout>

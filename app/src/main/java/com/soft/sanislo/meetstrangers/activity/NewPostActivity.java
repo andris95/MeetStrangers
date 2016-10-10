@@ -8,6 +8,7 @@ import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Menu;
@@ -39,12 +40,9 @@ import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 import butterknife.BindView;
@@ -118,6 +116,7 @@ public class NewPostActivity extends BaseActivity {
         mBottomBar.setOnTabSelectListener(new OnTabSelectListener() {
             @Override
             public void onTabSelected(@IdRes int tabId) {
+                Log.d(TAG, "onTabSelected: tabId: " + tabId);
                 if (tabId == R.id.tab_camera) {
                     onSelectedCamera();
                 }
@@ -130,15 +129,8 @@ public class NewPostActivity extends BaseActivity {
         getIntent.setType("image/*");
         getIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
-        /*Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        pickIntent.setType("image/*");
-        pickIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);*/
-
-        Intent chooserIntent = Intent.createChooser(getIntent, "Select Image");
-        //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
-        //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {getIntent});
-
-        startActivityForResult(chooserIntent, PICK_IMAGE);
+        Intent сhooserIntent = Intent.createChooser(getIntent, "Select Image");
+        startActivityForResult(сhooserIntent, PICK_IMAGE);
     }
 
     private void addSendPostEnabledListener() {
@@ -151,11 +143,23 @@ public class NewPostActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start,
                                       int count, int after) {
-                if (!mPhotoPathList.isEmpty()) {
+                /*if (!mPhotoPathList.isEmpty()) {
                     if (!edtPostText.getText().toString().equals("")) {
                         mMenu.findItem(R.id.menu_send_post).setEnabled(true);
                     } else {
                         mMenu.findItem(R.id.menu_send_post).setEnabled(false);
+                    }
+                }*/
+                String text = edtPostText.getText().toString();
+                if (!TextUtils.isEmpty(text)) {
+                    mMenu.findItem(R.id.menu_send_post).setEnabled(true);
+                    return;
+                }
+                if (TextUtils.isEmpty(text)) {
+                    if (mPhotoPathList.isEmpty()) {
+                        mMenu.findItem(R.id.menu_send_post).setEnabled(false);
+                    } else {
+                        mMenu.findItem(R.id.menu_send_post).setEnabled(true);
                     }
                 }
             }
@@ -219,9 +223,15 @@ public class NewPostActivity extends BaseActivity {
         String postText = edtPostText.getText().toString();
         String postKey = mDatabaseReference.child(Constants.F_POSTS).child(uid).push().getKey();
 
-        newPost = new Post(postText, uid, postKey, new Date().getTime());
+        newPost = new Post();
+        newPost.setKey(postKey);
+        newPost.setAuthorUID(user.getUid());
         newPost.setAuthFullName(user.getFullName());
         newPost.setAuthorAvatarURL(user.getAvatarURL());
+        newPost.setLikesCount(0);
+        newPost.setCommentsCount(0);
+        newPost.setText(postText);
+        newPost.setTimestamp(new Date().getTime());
 
         if (!mPhotoPathList.isEmpty()) {
             uploadPostPhotos();
@@ -254,7 +264,7 @@ public class NewPostActivity extends BaseActivity {
     private void sendPostJSONData() {
         mDatabaseReference.child(Constants.F_POSTS)
                 .child(uid)
-                .child(newPost.getPostID())
+                .child(newPost.getKey())
                 .setValue(newPost)
                 .addOnCompleteListener(getPostCompleteListener())
                 .addOnFailureListener(postFailureListener);
@@ -279,7 +289,7 @@ public class NewPostActivity extends BaseActivity {
 
             StorageReference postPhotoRef = storageRef.child(Constants.F_POSTS)
                     .child(uid)
-                    .child(newPost.getPostID())
+                    .child(newPost.getKey())
                     .child(photoFileName + ".jpg");
             Uri photoUri = Uri.parse(mTempPhotoPathQueue.remove());
             UploadTask uploadTask = postPhotoRef.putFile(photoUri);

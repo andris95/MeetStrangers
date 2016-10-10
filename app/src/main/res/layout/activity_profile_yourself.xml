@@ -69,8 +69,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/container_profile_yourself_info"
-                android:id="@+id/rv_posts"
-                android:background="@color/background">
+                android:id="@+id/rv_posts">
             </android.support.v7.widget.RecyclerView>
         </RelativeLayout>
     </android.support.v4.widget.NestedScrollView>

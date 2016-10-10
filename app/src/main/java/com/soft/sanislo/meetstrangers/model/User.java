@@ -4,7 +4,7 @@ package com.soft.sanislo.meetstrangers.model;
  * Created by root on 04.09.16.
  */
 public class User {
-    private String id;
+    private String uid;
     private String firstName;
     private String lastName;
     private String fullName;
@@ -32,12 +32,12 @@ public class User {
         this.linkTwitter = linkTwitter;
     }
 
-    public String getId() {
-        return id;
+    public String getUid() {
+        return uid;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 
     public String getFirstName() {
@@ -131,7 +131,7 @@ public class User {
     @Override
     public String toString() {
         return "User{" +
-                "id='" + id + '\'' +
+                "uid='" + uid + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", fullName='" + fullName + '\'' +

@@ -26,6 +26,8 @@ import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import java.io.File;
 import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by root on 05.09.16.
@@ -45,9 +47,9 @@ public class Utils {
         return mDatabase;
     }
 
-    public static boolean validate(Context context, String email, String password) {
+    public static boolean validateEmailPwrd(Context context, String email, String password) {
         if (!isValidEmail(email)) {
-            Toast.makeText(context, "Enter email address!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "Incorrect email address!", Toast.LENGTH_SHORT).show();
             return false;
         }
         if (TextUtils.isEmpty(password)) {
@@ -67,6 +69,30 @@ public class Utils {
         } else {
             return android.util.Patterns.EMAIL_ADDRESS.matcher(target).matches();
         }
+    }
+
+    public static boolean isValidName(Context context, String firstName, String lastName) {
+        String regx = "^[\\p{L}\\s.’\\-,]+$";
+        Pattern pattern = Pattern.compile(regx, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(firstName);
+        if (TextUtils.isEmpty(firstName)) {
+            Toast.makeText(context, "First Name can't be empty", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (!matcher.find()) {
+            Toast.makeText(context, "Invalid First Name", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        if (TextUtils.isEmpty(lastName)) {
+            Toast.makeText(context, "Last Name can't be empty", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        matcher = pattern.matcher(lastName);
+        if (!matcher.find()) {
+            Toast.makeText(context, "Invalid Last Name", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
     }
 
     public static Bitmap getCroppedBitmap(Bitmap bitmap) {

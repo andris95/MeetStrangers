@@ -1,5 +1,6 @@
 package com.soft.sanislo.meetstrangers.model;
 
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -9,31 +10,27 @@ public class Post {
     private String authorUID;
     private String authFullName;
     private String authorAvatarURL;
-    private String postID;
+    private String key;
     private String text;
-    private String photoURL;
     private long timestamp;
     private long likesCount;
     private long commentsCount;
     private List<String> photoURLList;
-
-    private String photoURLs;
+    private HashMap<String, Boolean> likedUsersUIDs;
 
     public Post() {}
 
-    public Post(String text, String authorUID, String postID, long timestamp) {
-        this.text = text;
+    public Post(String authorUID, String authFullName, String authorAvatarURL, String key, String text, long timestamp, long likesCount, long commentsCount, List<String> photoURLList, HashMap<String, Boolean> likedUsersUIDs) {
         this.authorUID = authorUID;
-        this.postID = postID;
-        this.timestamp = timestamp;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
+        this.authFullName = authFullName;
+        this.authorAvatarURL = authorAvatarURL;
+        this.key = key;
         this.text = text;
+        this.timestamp = timestamp;
+        this.likesCount = likesCount;
+        this.commentsCount = commentsCount;
+        this.photoURLList = photoURLList;
+        this.likedUsersUIDs = likedUsersUIDs;
     }
 
     public String getAuthorUID() {
@@ -44,12 +41,36 @@ public class Post {
         this.authorUID = authorUID;
     }
 
-    public String getPostID() {
-        return postID;
+    public String getAuthFullName() {
+        return authFullName;
     }
 
-    public void setPostID(String postID) {
-        this.postID = postID;
+    public void setAuthFullName(String authFullName) {
+        this.authFullName = authFullName;
+    }
+
+    public String getAuthorAvatarURL() {
+        return authorAvatarURL;
+    }
+
+    public void setAuthorAvatarURL(String authorAvatarURL) {
+        this.authorAvatarURL = authorAvatarURL;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     public long getTimestamp() {
@@ -76,34 +97,6 @@ public class Post {
         this.commentsCount = commentsCount;
     }
 
-    public String getAuthFullName() {
-        return authFullName;
-    }
-
-    public void setAuthFullName(String authFullName) {
-        this.authFullName = authFullName;
-    }
-
-    public String getAuthorAvatarURL() {
-        return authorAvatarURL;
-    }
-
-    public void setAuthorAvatarURL(String authorAvatarURL) {
-        this.authorAvatarURL = authorAvatarURL;
-    }
-
-    public String getPhotoURL() {
-        return photoURL;
-    }
-
-    public void setPhotoURL(String photoURL) {
-        this.photoURL = photoURL;
-    }
-
-    public String getPhotoURLs() {
-        return photoURLs;
-    }
-
     public List<String> getPhotoURLList() {
         return photoURLList;
     }
@@ -112,7 +105,11 @@ public class Post {
         this.photoURLList = photoURLList;
     }
 
-    public void setPhotoURLs(String photoURLs) {
-        this.photoURLs = photoURLs;
+    public HashMap<String, Boolean> getLikedUsersUIDs() {
+        return likedUsersUIDs;
+    }
+
+    public void setLikedUsersUIDs(HashMap<String, Boolean> likedUsersUIDs) {
+        this.likedUsersUIDs = likedUsersUIDs;
     }
 }

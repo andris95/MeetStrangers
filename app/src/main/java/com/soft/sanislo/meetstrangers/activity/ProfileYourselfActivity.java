@@ -15,7 +15,9 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.Toolbar;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -36,12 +38,15 @@ import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -49,6 +54,7 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
@@ -58,6 +64,9 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
+
+import java.util.Date;
+import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -200,13 +209,87 @@ public class ProfileYourselfActivity extends BaseActivity {
         }
     };
 
+    private PostAdapter.OnClickListener mPostClickListener = new PostAdapter.OnClickListener() {
+        @Override
+        public void onClick(View view, int position, Post post) {
+            if (view.getTag() != null) {
+                int tag = (int) view.getTag();
+                Log.d(TAG, "onClick: tag: " + tag);
+                return;
+            }
+            switch (view.getId()) {
+                case R.id.iv_post_author_avatar:
+                    Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_author_avatar", Toast.LENGTH_SHORT).show();
+                    break;
+                case R.id.tv_post_text:
+                    Toast.makeText(getApplicationContext(), "pos: " + position + ", tv_post_text", Toast.LENGTH_SHORT).show();
+                    break;
+                case R.id.iv_post_options:
+                    onClickPostOptions(post);
+                case R.id.iv_like_post:
+                    makeToast("like");
+                    //onClickLikePost(post.getKey());
+                    break;
+                case R.id.iv_comment_post:
+                    onClickCommentPost(position);
+                    break;
+                default:
+                    break;
+            }
+            try {
+                Log.d(TAG, "onClick: " + view.getTag());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void onClickAddComment(Post post, String commentText) {
+            DatabaseReference newCommentRef = database.child(Constants.F_POSTS_COMMENTS)
+                    .child(post.getAuthorUID())
+                    .child(post.getKey());
+            String newCommentKey = newCommentRef.push().getKey();
+            Comment comment = new Comment(newCommentKey,
+                    post.getKey(),
+                    user.getUid(),
+                    user.getFullName(),
+                    user.getAvatarURL(),
+                    commentText,
+                    new Date().getTime());
+            newCommentRef.child(newCommentKey).setValue(comment)
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            makeToast(e.getMessage());
+                            e.printStackTrace();
+                        }
+                    });
+        }
+
+        @Override
+        public void onClickCancelComment() {
+            mPostAdapter.setCommentsVisiblePos(-1);
+            TransitionManager.beginDelayedTransition(rvPosts);
+            mPostAdapter.notifyDataSetChanged();
+        }
+    };
+
+    private void onClickCommentPost(int position) {
+        if (mPostAdapter.getCommentsVisiblePos() == position) {
+            mPostAdapter.setCommentsVisiblePos(-1);
+        } else {
+            mPostAdapter.setCommentsVisiblePos(position);
+        }
+        TransitionManager.beginDelayedTransition(rvPosts);
+        mPostAdapter.notifyDataSetChanged();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
-        mPostRef = database.child(Constants.F_POSTS).child(uid);
 
         setContentView(R.layout.activity_profile_yourself);
         themeNavAndStatusBar(this);
@@ -227,36 +310,16 @@ public class ProfileYourselfActivity extends BaseActivity {
     }
 
     private void initPosts() {
+        mPostRef = database.child(Constants.F_POSTS).child(uid);
         mPostAdapter = new PostAdapter(getApplicationContext(),
                 Post.class,
                 R.layout.item_post,
                 PostViewHolder.class,
                 mPostRef);
-        mPostAdapter.setOnClickListener(new PostAdapter.OnClickListener() {
-            @Override
-            public void onClick(View view, int position, Post post) {
-                switch (view.getId()) {
-                    case R.id.iv_post_author_avatar:
-                        Toast.makeText(getApplicationContext(), "pos: " + position + ", iv_post_author_avatar", Toast.LENGTH_SHORT).show();
-                        break;
-                    case R.id.tv_post_text:
-                        Toast.makeText(getApplicationContext(), "pos: " + position + ", tv_post_text", Toast.LENGTH_SHORT).show();
-                        break;
-                    case R.id.iv_post_options:
-                        onClickPostOptions(post);
-                        break;
-                    default:
-                        break;
-                }
-                try {
-                    Log.d(TAG, "onClick: " + view.getTag());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        mPostAdapter.setOnClickListener(mPostClickListener);
         rvPosts.setLayoutManager(new LinearLayoutManager(this));
         rvPosts.setNestedScrollingEnabled(false);
+        ((SimpleItemAnimator) rvPosts.getItemAnimator()).setSupportsChangeAnimations(false);
         rvPosts.setAdapter(mPostAdapter);
     }
 
@@ -269,7 +332,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                         Log.d(TAG, "onSelection: which: " + which + " " + text.toString());
                         switch (which) {
                             case 0:
-                                removeUserPost(post.getPostID());
+                                removeUserPost(post.getKey());
                                 break;
                             default:
                                 break;

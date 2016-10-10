@@ -54,10 +54,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     private HashMap<String, Marker> mMarkers = new HashMap<>();
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
-            /*.showImageOnLoading(R.drawable.ic_stub) // resource or drawable
-            .showImageForEmptyUri(R.drawable.ic_empty) // resource or drawable
-            .showImageOnFail(R.drawable.ic_error) // resource or drawable
-            */.build();
+            .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private ImageLoadingProgressListener progressListener;
 

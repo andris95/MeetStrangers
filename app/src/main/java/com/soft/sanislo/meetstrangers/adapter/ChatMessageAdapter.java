@@ -41,7 +41,7 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     protected void populateViewHolder(ChatMessageViewHolder viewHolder, ChatMessage model, int position) {
-        if (mAuthenticatedUser.getId().equals(getItem(position).getAuthorUID())) {
+        if (mAuthenticatedUser.getUid().equals(getItem(position).getAuthorUID())) {
             viewHolder.populate(mContext, mAuthenticatedUser, model, position);
         } else {
             viewHolder.populate(mContext, mChatPartnerUser, model, position);
@@ -77,7 +77,7 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     public int getItemViewType(int position) {
-        if (mAuthenticatedUser.getId().equals(getItem(position).getAuthorUID())) {
+        if (mAuthenticatedUser.getUid().equals(getItem(position).getAuthorUID())) {
             return VIEW_TYPE_YOURSELF;
         } else {
             return VIEW_TYPE_STRANGER;

@@ -1,12 +1,14 @@
 package com.soft.sanislo.meetstrangers.adapter;
 
 import android.content.Context;
+import android.transition.TransitionManager;
 import android.view.View;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.model.Post;
+import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 
 /**
@@ -15,6 +17,8 @@ import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
     private OnClickListener mOnClickListener;
     private Context mContext;
+    private String mAuthUserUID;
+    private int mCommentsVisiblePos = -1;
 
     public PostAdapter(Context context, Class<Post> modelClass, int modelLayout,
                        Class<PostViewHolder> viewHolderClass, DatabaseReference ref) {
@@ -30,7 +34,8 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
 
     @Override
     protected void populateViewHolder(PostViewHolder viewHolder, Post model, int position) {
-        viewHolder.populate(mContext, model, mOnClickListener, position);
+        viewHolder.setShouldShowComments(position == mCommentsVisiblePos);
+        viewHolder.populate(mContext, model, mAuthUserUID, mOnClickListener, position);
     }
 
     public void setOnClickListener(OnClickListener onClickListener) {
@@ -39,5 +44,35 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
 
     public interface OnClickListener {
         void onClick(View view, int position, Post post);
+        void onClickAddComment(Post post, String commentText);
+        void onClickCancelComment();
+    }
+
+    public OnClickListener getOnClickListener() {
+        return mOnClickListener;
+    }
+
+    public Context getContext() {
+        return mContext;
+    }
+
+    public void setContext(Context context) {
+        mContext = context;
+    }
+
+    public String getAuthUserUID() {
+        return mAuthUserUID;
+    }
+
+    public void setAuthUserUID(String authUserUID) {
+        mAuthUserUID = authUserUID;
+    }
+
+    public int getCommentsVisiblePos() {
+        return mCommentsVisiblePos;
+    }
+
+    public void setCommentsVisiblePos(int commentsVisiblePos) {
+        mCommentsVisiblePos = commentsVisiblePos;
     }
 }

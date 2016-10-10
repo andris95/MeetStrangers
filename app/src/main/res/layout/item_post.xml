@@ -3,7 +3,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/white"
     android:layout_marginBottom="@dimen/_16sdp"
     android:elevation="@dimen/_4sdp">
     <RelativeLayout
@@ -13,7 +12,7 @@
             android:layout_width="match_parent"
             android:layout_height="@dimen/_72sdp"
             android:padding="@dimen/_16sdp"
-            android:id="@+id/rv_post_header">
+            android:id="@+id/rl_post_header">
             <com.mikhaellopez.circularimageview.CircularImageView
                 android:layout_width="@dimen/_40sdp"
                 android:layout_height="@dimen/_40sdp"
@@ -47,8 +46,8 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/rv_post_header"
-            android:id="@+id/rv_post_body">
+            android:layout_below="@+id/rl_post_header"
+            android:id="@+id/rl_post_body">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -62,6 +61,63 @@
                 android:padding="@dimen/_16sdp"
                 android:id="@+id/tv_post_text"
                 android:text="@string/lorem"/>
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/_8sdp"
+            android:layout_below="@+id/rl_post_body"
+            android:id="@+id/rl_post_footer">
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/_8sdp"
+                android:id="@+id/iv_like_post"
+                android:src="@drawable/heart"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:id="@+id/tv_like_counter"
+                android:layout_toRightOf="@+id/iv_like_post"/>
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="@dimen/_8sdp"
+                android:layout_toRightOf="@+id/tv_like_counter"
+                android:id="@+id/iv_comment_post"
+                android:src="@drawable/comment"/>
+        </RelativeLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/rl_post_comments"
+            android:visibility="gone"
+            android:layout_below="@+id/rl_post_footer">
+            <android.support.v7.widget.RecyclerView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/rv_comments">
+            </android.support.v7.widget.RecyclerView>
+            <EditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/rv_comments"
+                android:hint="Add a comment"
+                android:id="@+id/edt_new_comment"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/edt_new_comment"
+                android:text="Send comment"
+                android:id="@+id/btn_add_comment"/>
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/btn_cancel_comment"
+                android:text="Cancel"
+                android:layout_below="@+id/edt_new_comment"
+                android:layout_toRightOf="@+id/btn_add_comment"/>
         </RelativeLayout>
     </RelativeLayout>
 

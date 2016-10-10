@@ -10,7 +10,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -22,73 +21,81 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 public class SignupActivity extends BaseActivity {
 
-    private EditText edtEmail, edtPassword, edtFullName;
-    private Button btnSignIn, btnSignUp, btnResetPassword;
-    private ProgressBar progressBar;
+    @BindView(R.id.edt_email)
+    EditText edtEmail;
+    @BindView(R.id.edt_password)
+    EditText edtPassword;
+
+    @BindView(R.id.edt_first_name)
+    EditText edtFirstName;
+    @BindView(R.id.edt_last_name)
+    EditText edtLastName;
+    @BindView(R.id.sign_in_button)
+    Button btnSignIn;
+    @BindView(R.id.sign_up_button)
+    Button btnSignUp;
+    @BindView(R.id.btn_reset_password)
+    Button btnResetPassword;
+    @BindView(R.id.progressBar)
+    ProgressBar pbProgressBar;
+
     private FirebaseAuth auth;
-    private FirebaseDatabase database = Utils.getDatabase().getInstance();
-    private DatabaseReference reference = database.getReference();
+    private FirebaseDatabase database;
+    private DatabaseReference reference;
 
     private String email, password;
+    private String mFirstName;
+    private String mLastName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
-
-        //Get Firebase auth instance
+        ButterKnife.bind(this);
+        database = Utils.getDatabase().getInstance();
         auth = FirebaseAuth.getInstance();
-
-        btnSignIn = (Button) findViewById(R.id.sign_in_button);
-        btnSignUp = (Button) findViewById(R.id.sign_up_button);
-        edtEmail = (EditText) findViewById(R.id.email);
-        edtPassword = (EditText) findViewById(R.id.password);
-        edtFullName = (EditText) findViewById(R.id.name);
-        progressBar = (ProgressBar) findViewById(R.id.progressBar);
-        btnResetPassword = (Button) findViewById(R.id.btn_reset_password);
-
-        btnResetPassword.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(SignupActivity.this, ResetPasswordActivity.class));
-            }
-        });
-
-        btnSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-
-        btnSignUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                email = edtEmail.getText().toString().trim();
-                password = edtPassword.getText().toString().trim();
-                boolean isValid = Utils.validate(getApplicationContext(), email, password);
-
-                if (isValid) {
-                    progressBar.setVisibility(View.VISIBLE);
-                    auth.createUserWithEmailAndPassword(email, password)
-                            .addOnCompleteListener(onCreateUserCompleteListener);
-                }
-            }
-        });
-
+        reference = database.getReference();
     }
 
-    OnCompleteListener onCreateUserCompleteListener = new OnCompleteListener() {
+    @OnClick(R.id.sign_in_button)
+    public void onClickSignIn() {
+        finish();
+    }
+
+    @OnClick(R.id.sign_up_button)
+    public void onClickSignUp() {
+        mFirstName = edtFirstName.getText().toString().trim();
+        mLastName = edtLastName.getText().toString().trim();
+        boolean isValidName = Utils.isValidName(getApplicationContext(), mFirstName, mLastName);
+
+        email = edtEmail.getText().toString().trim();
+        password = edtPassword.getText().toString().trim();
+        boolean isValidEmailPwrd = Utils.validateEmailPwrd(getApplicationContext(), email, password);
+
+        if (isValidName && isValidEmailPwrd) {
+            pbProgressBar.setVisibility(View.VISIBLE);
+            auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener(onCreateUserCompleteListener);
+        }
+    }
+
+    @OnClick(R.id.btn_reset_password)
+    public void onClickResetPassword() {
+        startActivity(new Intent(SignupActivity.this, ResetPasswordActivity.class));
+    }
+
+    private OnCompleteListener onCreateUserCompleteListener = new OnCompleteListener() {
         @Override
         public void onComplete(@NonNull Task task) {
-            progressBar.setVisibility(View.GONE);
-
+            pbProgressBar.setVisibility(View.GONE);
             if (!task.isSuccessful()) {
-                Toast.makeText(SignupActivity.this, "Authentication failed." + task.getException(),
-                        Toast.LENGTH_SHORT).show();
+                makeToast("Authentication failed...");
             } else {
                 auth.signInWithEmailAndPassword(email, password)
                         .addOnCompleteListener(onSignInCompleteListener);
@@ -96,24 +103,24 @@ public class SignupActivity extends BaseActivity {
         }
     };
 
-    OnCompleteListener onSignInCompleteListener = new OnCompleteListener() {
+    private OnCompleteListener onSignInCompleteListener = new OnCompleteListener() {
         @Override
         public void onComplete(@NonNull Task task) {
             FirebaseUser firebaseUser = auth.getCurrentUser();
             if (firebaseUser != null) {
-                String fullName = edtFullName.getText().toString();
-                if (!fullName.equals("")) {
-                    User user = new User();
-                    user.setId(firebaseUser.getUid());
-                    user.setFullName(fullName);
-                    reference.child("users").child(firebaseUser.getUid()).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            startActivity(new Intent(SignupActivity.this, MainActivity.class));
-                            finish();
-                        }
-                    });
-                }
+                User user = new User();
+                user.setUid(firebaseUser.getUid());
+                user.setFirstName(mFirstName);
+                user.setLastName(mLastName);
+                user.setFullName(mFirstName + " " + mLastName);
+                reference.child("users").child(firebaseUser.getUid()).setValue(user)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                startActivity(new Intent(SignupActivity.this, MainActivity.class));
+                                finish();
+                            }
+                        });
             }
         }
     };
@@ -121,7 +128,7 @@ public class SignupActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        progressBar.setVisibility(View.GONE);
+        pbProgressBar.setVisibility(View.GONE);
     }
 
 }

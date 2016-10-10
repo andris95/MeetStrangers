@@ -64,7 +64,7 @@ public class LoginActivity extends BaseActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        inputEmail = (EditText) findViewById(R.id.email);
+        inputEmail = (EditText) findViewById(R.id.edt_email);
         inputPassword = (EditText) findViewById(R.id.password);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         btnSignup = (Button) findViewById(R.id.btn_signup);

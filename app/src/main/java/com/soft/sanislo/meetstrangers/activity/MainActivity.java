@@ -54,7 +54,7 @@ public class MainActivity extends BaseActivity {
         public void onDataChange(DataSnapshot dataSnapshot) {
             user = dataSnapshot.getValue(User.class);
             if (user != null) {
-                initDrawer(user.getAvatarURL());
+                initDrawer();
             }
         }
 
@@ -85,15 +85,14 @@ public class MainActivity extends BaseActivity {
         fragmentTransaction.commit();
     }
 
-    private void initDrawer(String avatarURL) {
+    private void initDrawer() {
         headerBuilder = new AccountHeaderBuilder()
                 .withActivity(this)
                 .withHeaderBackground(R.drawable.drawer_header)
                 .withOnAccountHeaderProfileImageListener(new AccountHeader.OnAccountHeaderProfileImageListener() {
                     @Override
                     public boolean onProfileImageClick(View view, IProfile profile, boolean current) {
-                        Intent intent = new Intent(getApplicationContext(), ProfileActivity.class);
-                        intent.putExtra(ProfileActivity.KEY_UID, uid);
+                        Intent intent = new Intent(getApplicationContext(), ProfileYourselfActivity.class);
                         startActivity(intent);
                         return true;
                     }
