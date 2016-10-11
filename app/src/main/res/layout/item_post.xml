@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginBottom="@dimen/_16sdp"
     android:elevation="@dimen/_4sdp">
     <RelativeLayout
@@ -16,6 +17,7 @@
             <com.mikhaellopez.circularimageview.CircularImageView
                 android:layout_width="@dimen/_40sdp"
                 android:layout_height="@dimen/_40sdp"
+                app:civ_border="false"
                 android:id="@+id/iv_post_author_avatar"
                 android:layout_alignParentLeft="true"/>
             <TextView

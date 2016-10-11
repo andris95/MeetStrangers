@@ -12,6 +12,9 @@ android {
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
+
+        renderscriptTargetApi 19
+        renderscriptSupportModeEnabled true
     }
     buildTypes {
         release {

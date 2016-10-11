@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -16,7 +17,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
+
+import java.util.Date;
+import java.util.HashMap;
 
 /**
  * BaseActivity class is used as a base class for all activities in the app
@@ -31,6 +41,36 @@ public abstract class BaseActivity extends AppCompatActivity implements
     private GoogleApiClient mGoogleApiClient;
     protected FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseAuth firebaseAuth;
+    private String mUID;
+
+    private DatabaseReference connectedRef = Utils.getDatabase()
+            .getReference(".info/connected");
+    private ValueEventListener onlineListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            boolean isOnline = dataSnapshot.getValue(Boolean.class);
+            Log.d(TAG, "onDataChange: " + mUID + " online: " + isOnline);
+            updateUserOnlineStatus(isOnline);
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+    private void updateUserOnlineStatus(boolean isOnline) {
+        HashMap<String, Object> updateValues = new HashMap<>();
+        updateValues.put("isOnline", isOnline);
+        updateValues.put("lastActiveTimestamp", new Date().getTime());
+
+        if (!TextUtils.isEmpty(mUID)) {
+            Utils.getDatabase().getReference()
+                    .child(Constants.F_USERS)
+                    .child(mUID)
+                    .updateChildren(updateValues);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,8 +99,8 @@ public abstract class BaseActivity extends AppCompatActivity implements
          */
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(BaseActivity.this);
         /* Get mEncodedEmail and mProvider from SharedPreferences, use null as default value */
-        /*mEncodedEmail = sp.getString(Constants.KEY_ENCODED_EMAIL, null);
-        mProvider = sp.getString(Constants.KEY_PROVIDER, null);*/
+        mEncodedEmail = sp.getString(Constants.KEY_ENCODED_EMAIL, null);
+        mProvider = sp.getString(Constants.KEY_PROVIDER, null);
 
 
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
@@ -71,12 +111,16 @@ public abstract class BaseActivity extends AppCompatActivity implements
                         logout();
                         takeUserToLoginScreenOnUnAuth();
                         Log.d(TAG, "onAuthStateChanged: log out");
+                        //connectedRef.onDisconnect();
+                        //Utils.getDatabase().goOffline();
+                        connectedRef.removeEventListener(onlineListener);
                     } else {
                         Log.d(TAG, "onAuthStateChanged: ");
+                        mUID = firebaseAuth.getCurrentUser().getUid();
+                        connectedRef.addValueEventListener(onlineListener);
                     }
                 }
             };
-
         }
     }
 

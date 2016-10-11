@@ -70,4 +70,6 @@
         <!--<item name="opt_edit">@string/post_opt_edit</item>-->
         <item name="opt_delete">@string/post_opt_delete</item>
     </string-array>
+
+    <string name="transition_user_avatar">TRANSITION_USER_AVATAR</string>
 </resources>

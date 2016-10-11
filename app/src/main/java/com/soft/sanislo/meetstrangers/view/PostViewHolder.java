@@ -170,7 +170,6 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
                 displayImageOptions);
     }
 
-
     public void setPostPhotosList() {
         int counter = 0;
         llPostPhotos.removeAllViews();
@@ -194,7 +193,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
             });
             ivPhoto.setTag(counter);
 
-            imageLoader.displayImage(url, ivPhoto, displayImageOptions, getPostPhotoLoadingListener(ivPhoto));
+            imageLoader.displayImage(url, ivPhoto, displayImageOptions,
+                    getPostPhotoLoadingListener(ivPhoto));
             counter++;
         }
     }

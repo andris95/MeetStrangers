@@ -19,6 +19,7 @@ import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.holder.ImageHolder;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
@@ -88,7 +89,6 @@ public class MainActivity extends BaseActivity {
     private void initDrawer() {
         headerBuilder = new AccountHeaderBuilder()
                 .withActivity(this)
-                .withHeaderBackground(R.drawable.drawer_header)
                 .withOnAccountHeaderProfileImageListener(new AccountHeader.OnAccountHeaderProfileImageListener() {
                     @Override
                     public boolean onProfileImageClick(View view, IProfile profile, boolean current) {
@@ -102,6 +102,12 @@ public class MainActivity extends BaseActivity {
                         return false;
                     }
                 });
+        if (!TextUtils.isEmpty(user.getAvatarBlurURL())) {
+            ImageHolder imageHolder = new ImageHolder(user.getAvatarBlurURL());
+            headerBuilder.withHeaderBackground(imageHolder);
+        } else {
+            headerBuilder.withHeaderBackground(R.drawable.drawer_header);
+        }
         if (initProfileDrawerItem(user) != null) {
             headerBuilder.addProfiles(initProfileDrawerItem(user));
         }
@@ -112,9 +118,7 @@ public class MainActivity extends BaseActivity {
         PrimaryDrawerItem primaryItemMessages = new PrimaryDrawerItem()
                 .withName(getString(R.string.messages));
         PrimaryDrawerItem primaryItemFriends = new PrimaryDrawerItem()
-                .withName(getString(R.string.friends));
-        PrimaryDrawerItem primaryItemStrangers = new PrimaryDrawerItem()
-                .withName(getString(R.string.strangers));
+                .withName("Users");
         SecondaryDrawerItem itemSignOut = new SecondaryDrawerItem()
                 .withName(getString(R.string.btn_sign_out));
         drawerBuilder = new DrawerBuilder()
@@ -124,7 +128,6 @@ public class MainActivity extends BaseActivity {
                         primaryItemMap,
                         primaryItemMessages,
                         primaryItemFriends,
-                        primaryItemStrangers,
                         new DividerDrawerItem(),
                         itemSignOut
                 )
@@ -143,12 +146,19 @@ public class MainActivity extends BaseActivity {
         switch (position) {
             case 2:
                 startChatHeaderActivity();
-                break;
-            case 6:
+                return true;
+            case 3:
+                startRelationshipsActivity();
+                return true;
+            case 5:
                 signOut();
-                break;
+                return true;
         }
         return true;
+    }
+
+    private void startRelationshipsActivity() {
+        startActivity(new Intent(getApplicationContext(), RelationshipsActivity.class));
     }
 
     private void startChatHeaderActivity() {
@@ -165,6 +175,7 @@ public class MainActivity extends BaseActivity {
         if (!TextUtils.isEmpty(user.getAvatarURL())) {
             profileDrawerItem.withIcon(user.getAvatarURL());
         }
+
         return profileDrawerItem;
     }
 

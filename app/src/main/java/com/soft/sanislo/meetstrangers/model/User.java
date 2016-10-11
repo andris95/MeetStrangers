@@ -16,6 +16,9 @@ public class User {
     private String linkFacebook;
     private String linkTwitter;
     private String avatarURL;
+    private String avatarBlurURL;
+    private boolean isOnline;
+    private long lastActiveTimestamp;
 
     public User() {}
 
@@ -128,6 +131,30 @@ public class User {
         this.gender = gender;
     }
 
+    public String getAvatarBlurURL() {
+        return avatarBlurURL;
+    }
+
+    public void setAvatarBlurURL(String avatarBlurURL) {
+        this.avatarBlurURL = avatarBlurURL;
+    }
+
+    public boolean isOnline() {
+        return isOnline;
+    }
+
+    public void setOnline(boolean online) {
+        isOnline = online;
+    }
+
+    public long getLastActiveTimestamp() {
+        return lastActiveTimestamp;
+    }
+
+    public void setLastActiveTimestamp(long lastActiveTimestamp) {
+        this.lastActiveTimestamp = lastActiveTimestamp;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -143,6 +170,7 @@ public class User {
                 ", linkFacebook='" + linkFacebook + '\'' +
                 ", linkTwitter='" + linkTwitter + '\'' +
                 ", avatarURL='" + avatarURL + '\'' +
+                ", avatarBlurURL='" + avatarBlurURL + '\'' +
                 '}';
     }
 }

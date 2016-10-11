@@ -1,29 +1,36 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
+import android.graphics.RectF;
 import android.location.Address;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.SharedElementCallback;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.Toolbar;
+import android.transition.ChangeBounds;
+import android.transition.Explode;
 import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.view.WindowManager;
+import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.common.ConnectionResult;
@@ -34,9 +41,7 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -49,11 +54,11 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
+import com.soft.sanislo.meetstrangers.model.Relationship;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
@@ -66,6 +71,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -78,7 +85,8 @@ public class ProfileActivity extends BaseActivity {
     public static final String KEY_UID = "KEY_UID";
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
-    private CollapsingToolbarLayout collapsingoToolbar;
+    @BindView(R.id.collapsingToolbar)
+    CollapsingToolbarLayout collapsingToolbar;
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.ivAvatar) ImageView ivAvatar;
     @BindView(R.id.tvProfileLastActive) TextView tvLastActive;
@@ -101,6 +109,8 @@ public class ProfileActivity extends BaseActivity {
     private String mDisplayedUserUID;
     private String mAvatarURL;
 
+    private Relationship mRelationship;
+
     private ResultReceiver mResultReceiver;
     private boolean isAddressRequested;
 
@@ -112,6 +122,8 @@ public class ProfileActivity extends BaseActivity {
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private PostAdapter mPostAdapter;
     private DatabaseReference mPostRef;
+
+    private MaterialDialog mActionDialog;
 
     /** ValueEventListener for current logged in mDisplayedUser*/
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
@@ -132,12 +144,13 @@ public class ProfileActivity extends BaseActivity {
         public void onDataChange(DataSnapshot dataSnapshot) {
             mDisplayedUser = dataSnapshot.getValue(User.class);
             mAvatarURL = mDisplayedUser.getAvatarURL();
-            collapsingoToolbar.setTitle(mDisplayedUser.getFullName());
+            collapsingToolbar.setTitle(mDisplayedUser.getFullName());
             mGoogleApiClient.connect();
-            imageLoader.displayImage(mAvatarURL, ivAvatar, new ImageLoadingListener() {
+            imageLoader.displayImage(mAvatarURL, ivAvatar, displayImageOptions, new ImageLoadingListener() {
                 @Override
                 public void onLoadingStarted(String imageUri, View view) {
-                    }
+                    pbAvatar.setVisibility(View.VISIBLE);
+                }
 
                 @Override
                 public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
@@ -147,6 +160,9 @@ public class ProfileActivity extends BaseActivity {
                 @Override
                 public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                     pbAvatar.setVisibility(View.GONE);
+                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                        startPostponedEnterTransition();
+                    }
                 }
 
                 @Override
@@ -161,6 +177,22 @@ public class ProfileActivity extends BaseActivity {
 
         }
     };
+
+    private ValueEventListener mRelationshipListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            mRelationship = dataSnapshot.getValue(Relationship.class);
+            if (mRelationship != null) {
+                Log.d(TAG, "onDataChange: " + mRelationship);
+            }
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
     private ValueEventListener locationListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -195,9 +227,6 @@ public class ProfileActivity extends BaseActivity {
             switch (view.getId()) {
                 case R.id.iv_post_author_avatar:
                     makeToast("clicked " + post.getAuthFullName() + "'s photo");
-                    break;
-                case R.id.tv_post_text:
-                    makeToast("clicked post's text");
                     break;
                 case R.id.iv_post_options:
                     makeToast("options clicked");
@@ -239,10 +268,24 @@ public class ProfileActivity extends BaseActivity {
         @Override
         public void onClickCancelComment() {
             mPostAdapter.setCommentsVisiblePos(-1);
-            TransitionManager.beginDelayedTransition(rvPosts);
+            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                TransitionManager.beginDelayedTransition(rvPosts);
+            }
             mPostAdapter.notifyDataSetChanged();
         }
     };
+
+    private void onClickCommentPost(int position) {
+        if (mPostAdapter.getCommentsVisiblePos() == position) {
+            mPostAdapter.setCommentsVisiblePos(-1);
+        } else {
+            mPostAdapter.setCommentsVisiblePos(position);
+        }
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            TransitionManager.beginDelayedTransition(rvPosts);
+        }
+        mPostAdapter.notifyItemChanged(position);
+    }
 
     private GoogleApiClient.ConnectionCallbacks mConnectionCallback = new GoogleApiClient.ConnectionCallbacks() {
         @Override
@@ -287,18 +330,17 @@ public class ProfileActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+        setTransitions();
+        setContentView(R.layout.activity_profile);
+        ButterKnife.bind(this);
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         mAuthenticatedUserUID = firebaseUser.getUid();
         mDisplayedUserUID = getIntent().getStringExtra(KEY_UID);
 
-        setContentView(R.layout.activity_profile);
-        ButterKnife.bind(this);
-        collapsingoToolbar = (CollapsingToolbarLayout) findViewById(R.id.collapsingToolbar);
         setSupportActionBar(toolbar);
-        
         initPosts();
 
         mGoogleApiClient = new GoogleApiClient
@@ -308,13 +350,21 @@ public class ProfileActivity extends BaseActivity {
                 .addConnectionCallbacks(mConnectionCallback)
                 .addOnConnectionFailedListener(mConnectionFailedListener)
                 .build();
-
         mResultReceiver = new AddressResultReceiver(new Handler());
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        return super.onCreateOptionsMenu(menu);
+    private void setTransitions() {
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            requestWindowFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
+            requestWindowFeature(Window.FEATURE_CONTENT_TRANSITIONS);
+            postponeEnterTransition();
+        }
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setSharedElementEnterTransition(new ChangeBounds());
+            getWindow().setSharedElementExitTransition(new ChangeBounds());
+            //getWindow().setSharedElementReenterTransition(new ChangeBounds());
+            //getWindow().setSharedElementReturnTransition(new ChangeBounds());
+        }
     }
 
     private void initPosts() {
@@ -330,18 +380,6 @@ public class ProfileActivity extends BaseActivity {
         rvPosts.setNestedScrollingEnabled(false);
         ((SimpleItemAnimator) rvPosts.getItemAnimator()).setSupportsChangeAnimations(false);
         rvPosts.setAdapter(mPostAdapter);
-    }
-
-    private void onClickCommentPost(int position) {
-        if (mPostAdapter.getCommentsVisiblePos() == position) {
-            mPostAdapter.setCommentsVisiblePos(-1);
-        } else {
-            mPostAdapter.setCommentsVisiblePos(position);
-        }
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            TransitionManager.beginDelayedTransition(rvPosts);
-        }
-        mPostAdapter.notifyItemChanged(position);
     }
 
     private void onClickLikePost(final String postKey) {
@@ -373,7 +411,7 @@ public class ProfileActivity extends BaseActivity {
         } else {
             post.setLikesCount(postLikesCount + 1);
             if (likedUsersUIDs == null) {
-                likedUsersUIDs = new HashMap<String, Boolean>();
+                likedUsersUIDs = new HashMap<>();
             }
             likedUsersUIDs.put(mAuthenticatedUserUID, true);
         }
@@ -386,8 +424,9 @@ public class ProfileActivity extends BaseActivity {
     public void onClickFabProfile() {
         String[] profileOptions = getResources().getStringArray(R.array.profile_stranger_options);
         ArrayList<String> options = new ArrayList<>(Arrays.asList(profileOptions));
+        options.add(getRelationshipStatusString());
 
-        new MaterialDialog.Builder(this)
+        mActionDialog = new MaterialDialog.Builder(this)
                 .items(options)
                 .itemsCallback(new MaterialDialog.ListCallback() {
                     @Override
@@ -396,6 +435,9 @@ public class ProfileActivity extends BaseActivity {
                         switch (which) {
                             case 0:
                                 launchChatActivity();
+                                break;
+                            case 1:
+                                onClickRelationshipAction();
                                 break;
                             default:
                                 break;
@@ -410,6 +452,87 @@ public class ProfileActivity extends BaseActivity {
         startActivity(intent);
     }
 
+    private String getRelationshipStatusString() {
+        String relationshipStatus = "UNKNOWN";
+        if (mRelationship == null) {
+            relationshipStatus = "Follow";
+        } else {
+            if (mRelationship.getStatus() == Constants.RS_FRIENDS) {
+                relationshipStatus = "Delete from friends";
+            } else if (mRelationship.getStatus() == Constants.RS_PENDING) {
+                if (mRelationship.getLastUserActionUID().equals(mAuthenticatedUserUID)) {
+                    relationshipStatus = "Unfollow";
+                } else {
+                    relationshipStatus = "Accept follow request";
+                }
+            }
+        }
+        return relationshipStatus;
+    }
+
+    private void onClickRelationshipAction() {
+        if (mRelationship == null) {
+            setRelationshipStatus(Constants.RS_PENDING);
+            setFollowers(mDisplayedUserUID, mAuthenticatedUserUID, true);
+        } else {
+            switch (mRelationship.getStatus()) {
+                /** users were friends, but now they are not*/
+                case Constants.RS_FRIENDS:
+                    setRelationshipStatus(Constants.RS_PENDING);
+                    setFriends(mAuthenticatedUserUID, mDisplayedUserUID, false);
+                    setFriends(mDisplayedUserUID, mAuthenticatedUserUID, false);
+                    setFollowers(mAuthenticatedUserUID, mDisplayedUserUID, true);
+                    break;
+
+                case Constants.RS_PENDING:
+                    if (mRelationship.getLastUserActionUID().equals(mAuthenticatedUserUID)) {
+                        setRelationshipStatus(Constants.RS_UNKNOWN);
+                        setFollowers(mDisplayedUserUID, mAuthenticatedUserUID, false);
+                    } else {
+                        setRelationshipStatus(Constants.RS_FRIENDS);
+                        setFriends(mAuthenticatedUserUID, mDisplayedUserUID, true);
+                        setFriends(mDisplayedUserUID, mAuthenticatedUserUID, true);
+                        setFollowers(mAuthenticatedUserUID, mDisplayedUserUID, false);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void setFriends(String firstUserUID, String secondUserUID, boolean areFriends) {
+        database.child(Constants.F_USERS_FRIENDS)
+                .child(firstUserUID)
+                .child(secondUserUID).setValue((areFriends) ? true : null);
+    }
+
+    /** sets*/
+    private void setFollowers(String userToFollowUID, String followerUID, boolean areFollowers) {
+        database.child(Constants.F_USERS_FOLLOWERS)
+                .child(userToFollowUID)
+                .child(followerUID).setValue((areFollowers) ? true : null);
+        database.child(Constants.F_USERS_FOLLOWING)
+                .child(followerUID)
+                .child(userToFollowUID).setValue((areFollowers) ? true : null);
+    }
+
+    private void setRelationshipStatus(int status) {
+        mRelationship = new Relationship(status, new Date().getTime(), mAuthenticatedUserUID);
+        if (status == Constants.RS_UNKNOWN) {
+            mRelationship = null;
+        }
+        database.child(Constants.F_RELATIONSHIPS)
+                .child(mAuthenticatedUserUID)
+                .child(mDisplayedUserUID)
+                .setValue(mRelationship);
+        database.child(Constants.F_RELATIONSHIPS)
+                .child(mDisplayedUserUID)
+                .child(mAuthenticatedUserUID)
+                .setValue(mRelationship);
+        mActionDialog.dismiss();
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -420,6 +543,10 @@ public class ProfileActivity extends BaseActivity {
                     .addValueEventListener(mDisplayedUserListener);
             database.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                     .addValueEventListener(locationListener);
+            database.child(Constants.F_RELATIONSHIPS)
+                    .child(mAuthenticatedUserUID)
+                    .child(mDisplayedUserUID)
+                    .addValueEventListener(mRelationshipListener);
         }
     }
 
@@ -433,6 +560,10 @@ public class ProfileActivity extends BaseActivity {
                 .removeEventListener(mDisplayedUserListener);
         database.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                 .removeEventListener(locationListener);
+        database.child(Constants.F_RELATIONSHIPS)
+                .child(mAuthenticatedUserUID)
+                .child(mDisplayedUserUID)
+                .removeEventListener(mRelationshipListener);
     }
 
     class AddressResultReceiver extends ResultReceiver {
@@ -457,5 +588,38 @@ public class ProfileActivity extends BaseActivity {
                 tvAddress.setText(errorMessage);
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        //super.onBackPressed();
+        supportFinishAfterTransition();
+    }
+
+    /**
+     * Schedules the shared element transition to be started immediately
+     * after the shared element has been measured and laid out within the
+     * activity's view hierarchy. Some common places where it might make
+     * sense to call this method are:
+     *
+     * (1) Inside a Fragment's onCreateView() method (if the shared element
+     *     lives inside a Fragment hosted by the called Activity).
+     *
+     * (2) Inside a Picasso Callback object (if you need to wait for Picasso to
+     *     asynchronously load/scale a bitmap before the transition can begin).
+     *
+     * (3) Inside a LoaderCallback's onLoadFinished() method (if the shared
+     *     element depends on data queried by a Loader).
+     */
+    private void scheduleStartPostponedTransition(final View sharedElement) {
+        sharedElement.getViewTreeObserver().addOnPreDrawListener(
+                new ViewTreeObserver.OnPreDrawListener() {
+                    @Override
+                    public boolean onPreDraw() {
+                        sharedElement.getViewTreeObserver().removeOnPreDrawListener(this);
+                        supportStartPostponedEnterTransition();
+                        return true;
+                    }
+                });
     }
 }

@@ -2,6 +2,7 @@ package com.soft.sanislo.meetstrangers.activity;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -30,6 +31,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
@@ -39,9 +41,12 @@ import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.BlurBuilder;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 
 import butterknife.BindView;
@@ -80,7 +85,6 @@ public class ProfileEditActivity extends BaseActivity {
     private FirebaseUser firebaseUser;
     private User mUser;
     private String uid;
-    private String avatarURL;
     private String mAvatarPhotoPath;
     private boolean mNeedToUploadAvatar;
 
@@ -134,8 +138,7 @@ public class ProfileEditActivity extends BaseActivity {
         mUserDatabaseRef = Utils.getDatabase().getReference()
                 .child(Constants.F_USERS).child(uid);
         mFirebaseStorage = FirebaseStorage.getInstance();
-        mUserStorageRef = mFirebaseStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET)
-                .child(Constants.F_USERS).child(uid);
+        mUserStorageRef = mFirebaseStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
     }
 
     @Override
@@ -172,7 +175,12 @@ public class ProfileEditActivity extends BaseActivity {
     private void uploadUserAvatar() {
         Log.d(TAG, "uploadUserAvatar: mUserStorageRef.getPath(): " + mUserStorageRef.getPath());
 
-        UploadTask uploadTask = mUserStorageRef.putFile(Uri.parse(mAvatarPhotoPath));
+        UploadTask uploadTask = mUserStorageRef
+                .child(uid)
+                .child(Constants.STORAGE_PHOTO_ALBUMS)
+                .child(Constants.STORAGE_ALBUM_PROFILE_PHOTOS)
+                .child(uid + "_profile.jpg")
+                .putFile(Uri.parse(mAvatarPhotoPath));
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
@@ -187,6 +195,40 @@ public class ProfileEditActivity extends BaseActivity {
             }
         });
     }
+
+    private void uploadBlurAvatar() {
+        String bitmapToBlurPath = Utils.getPath(getApplicationContext(), Uri.parse(mAvatarPhotoPath));
+        Bitmap bitmapToBlur = BitmapFactory.decodeFile(bitmapToBlurPath);
+        Bitmap blurredBitmap = BlurBuilder.blur(getApplicationContext(), bitmapToBlur);
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        blurredBitmap.compress(Bitmap.CompressFormat.PNG, 0 /*ignored for PNG*/, bos);
+        byte[] bitmapdata = bos.toByteArray();
+        ByteArrayInputStream bs = new ByteArrayInputStream(bitmapdata);
+
+        UploadTask uploadTask = mUserStorageRef
+                .child(uid)
+                .child(Constants.STORAGE_PHOTO_ALBUMS)
+                .child(Constants.STORAGE_ALBUM_PROFILE_PHOTOS)
+                .child(uid + "_blur.jpg")
+                .putStream(bs);
+        uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                Log.d(TAG, "onSuccess: blur");
+                mUser.setAvatarBlurURL(taskSnapshot.getDownloadUrl().toString());
+                uploadUserAvatar();
+            }
+        });
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "onFailure: blur");
+                e.printStackTrace();
+            }
+        });
+    }
+
 
     /** Updates the information about user under users node*/
     private void updateUserData() {
@@ -240,7 +282,7 @@ public class ProfileEditActivity extends BaseActivity {
 
     private void updateUser() {
         if (!TextUtils.isEmpty(mAvatarPhotoPath) && mNeedToUploadAvatar) {
-            uploadUserAvatar();
+            uploadBlurAvatar();
             return;
         }
         updateUserData();
@@ -263,7 +305,6 @@ public class ProfileEditActivity extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == Constants.RC_PICK_IMAGE_GALLERY) {
             if (data == null) {
-                Log.d(TAG, "onActivityResult: data null");
                 makeToast("Error choosing photo");
                 return;
             }
