@@ -8,7 +8,8 @@
     <com.mikhaellopez.circularimageview.CircularImageView
         android:layout_width="@dimen/_48sdp"
         android:layout_height="@dimen/_48sdp"
-        android:id="@+id/iv_chat_header_avatar"/>
+        android:id="@+id/iv_chat_header_avatar"
+        android:transitionName="@string/transition_chat_avatar"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

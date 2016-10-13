@@ -5,20 +5,37 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:minHeight="?attr/actionBarSize"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:titleTextColor="@android:color/white"
-        android:background="?attr/colorPrimary">
-    </android.support.v7.widget.Toolbar>
+        android:layout_height="@dimen/_150sdp"
+        android:id="@+id/rl_chat_header">
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:src="@drawable/lawrence"
+            android:id="@+id/iv_chat_partner_bg"/>
+        <com.mikhaellopez.circularimageview.CircularImageView
+            android:layout_width="@dimen/_64sdp"
+            android:layout_height="@dimen/_64sdp"
+            android:id="@+id/iv_chat_partner_avatar"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:transitionName="@string/transition_chat_avatar"
+            app:civ_border="false"/>
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:minHeight="?attr/actionBarSize"
+            android:layout_width="match_parent"
+            android:title="CHAT"
+            android:layout_height="wrap_content">
+        </android.support.v7.widget.Toolbar>
+    </RelativeLayout>
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
         android:layout_above="@+id/rl_chat_actions"
+        android:layout_below="@+id/rl_chat_header"
         android:id="@+id/rv_chat">
     </android.support.v7.widget.RecyclerView>
     <RelativeLayout

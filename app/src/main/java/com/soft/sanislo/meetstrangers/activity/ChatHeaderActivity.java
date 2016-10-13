@@ -1,10 +1,13 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -65,12 +68,9 @@ public class ChatHeaderActivity extends BaseActivity {
         ButterKnife.bind(this);
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            mAuthenticatedUserUID = firebaseUser.getUid();
-        }
-        Log.d(TAG, "onCreate: firebaseUser " + (firebaseUser == null));
-        chatHeaderRef = database.child(Constants.F_CHATS_HEADERS).child(mAuthenticatedUserUID);
+        mAuthenticatedUserUID = firebaseUser.getUid();
 
+        chatHeaderRef = database.child(Constants.F_CHATS_HEADERS).child(mAuthenticatedUserUID);
         mChatHeaderAdapter = new ChatHeaderAdapter(ChatHeader.class,
                 R.layout.item_chat_header,
                 ChatHeaderViewHolder.class,
@@ -79,13 +79,21 @@ public class ChatHeaderActivity extends BaseActivity {
         mChatHeaderAdapter.setOnClickListener(new ChatHeaderAdapter.OnClickListener() {
             @Override
             public void onClick(View view, int position, ChatHeader chatHeader, String chatPartnerKey) {
-                Log.d(TAG, "onClick: " + chatHeader);
-                Intent intent = new Intent(ChatHeaderActivity.this, ChatActivity.class);
+                Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
                 intent.putExtra(ChatActivity.KEY_CHAT_PARTER_UID, chatPartnerKey);
-                startActivity(intent);
+                View sharedView = view.findViewById(R.id.iv_chat_header_avatar);
+                Pair<View, String> sharedViews = new Pair<>(sharedView, getString(R.string.transition_chat_avatar));
+                if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                    Bundle sharedBundle = ActivityOptions.makeSceneTransitionAnimation(ChatHeaderActivity.this, sharedViews)
+                            .toBundle();
+                    startActivity(intent, sharedBundle);
+                } else {
+                    startActivity(intent);
+                }
             }
         });
         rvChatHeaders.setLayoutManager(new LinearLayoutManager(this));
+        rvChatHeaders.setAdapter(mChatHeaderAdapter);
     }
 
     @Override
@@ -93,7 +101,6 @@ public class ChatHeaderActivity extends BaseActivity {
         super.onResume();
         database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
                 .addValueEventListener(mAuthenticatedUserListener);
-        rvChatHeaders.setAdapter(mChatHeaderAdapter);
     }
 
     @Override
@@ -101,6 +108,11 @@ public class ChatHeaderActivity extends BaseActivity {
         super.onPause();
         database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
                 .removeEventListener(mAuthenticatedUserListener);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
         mChatHeaderAdapter.cleanup();
     }
 }

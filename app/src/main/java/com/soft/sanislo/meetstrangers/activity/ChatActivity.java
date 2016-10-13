@@ -1,13 +1,17 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -19,6 +23,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.assist.FailReason;
+import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.ChatMessageAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatMessage;
@@ -38,12 +46,18 @@ import butterknife.OnClick;
  * Created by root on 02.10.16.
  */
 public class ChatActivity extends BaseActivity {
+    @BindView(R.id.iv_chat_partner_avatar)
+    ImageView ivChatPartnerAvatar;
+    @BindView(R.id.iv_chat_partner_bg)
+    ImageView ivChatPartnerBG;
     @BindView(R.id.rv_chat)
     RecyclerView rvChat;
     @BindView(R.id.iv_send_message)
     ImageView ivSendMessage;
     @BindView(R.id.edt_chat_message)
     EditText edtChatMessage;
+    @BindView(R.id.toolbar)
+    Toolbar mToolbar;
 
     public static final String KEY_CHAT_PARTER_UID = "KEY_CHAT_PARTER_UID";
 
@@ -57,6 +71,15 @@ public class ChatActivity extends BaseActivity {
     private String mChatPartnerUID;
 
     private ChatMessageAdapter mChatMessageAdapter;
+
+    private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
+            .cacheInMemory(true)
+            .cacheOnDisk(true)
+            .showImageOnLoading(R.drawable.placeholder)
+            .showImageForEmptyUri(R.drawable.mountains)
+            .showImageOnFail(R.drawable.mountains)
+            .build();
+    private ImageLoader imageLoader = ImageLoader.getInstance();
 
     /** ValueEventListener for current authenticated user*/
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
@@ -78,6 +101,34 @@ public class ChatActivity extends BaseActivity {
         public void onDataChange(DataSnapshot dataSnapshot) {
             mChatPartnerUser = dataSnapshot.getValue(User.class);
             mChatMessageAdapter.setChatPartnerUser(mChatPartnerUser);
+            imageLoader.displayImage(mChatPartnerUser.getAvatarURL(), ivChatPartnerAvatar, displayImageOptions, new ImageLoadingListener() {
+                @Override
+                public void onLoadingStarted(String imageUri, View view) {
+
+                }
+
+                @Override
+                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                        startPostponedEnterTransition();
+                    }
+                }
+
+                @Override
+                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                        startPostponedEnterTransition();
+                    }
+                }
+
+                @Override
+                public void onLoadingCancelled(String imageUri, View view) {
+                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                        startPostponedEnterTransition();
+                    }
+                }
+            });
+            imageLoader.displayImage(mChatPartnerUser.getAvatarBlurURL(), ivChatPartnerBG, displayImageOptions);
         }
 
         @Override
@@ -93,6 +144,9 @@ public class ChatActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
         ButterKnife.bind(this);
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            postponeEnterTransition();
+        }
 
         mDatabaseRef = Utils.getDatabase().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
@@ -181,5 +235,11 @@ public class ChatActivity extends BaseActivity {
         mDatabaseRef.child(Constants.F_USERS)
                 .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
         //mChatMessageAdapter.cleanup();
+    }
+
+    @Override
+    public void onBackPressed() {
+        //super.onBackPressed();
+        supportFinishAfterTransition();
     }
 }

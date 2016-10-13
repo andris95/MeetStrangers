@@ -25,18 +25,18 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
     private User mChatPartnerUser;
     private static final int VIEW_TYPE_YOURSELF = 333;
     private static final int VIEW_TYPE_STRANGER = 444;
-    private Class<ChatMessageViewHolder> mChatMessageViewHolderClass;
+    private LayoutInflater mLayoutInflater;
 
     public ChatMessageAdapter(Class<ChatMessage> modelClass, int modelLayout, Class<ChatMessageViewHolder> viewHolderClass, Query ref, Context context) {
         super(modelClass, modelLayout, viewHolderClass, ref);
         mContext = context;
-        mChatMessageViewHolderClass = viewHolderClass;
+        mLayoutInflater = LayoutInflater.from(mContext);
     }
 
     public ChatMessageAdapter(Class<ChatMessage> modelClass, int modelLayout, Class<ChatMessageViewHolder> viewHolderClass, DatabaseReference ref, Context context) {
         super(modelClass, modelLayout, viewHolderClass, ref);
         mContext = context;
-        mChatMessageViewHolderClass = viewHolderClass;
+        mLayoutInflater = LayoutInflater.from(mContext);
     }
 
     @Override
@@ -50,29 +50,18 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     public ChatMessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-        ViewGroup view = null;
+        View view = null;
         switch (viewType) {
             case VIEW_TYPE_YOURSELF:
-                view = (ViewGroup) layoutInflater.inflate(R.layout.item_chat_message, parent, false);
+                view = mLayoutInflater.inflate(R.layout.item_chat_message, parent, false);
                 break;
             case VIEW_TYPE_STRANGER:
-                view = (ViewGroup) layoutInflater.inflate(R.layout.item_chat_message_stranger, parent, false);
+                view = mLayoutInflater.inflate(R.layout.item_chat_message_stranger, parent, false);
                 break;
+            default:
+                view = mLayoutInflater.inflate(R.layout.item_chat_message, parent, false);
         }
-
-        try {
-            Constructor<ChatMessageViewHolder> constructor = mChatMessageViewHolderClass.getConstructor(View.class);
-            return constructor.newInstance(view);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        return new ChatMessageViewHolder(view);
     }
 
     @Override

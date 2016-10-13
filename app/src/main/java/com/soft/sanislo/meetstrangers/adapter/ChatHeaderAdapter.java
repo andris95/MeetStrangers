@@ -25,17 +25,20 @@ public class ChatHeaderAdapter extends FirebaseRecyclerAdapter<ChatHeader, ChatH
     private Context mContext;
     private ChatHeaderAdapter.OnClickListener mOnClickListener;
     private Class<ChatHeaderViewHolder> mChatHeaderViewHolderClass;
+    private LayoutInflater mLayoutInflater;
 
     public ChatHeaderAdapter(Class<ChatHeader> modelClass, int modelLayout, Class<ChatHeaderViewHolder> viewHolderClass, Query ref, Context context) {
         super(modelClass, modelLayout, viewHolderClass, ref);
         mContext = context;
         mChatHeaderViewHolderClass = viewHolderClass;
+        mLayoutInflater = LayoutInflater.from(mContext);
     }
 
     public ChatHeaderAdapter(Class<ChatHeader> modelClass, int modelLayout, Class<ChatHeaderViewHolder> viewHolderClass, DatabaseReference ref, Context context) {
         super(modelClass, modelLayout, viewHolderClass, ref);
         mContext = context;
         mChatHeaderViewHolderClass = viewHolderClass;
+        mLayoutInflater = LayoutInflater.from(mContext);
     }
 
     @Override
@@ -47,8 +50,7 @@ public class ChatHeaderAdapter extends FirebaseRecyclerAdapter<ChatHeader, ChatH
 
     @Override
     public ChatHeaderViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        LayoutInflater layoutInflater = LayoutInflater.from(parent.getContext());
-        ViewGroup view = (ViewGroup) layoutInflater.inflate(viewType, parent, false);
+        ViewGroup view = (ViewGroup) mLayoutInflater.inflate(viewType, parent, false);
         try {
             Constructor<ChatHeaderViewHolder> constructor = mChatHeaderViewHolderClass.getConstructor(View.class);
             return constructor.newInstance(view);
