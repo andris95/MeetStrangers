@@ -6,7 +6,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 
@@ -18,14 +17,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.ChatHeaderAdapter;
-import com.soft.sanislo.meetstrangers.adapter.ChatMessageAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatHeader;
-import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ChatHeaderViewHolder;
-import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -80,7 +76,7 @@ public class ChatHeaderActivity extends BaseActivity {
             @Override
             public void onClick(View view, int position, ChatHeader chatHeader, String chatPartnerKey) {
                 Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
-                intent.putExtra(ChatActivity.KEY_CHAT_PARTER_UID, chatPartnerKey);
+                intent.putExtra(ChatActivity.KEY_CHAT_PARTNER_UID, chatPartnerKey);
                 View sharedView = view.findViewById(R.id.iv_chat_header_avatar);
                 Pair<View, String> sharedViews = new Pair<>(sharedView, getString(R.string.transition_chat_avatar));
                 if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {

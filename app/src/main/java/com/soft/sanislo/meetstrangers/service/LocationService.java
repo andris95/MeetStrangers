@@ -1,10 +1,11 @@
 package com.soft.sanislo.meetstrangers.service;
 
-import android.app.IntentService;
+import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
@@ -27,29 +28,28 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.util.Calendar;
 
 /**
  * Created by root on 05.09.16.
  */
-public class LocationService extends IntentService {
+public class LocationService extends Service {
     public static final String REQUEST_CHECK_SETTINGS = "REQUEST_CHECK_SETTINGS";
     private static final long LOCATION_REQUEST_INTERVAL = 1000 * 5;
     private static final String TAG = LocationService.class.getSimpleName();
 
-    private DatabaseReference database = FirebaseDatabase.getInstance().getReference();
+    private DatabaseReference mDatabaseRef = Utils.getDatabase().getReference();
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User mUser;
-    private String uid;
-    private String avatarURL;
+    private String mUid;
 
     private GoogleApiClient googleApiClient;
     private Location mCurrentLocation;
@@ -60,10 +60,18 @@ public class LocationService extends IntentService {
     private PendingResult<LocationSettingsResult> result;
     private boolean isRequestingUpdates;
 
-    public LocationService() {
-        super(TAG);
-        
-    }
+    private ValueEventListener mUserValueEventListener = new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot dataSnapshot) {
+            mUser = dataSnapshot.getValue(User.class);
+            connectClient();
+        }
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -71,7 +79,7 @@ public class LocationService extends IntentService {
         Log.d(TAG, "onCreate: ");
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        uid = firebaseUser.getUid();
+        mUid = firebaseUser.getUid();
 
         initListeners();
         if (googleApiClient == null) {
@@ -84,27 +92,10 @@ public class LocationService extends IntentService {
     }
 
     @Override
-    protected void onHandleIntent(Intent intent) {
-        Log.d(TAG, "onHandleIntent: ");
-    }
-
-    @Override
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
         Log.d(TAG, "onStart: ");
-        database.child(Constants.F_USERS).child(uid).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                mUser = dataSnapshot.getValue(User.class);
-                avatarURL = mUser.getAvatarURL();
-                connectClient();
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+        mDatabaseRef.child(Constants.F_USERS).child(mUid).addValueEventListener(mUserValueEventListener);
     }
 
     @Override
@@ -118,6 +109,13 @@ public class LocationService extends IntentService {
         super.onDestroy();
         Log.d(TAG, "onDestroy: ");
         disconnectClient();
+        mDatabaseRef.child(Constants.F_USERS).child(mUid).removeEventListener(mUserValueEventListener);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     /**
@@ -185,7 +183,6 @@ public class LocationService extends IntentService {
         locationListener = new LocationListener() {
             public void onLocationChanged(final Location newLocation) {
                 // Called when a new location is found by the network location provider.
-
                 boolean isBetterLocation = LocationUtils.isBetterLocation(newLocation, mCurrentLocation);
                 if (isBetterLocation) {
                     Log.d(TAG, "onLocationChanged: isBetterLocation" + newLocation);
@@ -193,17 +190,22 @@ public class LocationService extends IntentService {
                     LocationSnapshot locationSnapshot = new LocationSnapshot(firebaseUser.getUid(),
                             newLocation.getLatitude(), newLocation.getLongitude(),
                             Calendar.getInstance().getTimeInMillis(),
-                            avatarURL);
-                    Log.d(TAG, "onLocationChanged: " + locationSnapshot);
-                    database.child(Constants.F_LOCATIONS).child(uid).setValue(locationSnapshot);
+                            mUser.getAvatarURL());
+                    mDatabaseRef.child(Constants.F_LOCATIONS).child(mUid).setValue(locationSnapshot);
                 }
             }
 
-            public void onStatusChanged(String provider, int status, Bundle extras) {}
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+                Log.d(TAG, "onStatusChanged: ");
+            }
 
-            public void onProviderEnabled(String provider) {}
+            public void onProviderEnabled(String provider) {
+                Log.d(TAG, "onProviderEnabled: ");
+            }
 
-            public void onProviderDisabled(String provider) {}
+            public void onProviderDisabled(String provider) {
+                Log.d(TAG, "onProviderDisabled: ");
+            }
         };
     }
 

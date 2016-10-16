@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -19,14 +20,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
+import com.nostra13.universalimageloader.core.assist.ImageSize;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Comment;
+import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.text.SimpleDateFormat;
@@ -35,6 +38,7 @@ import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 /**
  * Created by root on 24.09.16.
@@ -68,7 +72,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     LinearLayout llPostPhotos;
 
     @BindView(R.id.iv_like_post)
-    ImageView ivLikePost;
+    ImageButton ivLikePost;
 
     @BindView(R.id.tv_like_counter)
     TextView tvLikeCounter;
@@ -95,6 +99,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
             .cacheInMemory(true)
             .cacheOnDisk(true)
             .showImageOnLoading(R.drawable.placeholder)
+            .showImageOnFail(R.drawable.placeholder)
             .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private String mAuthUserUID;
@@ -103,25 +108,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     public PostViewHolder(View itemView) {
         super(itemView);
         mRootView = itemView;
-        //ButterKnife.bind(mContext, mRootView);
-
-        ivPostAuthorAvatar = (ImageView) mRootView.findViewById(R.id.iv_post_author_avatar);
-        tvPostText = (TextView) mRootView.findViewById(R.id.tv_post_text);
-        tvPostAuthor = (TextView) mRootView.findViewById(R.id.tv_post_author);
-        tvPostDate = (TextView) mRootView.findViewById(R.id.tv_post_date);
-        ivPostOptions = (ImageView) mRootView.findViewById(R.id.iv_post_options);
-        llPostPhotos = (LinearLayout) mRootView.findViewById(R.id.ll_post_photos);
-        ivLikePost = (ImageView) mRootView.findViewById(R.id.iv_like_post);
-        tvLikeCounter = (TextView) mRootView.findViewById(R.id.tv_like_counter);
-        ivCommentPost = (ImageView) mRootView.findViewById(R.id.iv_comment_post);
-
-        rlComments = (RelativeLayout) mRootView.findViewById(R.id.rl_post_comments);
-        rvComments = (RecyclerView) mRootView.findViewById(R.id.rv_comments);
+        ButterKnife.bind(this, mRootView);
         rvComments.setLayoutManager(new LinearLayoutManager(mContext));
-
-        btnAddComment = (Button) mRootView.findViewById(R.id.btn_add_comment);
-        btnCancelComment = (Button) mRootView.findViewById(R.id.btn_cancel_comment);
-        edtNewComment = (EditText) mRootView.findViewById(R.id.edt_new_comment);
     }
 
     public void populate(Context context,
@@ -150,7 +138,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         tvPostAuthor.setText(mPost.getAuthFullName());
     }
 
-    public void setPostText() {
+    private void setPostText() {
         if (!TextUtils.isEmpty(mPost.getText())) {
             tvPostText.setText(mPost.getText());
         } else {
@@ -159,23 +147,21 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setPostDate() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
-        Date postDate = new Date(mPost.getTimestamp());
-        String postDateDisplay = dateFormat.format(postDate);
+        String postDateDisplay = DateUtils.getDateDisplay(mPost.getTimestamp());
         tvPostDate.setText(postDateDisplay);
     }
 
-    public void setPostAuthorAvatar() {
+    private void setPostAuthorAvatar() {
         imageLoader.displayImage(mPost.getAuthorAvatarURL(), ivPostAuthorAvatar,
                 displayImageOptions);
     }
 
-    public void setPostPhotosList() {
+    private void setPostPhotosList() {
         int counter = 0;
         llPostPhotos.removeAllViews();
-        if (mPost.getPhotoURLList() == null) return;
-        for (String url : mPost.getPhotoURLList()) {
-            Log.d(TAG, "setPostPhotosList: url: " + url);
+        if (mPost.getMediaFiles() == null) return;
+        for (MediaFile mediaFile : mPost.getMediaFiles()) {
+            Log.d(TAG, "setPostPhotosList: " + mediaFile);
             final ImageView ivPhoto = new ImageView(mContext);
             ivPhoto.setAdjustViewBounds(true);
             ivPhoto.setLayoutParams(new RecyclerView.LayoutParams(
@@ -192,8 +178,10 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
                 }
             });
             ivPhoto.setTag(counter);
-
-            imageLoader.displayImage(url, ivPhoto, displayImageOptions,
+            ImageSize imageSize = new ImageSize(mediaFile.getWidth(), mediaFile.getHeight());
+            imageLoader.displayImage(mediaFile.getUrl(),
+                    ivPhoto,
+                    displayImageOptions,
                     getPostPhotoLoadingListener(ivPhoto));
             counter++;
         }
@@ -243,19 +231,12 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     private void setLikeIcon() {
         HashMap<String, Boolean> likers = mPost.getLikedUsersUIDs();
         if (likers != null) {
-            if (likers.containsKey(mAuthUserUID)) {
-                ivLikePost.setImageDrawable(mContext.getResources()
-                        .getDrawable(R.drawable.heart));
-                Log.d(TAG, "setLikeIcon: contains");
-            } else {
-                ivLikePost.setImageDrawable(mContext.getResources()
-                        .getDrawable(R.drawable.heart_outline));
-                Log.d(TAG, "setLikeIcon: !contains");
-            }
+            boolean isLiked = likers.containsKey(mAuthUserUID);
+            ivLikePost.setSelected(isLiked);
+            Log.d(TAG, "setLikeIcon: isLiked: " + isLiked);
         } else {
-            ivLikePost.setImageDrawable(mContext.getResources()
-                    .getDrawable(R.drawable.heart_outline));
-            Log.d(TAG, "setLikeIcon: likers null");
+            ivLikePost.setSelected(false);
+            Log.d(TAG, "setLikeIcon: isLiked: false - likers == null");
         }
     }
 
@@ -341,5 +322,15 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
                 onClickAddComment();
             }
         });
+    }
+
+    @OnClick(R.id.iv_post_author_avatar)
+    public void onClickPostAuthorAvatar() {
+
+    }
+
+    @OnClick(R.id.iv_like_post)
+    public void onClickLikePost() {
+
     }
 }

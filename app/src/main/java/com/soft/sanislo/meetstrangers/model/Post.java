@@ -16,6 +16,7 @@ public class Post {
     private long likesCount;
     private long commentsCount;
     private List<String> photoURLList;
+    private List<MediaFile> mediaFiles;
     private HashMap<String, Boolean> likedUsersUIDs;
 
     public Post() {}
@@ -111,5 +112,13 @@ public class Post {
 
     public void setLikedUsersUIDs(HashMap<String, Boolean> likedUsersUIDs) {
         this.likedUsersUIDs = likedUsersUIDs;
+    }
+
+    public List<MediaFile> getMediaFiles() {
+        return mediaFiles;
+    }
+
+    public void setMediaFiles(List<MediaFile> mediaFiles) {
+        this.mediaFiles = mediaFiles;
     }
 }

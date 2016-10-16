@@ -33,16 +33,14 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 public class MainActivity extends BaseActivity {
-    public static final String REQUEST_CHECK_SETTINGS = "REQUEST_CHECK_SETTINGS";
     private static final String TAG = MainActivity.class.getSimpleName();
-    private static final long LOCATION_REQUEST_INTERVAL = 1000 * 5;
 
     private MapFragment mapFragment;
 
     private AccountHeaderBuilder headerBuilder;
     private AccountHeader accountHeader;
     private DrawerBuilder drawerBuilder;
-    private Drawer drawer;
+    private Drawer mDrawer;
 
     private DatabaseReference database = Utils.getDatabase().getReference();
     private FirebaseAuth firebaseAuth;
@@ -138,7 +136,7 @@ public class MainActivity extends BaseActivity {
                         return onDrawerItemClick(view, position, drawerItem);
                     }
                 });
-        drawer = drawerBuilder.build();
+        mDrawer = drawerBuilder.build();
     }
 
     private boolean onDrawerItemClick(View view, int position, IDrawerItem drawerItem) {
@@ -146,15 +144,20 @@ public class MainActivity extends BaseActivity {
         switch (position) {
             case 2:
                 startChatHeaderActivity();
+                mDrawer.closeDrawer();
                 return true;
             case 3:
                 startRelationshipsActivity();
+                mDrawer.closeDrawer();
                 return true;
             case 5:
                 signOut();
+                mDrawer.closeDrawer();
                 return true;
+            default:
+                mDrawer.closeDrawer();
+                return false;
         }
-        return true;
     }
 
     private void startRelationshipsActivity() {

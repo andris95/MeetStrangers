@@ -60,7 +60,7 @@ public class UserListFragment extends android.support.v4.app.Fragment {
     private int mRelationshipStatus = USERS_ALL;
     private UserAdapter mUserAdapter;
 
-    /** ValueEventListener for current logged in mDisplayedUser*/
+    /** ValueEventListener for current logged in mAuthenticatedUser*/
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -97,6 +97,7 @@ public class UserListFragment extends android.support.v4.app.Fragment {
             mAuthenticatedUserUID = firebaseUser.getUid();
         }
         mRelationshipStatus = getArguments().getInt(KEY_RELATIONSHIP_STATUS, USERS_ALL);
+
         setUserListRef();
         mUserAdapter = new UserAdapter(Boolean.class,
                 R.layout.item_user,
@@ -120,7 +121,8 @@ public class UserListFragment extends android.support.v4.app.Fragment {
             View sharedView = view.findViewById(R.id.iv_user_avatar);
             Pair<View, String> sharedViews = new Pair<>(sharedView, getString(R.string.transition_user_avatar));
             if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                Bundle sharedBundle = ActivityOptions.makeSceneTransitionAnimation(getActivity(), sharedViews).toBundle();
+                Bundle sharedBundle = ActivityOptions.makeSceneTransitionAnimation(getActivity(), sharedViews)
+                        .toBundle();
                 startActivity(intent, sharedBundle);
             } else {
                 startActivity(intent);
@@ -141,9 +143,7 @@ public class UserListFragment extends android.support.v4.app.Fragment {
         super.onResume();
         database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
                 .addValueEventListener(mAuthenticatedUserListener);
-        if (mUserAdapter != null) {
-            rvUserList.setAdapter(mUserAdapter);
-        }
+        rvUserList.setAdapter(mUserAdapter);
     }
 
     @Override
@@ -151,7 +151,13 @@ public class UserListFragment extends android.support.v4.app.Fragment {
         super.onPause();
         database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
                 .removeEventListener(mAuthenticatedUserListener);
-        if (mUserAdapter != null) mUserAdapter.cleanup();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mUserAdapter.cleanup();
+        mUserAdapter = null;
     }
 
     private void setUserListRef() {

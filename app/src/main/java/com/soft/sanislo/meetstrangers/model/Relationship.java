@@ -6,14 +6,24 @@ package com.soft.sanislo.meetstrangers.model;
 public class Relationship {
     private int status;
     private long timestamp;
-    private String lastUserActionUID;
+    private String lastActionUserUID;
+    private String firstActionUserUID;
 
     public Relationship() {}
 
-    public Relationship(int status, long timestamp, String lastUserActionUID) {
+    public Relationship(int status, long timestamp, String lastActionUserUID, String firstActionUserUID) {
         this.status = status;
         this.timestamp = timestamp;
-        this.lastUserActionUID = lastUserActionUID;
+        this.lastActionUserUID = lastActionUserUID;
+        this.firstActionUserUID = firstActionUserUID;
+    }
+
+    public String getFirstActionUserUID() {
+        return firstActionUserUID;
+    }
+
+    public void setFirstActionUserUID(String firstActionUserUID) {
+        this.firstActionUserUID = firstActionUserUID;
     }
 
     public int getStatus() {
@@ -33,12 +43,12 @@ public class Relationship {
         this.timestamp = timestamp;
     }
 
-    public String getLastUserActionUID() {
-        return lastUserActionUID;
+    public String getLastActionUserUID() {
+        return lastActionUserUID;
     }
 
-    public void setLastUserActionUID(String lastUserActionUID) {
-        this.lastUserActionUID = lastUserActionUID;
+    public void setLastActionUserUID(String lastActionUserUID) {
+        this.lastActionUserUID = lastActionUserUID;
     }
 
     @Override
@@ -46,7 +56,7 @@ public class Relationship {
         return "Relationship{" +
                 "status=" + status +
                 ", timestamp=" + timestamp +
-                ", lastUserActionUID='" + lastUserActionUID + '\'' +
+                ", lastActionUserUID='" + lastActionUserUID + '\'' +
                 '}';
     }
 }

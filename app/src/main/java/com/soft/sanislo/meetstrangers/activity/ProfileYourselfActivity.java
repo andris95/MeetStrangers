@@ -45,8 +45,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.MutableData;
-import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -66,7 +64,6 @@ import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 
 import java.util.Date;
-import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -82,7 +79,7 @@ public class ProfileYourselfActivity extends BaseActivity {
     @BindView(R.id.collapsingToolbar)
     CollapsingToolbarLayout collapsingToolbar;
     @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.ivAvatar) ImageView ivAvatar;
+    @BindView(R.id.iv_avatar) ImageView ivAvatar;
     @BindView(R.id.tvProfileLastActive) TextView tvLastActive;
     @BindView(R.id.tvProfileLocation) TextView tvAddress;
     @BindView(R.id.pbProfileAvatar) ProgressBar pbAvatar;

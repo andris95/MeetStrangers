@@ -7,9 +7,11 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
@@ -22,6 +24,7 @@ import android.util.TimeUtils;
 import android.widget.Toast;
 
 import com.google.firebase.database.FirebaseDatabase;
+import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 
 import java.io.File;
@@ -96,23 +99,36 @@ public class Utils {
         return true;
     }
 
-    public static Bitmap getCroppedBitmap(Bitmap bitmap) {
-        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
-                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(output);
+    public static Bitmap getCircledBitmap(Bitmap sourceBitmap) {
+        Log.d(TAG, "getCircledBitmap: " + sourceBitmap.getWidth() + " x " + sourceBitmap.getHeight());
+        int circleDiameter = Math.min(sourceBitmap.getWidth(), sourceBitmap.getHeight());
+        float circleRadius = circleDiameter / 2;
+        Log.d(TAG, "getCircledBitmap: circleDiameter: " + circleDiameter);
 
-        final int color = 0xff424242;
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        int offsetX = (sourceBitmap.getWidth() - circleDiameter) / 2;
+        int offsetY = (sourceBitmap.getHeight() - circleDiameter) / 2;
+        Log.d(TAG, "getCircledBitmap: offsetX: " + offsetX + " offsetY: " + offsetY);
 
-        paint.setAntiAlias(true);
+        Bitmap tmpBitmap = Bitmap.createBitmap(sourceBitmap,
+                offsetX,
+                offsetY,
+                circleDiameter,
+                circleDiameter);
+        Bitmap squaredBitmap = tmpBitmap.copy(Bitmap.Config.ARGB_8888, true);
+
+        Canvas canvas = new Canvas(squaredBitmap);
         canvas.drawARGB(0, 0, 0, 0);
-        paint.setColor(color);
-        canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2,
-                bitmap.getWidth() / 2, paint);
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, rect, rect, paint);
-        return output;
+        Path circlePath = new Path();
+        circlePath.addCircle((circleDiameter - 1) / 2,
+                (circleDiameter - 1) / 2,
+                circleRadius,
+                Path.Direction.CCW);
+        canvas.clipPath(circlePath);
+
+        Rect one = new Rect(0, 0, sourceBitmap.getWidth(), sourceBitmap.getHeight());
+        RectF two = new RectF(0, 0, circleDiameter, circleDiameter);
+        canvas.drawBitmap(squaredBitmap, one, two, new Paint());
+        return squaredBitmap;
     }
 
     public static String getLastOnline(LocationSnapshot model) {

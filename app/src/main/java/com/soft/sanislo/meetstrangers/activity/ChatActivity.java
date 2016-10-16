@@ -4,24 +4,22 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.Toolbar;
 
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -59,7 +57,7 @@ public class ChatActivity extends BaseActivity {
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
-    public static final String KEY_CHAT_PARTER_UID = "KEY_CHAT_PARTER_UID";
+    public static final String KEY_CHAT_PARTNER_UID = "KEY_CHAT_PARTNER_UID";
 
     private DatabaseReference mDatabaseRef;
     private FirebaseAuth firebaseAuth;
@@ -147,12 +145,15 @@ public class ChatActivity extends BaseActivity {
         if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
             postponeEnterTransition();
         }
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        mDatabaseRef = Utils.getDatabase().getReference();
+        mDatabaseRef = Utils.getDatabase().getReference().push();
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         mAuthenticatedUserUID = firebaseUser.getUid();
-        mChatPartnerUID = getIntent().getStringExtra(KEY_CHAT_PARTER_UID);
+        mChatPartnerUID = getIntent().getStringExtra(KEY_CHAT_PARTNER_UID);
 
         mChatMessageAdapter = new ChatMessageAdapter(ChatMessage.class,
                 R.layout.item_chat_message,
@@ -162,6 +163,16 @@ public class ChatActivity extends BaseActivity {
                 this);
         rvChat.setLayoutManager(new LinearLayoutManager(this));
         rvChat.setAdapter(mChatMessageAdapter);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // handle arrow click here
+        if (item.getItemId() == android.R.id.home) {
+            finish(); // close this activity and return to preview activity (if there is any)
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @OnClick(R.id.iv_send_message)
@@ -174,7 +185,6 @@ public class ChatActivity extends BaseActivity {
                 updateChatHeader();
             }
         });
-        edtChatMessage.setText("");
     }
 
     private void pushChatMessage(String firstUserUID, String secondUserUID,
@@ -201,7 +211,8 @@ public class ChatActivity extends BaseActivity {
     }
 
     private void updateChatHeader() {
-        ChatHeader chatHeader = new ChatHeader(edtChatMessage.getText().toString(),
+        ChatHeader chatHeader = new ChatHeader(
+                edtChatMessage.getText().toString(),
                 mAuthenticatedUserUID,
                 mAuthenticatedUser.getFullName(),
                 mChatPartnerUser.getAvatarURL(),
@@ -209,6 +220,7 @@ public class ChatActivity extends BaseActivity {
 
         setChatHeader(chatHeader, mAuthenticatedUserUID, mChatPartnerUID);
         setChatHeader(chatHeader, mChatPartnerUID, mAuthenticatedUserUID);
+        edtChatMessage.setText("");
     }
 
     private void setChatHeader(ChatHeader chatHeader, String firstUserUID, String secondUserUID) {
@@ -225,6 +237,17 @@ public class ChatActivity extends BaseActivity {
                 .child(mAuthenticatedUserUID).addValueEventListener(mAuthenticatedUserListener);
         mDatabaseRef.child(Constants.F_USERS)
                 .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
+        if (rvChat.getAdapter() == null && mChatMessageAdapter != null) {
+            rvChat.setAdapter(mChatMessageAdapter);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy: ");
+        mChatMessageAdapter.cleanup();
+        mChatMessageAdapter = null;
     }
 
     @Override
@@ -234,7 +257,6 @@ public class ChatActivity extends BaseActivity {
                 .child(mAuthenticatedUserUID).removeEventListener(mAuthenticatedUserListener);
         mDatabaseRef.child(Constants.F_USERS)
                 .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
-        //mChatMessageAdapter.cleanup();
     }
 
     @Override

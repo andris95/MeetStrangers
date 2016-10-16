@@ -90,4 +90,9 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
         mChatPartnerUser = chatPartnerUser;
         notifyDataSetChanged();
     }
+
+    @Override
+    public void cleanup() {
+        super.cleanup();
+    }
 }

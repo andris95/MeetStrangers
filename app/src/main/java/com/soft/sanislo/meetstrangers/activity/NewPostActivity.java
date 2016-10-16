@@ -17,7 +17,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -35,9 +34,11 @@ import com.google.firebase.storage.UploadTask;
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.OnTabSelectListener;
 import com.soft.sanislo.meetstrangers.R;
+import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.ImageUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.util.ArrayList;
@@ -68,7 +69,6 @@ public class NewPostActivity extends BaseActivity {
     private DatabaseReference mDatabaseReference = Utils.getDatabase().getReference();
     private FirebaseStorage mStorage = FirebaseStorage.getInstance();
     private StorageReference storageRef = mStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
-    private DatabaseReference postReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User user;
@@ -79,7 +79,7 @@ public class NewPostActivity extends BaseActivity {
     private ArrayList<String> mPhotoPathList = new ArrayList<>();
     private Queue<String> mTempPhotoPathQueue;
     private ArrayList<String> postPhotoURLList;
-    private MaterialDialog postUploadProgressDialog;
+    private ArrayList<MediaFile> mMediaFiles;
 
     private Post newPost;
 
@@ -100,13 +100,11 @@ public class NewPostActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_post);
         ButterKnife.bind(this);
-
         setSupportActionBar(mToolbar);
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
-        postReference = mDatabaseReference.child(Constants.F_POSTS).child(uid);
 
         addSendPostEnabledListener();
         initBottomBar();
@@ -143,13 +141,6 @@ public class NewPostActivity extends BaseActivity {
             @Override
             public void onTextChanged(CharSequence s, int start,
                                       int count, int after) {
-                /*if (!mPhotoPathList.isEmpty()) {
-                    if (!edtPostText.getText().toString().equals("")) {
-                        mMenu.findItem(R.id.menu_send_post).setEnabled(true);
-                    } else {
-                        mMenu.findItem(R.id.menu_send_post).setEnabled(false);
-                    }
-                }*/
                 String text = edtPostText.getText().toString();
                 if (!TextUtils.isEmpty(text)) {
                     mMenu.findItem(R.id.menu_send_post).setEnabled(true);
@@ -220,8 +211,12 @@ public class NewPostActivity extends BaseActivity {
 
     private void sendPost() {
         progressBar.setVisibility(View.VISIBLE);
+        long timestamp = new Date().getTime();
         String postText = edtPostText.getText().toString();
-        String postKey = mDatabaseReference.child(Constants.F_POSTS).child(uid).push().getKey();
+        String postKey = mDatabaseReference.child(Constants.F_POSTS)
+                .child(uid)
+                .push()
+                .getKey();
 
         newPost = new Post();
         newPost.setKey(postKey);
@@ -231,7 +226,7 @@ public class NewPostActivity extends BaseActivity {
         newPost.setLikesCount(0);
         newPost.setCommentsCount(0);
         newPost.setText(postText);
-        newPost.setTimestamp(new Date().getTime());
+        newPost.setTimestamp(timestamp);
 
         if (!mPhotoPathList.isEmpty()) {
             uploadPostPhotos();
@@ -244,7 +239,7 @@ public class NewPostActivity extends BaseActivity {
         OnCompleteListener<Void> postCompleteListener = new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
-                Toast.makeText(getApplicationContext(), "Posted successfully", Toast.LENGTH_SHORT).show();
+                makeToast("Posted successfully");
                 progressBar.setVisibility(View.GONE);
                 finish();
             }
@@ -265,23 +260,34 @@ public class NewPostActivity extends BaseActivity {
         mDatabaseReference.child(Constants.F_POSTS)
                 .child(uid)
                 .child(newPost.getKey())
-                .setValue(newPost)
+                .setValue(newPost, 0 - new Date().getTime())
                 .addOnCompleteListener(getPostCompleteListener())
                 .addOnFailureListener(postFailureListener);
     }
 
     private void uploadPostPhotos() {
-        if (!mPhotoPathList.isEmpty()) {
-            mTempPhotoPathQueue = new LinkedList<>();
-            mTempPhotoPathQueue.addAll(mPhotoPathList);
-            postPhotoURLList = new ArrayList<>();
-            uploadNextPhotoTask();
+        mTempPhotoPathQueue = new LinkedList<>();
+        mTempPhotoPathQueue.addAll(mPhotoPathList);
+        postPhotoURLList = new ArrayList<>();
+        mMediaFiles = new ArrayList<>();
+        for (String photoFilePath : mPhotoPathList) {
+            String realPhotoFilePath = Utils.getPath(getApplicationContext(), Uri.parse(photoFilePath));
+            MediaFile mediaFile = ImageUtils.getPhotoSize(realPhotoFilePath);
+            mMediaFiles.add(mediaFile);
+            Log.d(TAG, "uploadPostPhotos: " + mediaFile);
         }
+        uploadNextPhotoTask();
     }
 
     private void uploadNextPhotoTask() {
         if (mTempPhotoPathQueue.isEmpty()) {
             newPost.setPhotoURLList(postPhotoURLList);
+            int i = 0;
+            for (String url : postPhotoURLList) {
+                mMediaFiles.get(i).setUrl(url);
+                i++;
+            }
+            newPost.setMediaFiles(mMediaFiles);
             sendPostJSONData();
         } else {
             String photoFileName = Utils.getFileName(getApplicationContext(),
@@ -316,6 +322,7 @@ public class NewPostActivity extends BaseActivity {
         @Override
         public void onFailure(@NonNull Exception e) {
             e.printStackTrace();
+            makeToast(e.getMessage());
         }
     };
 
@@ -329,6 +336,7 @@ public class NewPostActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        mDatabaseReference.child(Constants.F_USERS).child(uid).removeEventListener(userValueEventLisener);
+        mDatabaseReference.child(Constants.F_USERS).child(uid)
+                .removeEventListener(userValueEventLisener);
     }
 }

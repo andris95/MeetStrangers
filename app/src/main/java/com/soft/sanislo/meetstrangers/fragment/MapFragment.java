@@ -34,6 +34,7 @@ import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileYourselfActivity;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
+import com.soft.sanislo.meetstrangers.utilities.ImageUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.util.HashMap;
@@ -174,7 +175,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
             {
                 // Do whatever you want with Bitmap
                 if (loadedImage != null) {
-                    loadedImage = Utils.getCroppedBitmap(loadedImage);
+                    loadedImage = ImageUtils.getCircledBitmap(loadedImage);
                     marker.setIcon(BitmapDescriptorFactory.fromBitmap(loadedImage));
                     mMarkers.put(locationSnapshot.getId(), marker);
                 }
