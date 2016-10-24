@@ -19,11 +19,13 @@ import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by root on 24.09.16.
@@ -33,7 +35,6 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
 
     private View mRootView;
     private ChatMessage mChatMessage;
-    private Context mContext;
 
     @BindView(R.id.iv_chat_author_avatar)
     ImageView ivMessageAuthorAvatar;
@@ -55,27 +56,21 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
     public ChatMessageViewHolder(View itemView) {
         super(itemView);
         mRootView = itemView;
-        //ButterKnife.bind(mContext, mRootView);
-
-        ivMessageAuthorAvatar = (ImageView) mRootView.findViewById(R.id.iv_chat_author_avatar);
-        tvChatMessage = (TextView) mRootView.findViewById(R.id.tv_chat_message);
-        tvMessageDate = (TextView) mRootView.findViewById(R.id.tv_chat_message_date);
+        ButterKnife.bind(this, mRootView);
     }
 
-    public void setMessage() {
+    private void setMessage() {
         if (!TextUtils.isEmpty(mChatMessage.getMessage())) {
             tvChatMessage.setText(mChatMessage.getMessage());
         }
     }
 
     private void setMessageDate() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
-        Date messageDate = new Date(mChatMessage.getTimestamp());
-        String messageDateDisplay = dateFormat.format(messageDate);
+        String messageDateDisplay = DateUtils.getDateDisplay(mChatMessage.getTimestamp());
         tvMessageDate.setText(messageDateDisplay);
     }
 
-    public void setMessageAuthorAvatar() {
+    private void setMessageAuthorAvatar() {
         if (mUser != null) imageLoader.displayImage(mUser.getAvatarURL(), ivMessageAuthorAvatar, displayImageOptions);
     }
 
@@ -84,11 +79,12 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
                          ChatMessage chatMessage,
                          final int position) {
         mChatMessage = chatMessage;
-        mContext = context;
         mUser = user;
 
         setMessage();
-        setMessageAuthorAvatar();
-        setMessageDate();
+        if (mUser != null) {
+            setMessageAuthorAvatar();
+            setMessageDate();
+        }
     }
 }

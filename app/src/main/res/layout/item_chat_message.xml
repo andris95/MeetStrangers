@@ -8,8 +8,7 @@
     <com.mikhaellopez.circularimageview.CircularImageView
         android:layout_width="@dimen/_48sdp"
         android:layout_height="@dimen/_48sdp"
-        android:id="@+id/iv_chat_author_avatar"
-        android:src="@drawable/lawrence"/>
+        android:id="@+id/iv_chat_author_avatar" />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

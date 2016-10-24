@@ -269,6 +269,16 @@ public class ProfileYourselfActivity extends BaseActivity {
             TransitionManager.beginDelayedTransition(rvPosts);
             mPostAdapter.notifyDataSetChanged();
         }
+
+        @Override
+        public void onClickLikeComment(Comment comment) {
+
+        }
+
+        @Override
+        public void onClickHighlightComment() {
+            TransitionManager.beginDelayedTransition(rvPosts);
+        }
     };
 
     private void onClickCommentPost(int position) {

@@ -107,23 +107,17 @@ public class ChatActivity extends BaseActivity {
 
                 @Override
                 public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                        startPostponedEnterTransition();
-                    }
+                    supportStartPostponedEnterTransition();
                 }
 
                 @Override
                 public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                        startPostponedEnterTransition();
-                    }
+                    supportStartPostponedEnterTransition();
                 }
 
                 @Override
                 public void onLoadingCancelled(String imageUri, View view) {
-                    if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                        startPostponedEnterTransition();
-                    }
+                    supportStartPostponedEnterTransition();
                 }
             });
             imageLoader.displayImage(mChatPartnerUser.getAvatarBlurURL(), ivChatPartnerBG, displayImageOptions);
@@ -149,20 +143,13 @@ public class ChatActivity extends BaseActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        mDatabaseRef = Utils.getDatabase().getReference().push();
+        mDatabaseRef = Utils.getDatabase().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         mAuthenticatedUserUID = firebaseUser.getUid();
         mChatPartnerUID = getIntent().getStringExtra(KEY_CHAT_PARTNER_UID);
-
-        mChatMessageAdapter = new ChatMessageAdapter(ChatMessage.class,
-                R.layout.item_chat_message,
-                ChatMessageViewHolder.class,
-                mDatabaseRef.child(Constants.F_CHATS)
-                        .child(mAuthenticatedUserUID).child(mChatPartnerUID),
-                this);
-        rvChat.setLayoutManager(new LinearLayoutManager(this));
-        rvChat.setAdapter(mChatMessageAdapter);
+        Log.d(TAG, "onCreate: " + mChatPartnerUID);
+        initChat();
     }
 
     @Override
@@ -171,8 +158,20 @@ public class ChatActivity extends BaseActivity {
         if (item.getItemId() == android.R.id.home) {
             finish(); // close this activity and return to preview activity (if there is any)
         }
-
         return super.onOptionsItemSelected(item);
+    }
+
+    private void initChat() {
+        mChatMessageAdapter = new ChatMessageAdapter(ChatMessage.class,
+                R.layout.item_chat_message,
+                ChatMessageViewHolder.class,
+                mDatabaseRef.child(Constants.F_CHATS)
+                        .child(mAuthenticatedUserUID).child(mChatPartnerUID),
+                this);
+        mChatMessageAdapter.setAuthenticatedUID(mAuthenticatedUserUID);
+        mChatMessageAdapter.setChatPartnerUID(mChatPartnerUID);
+        rvChat.setLayoutManager(new LinearLayoutManager(this));
+        rvChat.setAdapter(mChatMessageAdapter);
     }
 
     @OnClick(R.id.iv_send_message)
@@ -247,7 +246,6 @@ public class ChatActivity extends BaseActivity {
         super.onDestroy();
         Log.d(TAG, "onDestroy: ");
         mChatMessageAdapter.cleanup();
-        mChatMessageAdapter = null;
     }
 
     @Override

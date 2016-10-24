@@ -14,6 +14,7 @@ import com.soft.sanislo.meetstrangers.adapter.ChatHeaderAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatHeader;
 import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -77,9 +78,7 @@ public class ChatHeaderViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setLastMessageDate() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy.MM.dd G 'at' HH:mm:ss z");
-        Date messageDate = new Date(mChatHeader.getTimestamp());
-        String messageDateDisplay = dateFormat.format(messageDate);
+        String messageDateDisplay = DateUtils.getDateDisplay(mChatHeader.getTimestamp());
         tvLastMessageDate.setText(messageDateDisplay);
     }
 

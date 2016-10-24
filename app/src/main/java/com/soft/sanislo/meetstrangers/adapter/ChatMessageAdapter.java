@@ -23,6 +23,10 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
     private Context mContext;
     private User mAuthenticatedUser;
     private User mChatPartnerUser;
+
+    private String mAuthenticatedUID;
+    private String mChatPartnerUID;
+
     private static final int VIEW_TYPE_YOURSELF = 333;
     private static final int VIEW_TYPE_STRANGER = 444;
     private LayoutInflater mLayoutInflater;
@@ -41,7 +45,7 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     protected void populateViewHolder(ChatMessageViewHolder viewHolder, ChatMessage model, int position) {
-        if (mAuthenticatedUser.getUid().equals(getItem(position).getAuthorUID())) {
+        if (mAuthenticatedUID.equals(getItem(position).getAuthorUID())) {
             viewHolder.populate(mContext, mAuthenticatedUser, model, position);
         } else {
             viewHolder.populate(mContext, mChatPartnerUser, model, position);
@@ -50,7 +54,7 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     public ChatMessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = null;
+        View view;
         switch (viewType) {
             case VIEW_TYPE_YOURSELF:
                 view = mLayoutInflater.inflate(R.layout.item_chat_message, parent, false);
@@ -66,15 +70,11 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
 
     @Override
     public int getItemViewType(int position) {
-        if (mAuthenticatedUser.getUid().equals(getItem(position).getAuthorUID())) {
+        if (mAuthenticatedUID.equals(getItem(position).getAuthorUID())) {
             return VIEW_TYPE_YOURSELF;
         } else {
             return VIEW_TYPE_STRANGER;
         }
-    }
-
-    public User getAuthenticatedUser() {
-        return mAuthenticatedUser;
     }
 
     public void setAuthenticatedUser(User authenticatedUser) {
@@ -82,13 +82,17 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
         notifyDataSetChanged();
     }
 
-    public User getChatPartnerUser() {
-        return mChatPartnerUser;
-    }
-
     public void setChatPartnerUser(User chatPartnerUser) {
         mChatPartnerUser = chatPartnerUser;
         notifyDataSetChanged();
+    }
+
+    public void setChatPartnerUID(String chatPartnerUID) {
+        mChatPartnerUID = chatPartnerUID;
+    }
+
+    public void setAuthenticatedUID(String authenticatedUID) {
+        mAuthenticatedUID = authenticatedUID;
     }
 
     @Override

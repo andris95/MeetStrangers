@@ -12,6 +12,9 @@ import com.soft.sanislo.meetstrangers.view.CommentViewHolder;
  * Created by root on 09.10.16.
  */
 public class CommentAdapter extends FirebaseRecyclerAdapter<Comment, CommentViewHolder> {
+    private OnClickListener mOnClickListener;
+    private int mExpandedPos = -1;
+    private String mAuthUID;
 
     public CommentAdapter(Class<Comment> modelClass, int modelLayout, Class<CommentViewHolder> viewHolderClass, Query ref) {
         super(modelClass, modelLayout, viewHolderClass, ref);
@@ -23,10 +26,29 @@ public class CommentAdapter extends FirebaseRecyclerAdapter<Comment, CommentView
 
     @Override
     protected void populateViewHolder(CommentViewHolder viewHolder, Comment model, int position) {
-        viewHolder.populate(null, model, position, null);
+        viewHolder.setExpanded(getExpandedPos() == position);
+        viewHolder.setAuthUID(mAuthUID);
+        viewHolder.populate(null, model, position, mOnClickListener);
+    }
+
+    public int getExpandedPos() {
+        return mExpandedPos;
+    }
+
+    public void setExpandedPos(int expandedPos) {
+        mExpandedPos = expandedPos;
+    }
+
+    public void setAuthUID(String authUID) {
+        mAuthUID = authUID;
+    }
+
+    public void setOnClickListener(OnClickListener onClickListener) {
+        mOnClickListener = onClickListener;
     }
 
     public interface OnClickListener {
         void onClick(View view, int position, Comment comment);
+        void onClickLikeComment(Comment comment);
     }
 }

@@ -121,4 +121,8 @@ public class Post {
     public void setMediaFiles(List<MediaFile> mediaFiles) {
         this.mediaFiles = mediaFiles;
     }
+
+    public boolean isLikedByUser(String uid) {
+        return likedUsersUIDs != null && likedUsersUIDs.containsKey(uid);
+    }
 }

@@ -1,5 +1,7 @@
 package com.soft.sanislo.meetstrangers.model;
 
+import java.util.HashMap;
+
 /**
  * Created by root on 09.10.16.
  */
@@ -10,6 +12,8 @@ public class Comment {
     private String authorFullName;
     private String authorAvatarURL;
     private String text;
+    private long likesCount;
+    private HashMap<String, Boolean> likedUsersUIDs;
     private long timestamp;
 
     public Comment () {}
@@ -22,19 +26,6 @@ public class Comment {
         this.authorAvatarURL = authorAvatarURL;
         this.text = text;
         this.timestamp = timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return "Comment{" +
-                "commentKey='" + commentKey + '\'' +
-                ", postKey='" + postKey + '\'' +
-                ", authorUID='" + authorUID + '\'' +
-                ", authorFullName='" + authorFullName + '\'' +
-                ", authorAvatarURL='" + authorAvatarURL + '\'' +
-                ", text='" + text + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
     }
 
     public String getCommentKey() {
@@ -91,5 +82,41 @@ public class Comment {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return "Comment{" +
+                "commentKey='" + commentKey + '\'' +
+                ", postKey='" + postKey + '\'' +
+                ", authorUID='" + authorUID + '\'' +
+                ", authorFullName='" + authorFullName + '\'' +
+                ", authorAvatarURL='" + authorAvatarURL + '\'' +
+                ", text='" + text + '\'' +
+                ", likesCount=" + likesCount +
+                ", likedUsersUIDs=" + likedUsersUIDs +
+                ", timestamp=" + timestamp +
+                '}';
+    }
+
+    public long getLikesCount() {
+        return likesCount;
+    }
+
+    public void setLikesCount(long likesCount) {
+        this.likesCount = likesCount;
+    }
+
+    public HashMap<String, Boolean> getLikedUsersUIDs() {
+        return likedUsersUIDs;
+    }
+
+    public void setLikedUsersUIDs(HashMap<String, Boolean> likedUsersUIDs) {
+        this.likedUsersUIDs = likedUsersUIDs;
+    }
+
+    public boolean isLikedByUser(String uid) {
+        HashMap<String, Boolean> likers = likedUsersUIDs;
+        return likers != null && likers.containsKey(uid);
     }
 }

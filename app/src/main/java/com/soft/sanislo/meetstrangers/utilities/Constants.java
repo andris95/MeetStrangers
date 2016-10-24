@@ -9,8 +9,7 @@ public final class Constants {
 
     public static final int RS_FRIENDS = 11228;
     public static final int RS_PENDING = 11229;
-    public static final int RS_STRANGERS = 11230;
-    public static final int RS_UNKNOWN = 11231;
+    public static final int RS_DELETED = 11230;
 
     /**
      * Constants related to locations in Firebase

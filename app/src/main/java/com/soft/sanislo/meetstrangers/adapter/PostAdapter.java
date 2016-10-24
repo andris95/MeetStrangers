@@ -1,14 +1,13 @@
 package com.soft.sanislo.meetstrangers.adapter;
 
 import android.content.Context;
-import android.transition.TransitionManager;
 import android.view.View;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 
 /**
@@ -34,7 +33,7 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
 
     @Override
     protected void populateViewHolder(PostViewHolder viewHolder, Post model, int position) {
-        viewHolder.setShouldShowComments(position == mCommentsVisiblePos);
+        viewHolder.setExpanded(position == mCommentsVisiblePos);
         viewHolder.populate(mContext, model, mAuthUserUID, mOnClickListener, position);
     }
 
@@ -46,6 +45,8 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
         void onClick(View view, int position, Post post);
         void onClickAddComment(Post post, String commentText);
         void onClickCancelComment();
+        void onClickHighlightComment();
+        void onClickLikeComment(Comment comment);
     }
 
     public OnClickListener getOnClickListener() {

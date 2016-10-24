@@ -2,6 +2,7 @@ package com.soft.sanislo.meetstrangers.view;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -19,7 +20,6 @@ import android.widget.TextView;
 import com.google.firebase.database.DatabaseReference;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.assist.ImageSize;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
@@ -32,8 +32,6 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 
 import butterknife.BindView;
@@ -51,7 +49,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     private Context mContext;
     private int mPostition;
     private PostAdapter.OnClickListener mOnClickListener;
-    private boolean shouldShowComments;
+    private boolean isExpanded;
+    private boolean isFirstTime;
 
     @BindView(R.id.iv_post_author_avatar)
     ImageView ivPostAuthorAvatar;
@@ -130,8 +129,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         setPostAuthorAvatar();
         setPostDate();
         setPostPhotosList();
-        showCommentsList();
-        setClickListeners();
+        setCommentsListVisibility();
     }
 
     private void setAuthorName() {
@@ -194,50 +192,59 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
                 super.onLoadingComplete(imageUri, view, loadedImage);
                 llPostPhotos.addView(ivPhoto);
             }
-
-            @Override
-            public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                super.onLoadingFailed(imageUri, view, failReason);
-                Log.d(TAG, "onLoadingFailed: " + failReason.getType().name());
-                failReason.getCause().printStackTrace();
-            }
         };
         return postPhotoLoadingListener;
     }
 
-    private void showCommentsList() {
-        if (shouldShowComments) {
-            rlComments.setVisibility(View.VISIBLE);
-            DatabaseReference commentRef = Utils.getDatabase().getReference()
-                    .child(Constants.F_POSTS_COMMENTS)
-                    .child(mPost.getAuthorUID())
-                    .child(mPost.getKey());
-            mCommentAdapter = new CommentAdapter(Comment.class,
-                    R.layout.item_comment,
-                    CommentViewHolder.class,
-                    commentRef);
-            rvComments.setAdapter(mCommentAdapter);
+    private void setCommentsListVisibility() {
+        if (isExpanded) {
+            showComments();
         } else {
-            rlComments.setVisibility(View.GONE);
-            if (mCommentAdapter != null) {
-                mCommentAdapter.cleanup();
-                mCommentAdapter = null;
+            hideComments();
+        }
+    }
+
+    private void showComments() {
+        rlComments.setVisibility(View.VISIBLE);
+        DatabaseReference commentRef = Utils.getDatabase().getReference()
+                .child(Constants.F_POSTS_COMMENTS)
+                .child(mPost.getAuthorUID())
+                .child(mPost.getKey());
+        mCommentAdapter = new CommentAdapter(Comment.class,
+                R.layout.item_comment,
+                CommentViewHolder.class,
+                commentRef);
+        mCommentAdapter.setOnClickListener(new CommentAdapter.OnClickListener() {
+            @Override
+            public void onClick(View view, int position, Comment comment) {
+                if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+                    int expanedPos = mCommentAdapter.getExpandedPos() == position ? -1 : position;
+                    mCommentAdapter.setExpandedPos(expanedPos);
+                    mCommentAdapter.notifyDataSetChanged();
+                    mOnClickListener.onClickHighlightComment();
+                }
             }
-            btnAddComment.setOnClickListener(null);
-            btnCancelComment.setOnClickListener(null);
+
+            @Override
+            public void onClickLikeComment(Comment comment) {
+                mOnClickListener.onClickLikeComment(comment);
+            }
+        });
+        mCommentAdapter.setAuthUID(mAuthUserUID);
+        rvComments.setAdapter(mCommentAdapter);
+    }
+
+    private void hideComments() {
+        rlComments.setVisibility(View.GONE);
+        if (mCommentAdapter != null) {
+            mCommentAdapter.cleanup();
+            mCommentAdapter = null;
         }
     }
 
     private void setLikeIcon() {
-        HashMap<String, Boolean> likers = mPost.getLikedUsersUIDs();
-        if (likers != null) {
-            boolean isLiked = likers.containsKey(mAuthUserUID);
-            ivLikePost.setSelected(isLiked);
-            Log.d(TAG, "setLikeIcon: isLiked: " + isLiked);
-        } else {
-            ivLikePost.setSelected(false);
-            Log.d(TAG, "setLikeIcon: isLiked: false - likers == null");
-        }
+        if (isFirstTime) return;
+        ivLikePost.setSelected(mPost.isLikedByUser(mAuthUserUID));
     }
 
     private void setLikeCounter() {
@@ -248,15 +255,11 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    public boolean isShouldShowComments() {
-        return shouldShowComments;
+    public void setExpanded(boolean expanded) {
+        this.isExpanded = expanded;
     }
 
-    public void setShouldShowComments(boolean shouldShowComments) {
-        this.shouldShowComments = shouldShowComments;
-    }
-
-    private void onClickAddComment() {
+    private void addComment() {
         String newCommentText = edtNewComment.getText().toString();
         if (!TextUtils.isEmpty(newCommentText)) {
             mOnClickListener.onClickAddComment(mPost, newCommentText);
@@ -264,73 +267,43 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    private void onClickCancelComment() {
+    private void cancelComment() {
         edtNewComment.setText("");
         mOnClickListener.onClickCancelComment();
     }
 
-    private void setClickListeners() {
-        ivPostAuthorAvatar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mOnClickListener != null) {
-                    mOnClickListener.onClick(view, mPostition, mPost);
-                    Log.d(TAG, "onClick: position: " + mPostition + " view: " + view.getId());
-                }
-            }
-        });
-        ivPostOptions.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mOnClickListener != null) {
-                    mOnClickListener.onClick(view, mPostition, mPost);
-                    Log.d(TAG, "onClick: position: " + mPostition + " view: " + view.getId());
-                }
-            }
-        });
-        llPostPhotos.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mOnClickListener != null) {
-                    mOnClickListener.onClick(view, mPostition, mPost);
-                }
-            }
-        });
-        ivLikePost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mOnClickListener != null) mOnClickListener.onClick(view, mPostition, mPost);
-            }
-        });
-        ivCommentPost.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mOnClickListener != null) {
-                    mOnClickListener.onClick(view, mPostition, mPost);
-                }
-            }
-        });
-        btnCancelComment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickCancelComment();
-            }
-        });
-        btnAddComment.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickAddComment();
-            }
-        });
-    }
-
     @OnClick(R.id.iv_post_author_avatar)
     public void onClickPostAuthorAvatar() {
+        mOnClickListener.onClick(ivPostAuthorAvatar, mPostition, mPost);
+    }
 
+    @OnClick(R.id.iv_post_options)
+    public void onClickPostOptions() {
+        mOnClickListener.onClick(ivPostOptions, mPostition, mPost);
+    }
+
+    @OnClick(R.id.ll_post_photos)
+    public void onClickPostPhotos() {
+        mOnClickListener.onClick(llPostPhotos, mPostition, mPost);
     }
 
     @OnClick(R.id.iv_like_post)
     public void onClickLikePost() {
+        mOnClickListener.onClick(ivLikePost, mPostition, mPost);
+    }
 
+    @OnClick(R.id.btn_cancel_comment)
+    public void onClickCancelComment() {
+        cancelComment();
+    }
+
+    @OnClick(R.id.btn_add_comment)
+    public void onClickAddComment() {
+        addComment();
+    }
+
+    @OnClick(R.id.iv_comment_post)
+    public void onClickCommentPost() {
+        mOnClickListener.onClick(ivCommentPost, mPostition, mPost);
     }
 }

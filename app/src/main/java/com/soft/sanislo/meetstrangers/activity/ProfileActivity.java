@@ -55,6 +55,8 @@ import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.Relationship;
+import com.soft.sanislo.meetstrangers.presenter.ProfilePresenter;
+import com.soft.sanislo.meetstrangers.presenter.ProfilePresenterImpl;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
@@ -62,6 +64,7 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
+import com.soft.sanislo.meetstrangers.view.ProfileView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,7 +78,7 @@ import butterknife.OnClick;
 /**
  * Created by root on 08.09.16.
  */
-public class ProfileActivity extends BaseActivity {
+public class ProfileActivity extends BaseActivity implements ProfileView {
     public static final String KEY_UID = "KEY_UID";
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
@@ -102,23 +105,18 @@ public class ProfileActivity extends BaseActivity {
 
     @BindView(R.id.rv_posts)
     RecyclerView rvPosts;
-    @BindView(R.id.scv_profile_content)
-    NestedScrollView scvProfileContent;
 
-    private GoogleApiClient mGoogleApiClient;
+    private ProfilePresenter mProfilePresenter;
     private DatabaseReference database = Utils.getDatabase().getReference();
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
-    
-    private User mAuthenticatedUser;
+
+    private FirebaseAuth mFirebaseAuth;
+    private FirebaseUser mFirebaseUser;
     private String mAuthenticatedUserUID;
-    private User mDisplayedUser;
     private String mDisplayedUserUID;
 
     private Relationship mRelationship;
-
-    private ResultReceiver mResultReceiver;
-    private boolean isAddressRequested;
+    private String mLastActionUID;
+    private String mFirstActionUID;
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
             .cacheInMemory(true)
@@ -128,51 +126,6 @@ public class ProfileActivity extends BaseActivity {
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private PostAdapter mPostAdapter;
     private Query mPostQuery;
-
-    private MaterialDialog mActionDialog;
-
-    /** ValueEventListener for current logged in mDisplayedUser*/
-    private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            mAuthenticatedUser = dataSnapshot.getValue(User.class);
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
-
-    /** ValueEventListener for displayed mDisplayedUser*/
-    private ValueEventListener mDisplayedUserListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            mDisplayedUser = dataSnapshot.getValue(User.class);
-            collapsingToolbar.setTitle(mDisplayedUser.getFullName());
-            imageLoader.loadImage(mDisplayedUser.getAvatarURL(), displayImageOptions, new SimpleImageLoadingListener() {
-                @Override
-                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                    super.onLoadingComplete(imageUri, view, loadedImage);
-                    imageLoader.displayImage(imageUri, ivAvatar, displayImageOptions);
-                    imageLoader.displayImage(imageUri, ivAvatarShared, displayImageOptions, new SimpleImageLoadingListener() {
-                        @Override
-                        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                            super.onLoadingComplete(imageUri, view, loadedImage);
-                            setStatusBarColor(loadedImage);
-                            supportStartPostponedEnterTransition();
-                        }
-                    });
-                }
-            });
-            mGoogleApiClient.connect();
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
 
     private void setStatusBarColor(Bitmap loadedImage) {
         Palette.from(loadedImage)
@@ -198,43 +151,6 @@ public class ProfileActivity extends BaseActivity {
                 });
     }
 
-    private ValueEventListener mRelationshipListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            mRelationship = dataSnapshot.getValue(Relationship.class);
-            if (mRelationship != null) {
-                Log.d(TAG, "onDataChange: " + mRelationship);
-            }
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
-
-    private ValueEventListener locationListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
-            if (locationSnapshot != null && !isAddressRequested) {
-                Intent intent = new Intent(getApplicationContext(), FetchAddressIntentService.class);
-                intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
-                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
-                        LocationUtils.getLocation(locationSnapshot));
-                startService(intent);
-                isAddressRequested = true;
-                tvLastActive.setText(Utils.getLastOnline(locationSnapshot));
-            }
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-            makeToast(databaseError.getMessage());
-            databaseError.toException().printStackTrace();
-        }
-    };
-
     private PostAdapter.OnClickListener mPostClickListener = new PostAdapter.OnClickListener() {
         @Override
         public void onClick(View view, int position, Post post) {
@@ -252,7 +168,7 @@ public class ProfileActivity extends BaseActivity {
                     makeToast("options");
                     break;
                 case R.id.iv_like_post:
-                    onClickLikePost(post.getKey());
+                    mProfilePresenter.likePost(post.getKey());
                     break;
                 case R.id.iv_comment_post:
                     onClickCommentPost(position);
@@ -264,25 +180,7 @@ public class ProfileActivity extends BaseActivity {
 
         @Override
         public void onClickAddComment(Post post, String commentText) {
-            DatabaseReference newCommentRef = database.child(Constants.F_POSTS_COMMENTS)
-                    .child(post.getAuthorUID())
-                    .child(post.getKey());
-            String newCommentKey = newCommentRef.push().getKey();
-            Comment comment = new Comment(newCommentKey,
-                    post.getKey(),
-                    mAuthenticatedUserUID,
-                    mAuthenticatedUser.getFullName(),
-                    mAuthenticatedUser.getAvatarURL(),
-                    commentText,
-                    new Date().getTime());
-            newCommentRef.child(newCommentKey).setValue(comment)
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            makeToast(e.getMessage());
-                            e.printStackTrace();
-                        }
-                    });
+            mProfilePresenter.addComment(post, commentText);
         }
 
         @Override
@@ -290,8 +188,18 @@ public class ProfileActivity extends BaseActivity {
             mPostAdapter.setCommentsVisiblePos(-1);
             if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
                 TransitionManager.beginDelayedTransition(rvPosts);
+                mPostAdapter.notifyDataSetChanged();
             }
-            mPostAdapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onClickHighlightComment() {
+            TransitionManager.beginDelayedTransition(rvPosts);
+        }
+
+        @Override
+        public void onClickLikeComment(Comment comment) {
+            mProfilePresenter.likeComment(comment);
         }
     };
 
@@ -307,46 +215,6 @@ public class ProfileActivity extends BaseActivity {
         mPostAdapter.notifyItemChanged(position);
     }
 
-    private GoogleApiClient.ConnectionCallbacks mConnectionCallback = new GoogleApiClient.ConnectionCallbacks() {
-        @Override
-        public void onConnected(@Nullable Bundle bundle) {
-            Log.d(TAG, "onConnected: ");
-            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
-                    .getCurrentPlace(mGoogleApiClient, null);
-            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                @Override
-                public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                    Log.d(TAG, "onResult: likelyPlace size: " + likelyPlaces.toString());
-                    Status status = likelyPlaces.getStatus();
-                    int statusCode = status.getStatusCode();
-                    Log.d(TAG, "onResult: statusCOde " + statusCode);
-                    switch (statusCode) {
-
-                    }
-                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                        Log.i(TAG, String.format("Place '%s' has likelihood: %g",
-                                placeLikelihood.getPlace().getName(),
-                                placeLikelihood.getLikelihood()));
-                        tvAddress.setText(placeLikelihood.getPlace().getName());
-                    }
-                    likelyPlaces.release();
-                }
-            });
-        }
-
-        @Override
-        public void onConnectionSuspended(int i) {
-
-        }
-    };
-
-    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
-        @Override
-        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-            Log.d(TAG, "onConnectionFailed: " + connectionResult.getErrorMessage());
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -356,13 +224,13 @@ public class ProfileActivity extends BaseActivity {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUser = firebaseAuth.getCurrentUser();
-        mAuthenticatedUserUID = firebaseUser.getUid();
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+        mAuthenticatedUserUID = mFirebaseUser.getUid();
         mDisplayedUserUID = getIntent().getStringExtra(KEY_UID);
+        mProfilePresenter = new ProfilePresenterImpl(this, this, mDisplayedUserUID);
 
         initPosts();
-        initAddressFetcher();
     }
 
     private void initTransition() {
@@ -370,9 +238,6 @@ public class ProfileActivity extends BaseActivity {
             requestWindowFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
             requestWindowFeature(Window.FEATURE_CONTENT_TRANSITIONS);
 
-            //Transition contentEnterTrans = TransitionInflater.from(this).inflateTransition(R.transition.trans_slide);
-            //contentEnterTrans.addTarget(scvProfileContent);
-            //getWindow().setEnterTransition(contentEnterTrans);
             Transition revealAvatarTrans = TransitionInflater.from(this).inflateTransition(R.transition.transition_reveal_avatar);
             getWindow().setEnterTransition(revealAvatarTrans);
             getWindow().getEnterTransition().addListener(new TransitionListenerAdapter() {
@@ -405,239 +270,90 @@ public class ProfileActivity extends BaseActivity {
                 mPostQuery);
         mPostAdapter.setAuthUserUID(mAuthenticatedUserUID);
         mPostAdapter.setOnClickListener(mPostClickListener);
+
         rvPosts.setLayoutManager(new LinearLayoutManager(this));
         rvPosts.setNestedScrollingEnabled(false);
         ((SimpleItemAnimator) rvPosts.getItemAnimator()).setSupportsChangeAnimations(false);
         rvPosts.setAdapter(mPostAdapter);
     }
 
-    private void initAddressFetcher() {
-        mGoogleApiClient = new GoogleApiClient
-                .Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .addConnectionCallbacks(mConnectionCallback)
-                .addOnConnectionFailedListener(mConnectionFailedListener)
-                .build();
-        mResultReceiver = new AddressResultReceiver(new Handler());
-    }
-
-    private void onClickLikePost(final String postKey) {
-        database.child(Constants.F_POSTS)
-                .child(mDisplayedUserUID)
-                .child(postKey).runTransaction(new Transaction.Handler() {
-            @Override
-            public Transaction.Result doTransaction(MutableData mutableData) {
-                mutableData = likePost(mutableData);
-                return Transaction.success(mutableData);
-            }
-
-            @Override
-            public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
-                if (databaseError != null) {
-                    databaseError.toException().printStackTrace();
-                    makeToast(databaseError.getMessage());
-                }
-            }
-        });
-    }
-
-    private MutableData likePost(MutableData mutableData) {
-        Post post = mutableData.getValue(Post.class);
-        long postLikesCount = post.getLikesCount();
-        HashMap<String, Boolean> likedUsersUIDs = post.getLikedUsersUIDs();
-        if (likedUsersUIDs != null &&
-                likedUsersUIDs.containsKey(mAuthenticatedUserUID)) {
-            post.setLikesCount(postLikesCount - 1);
-            likedUsersUIDs.remove(mAuthenticatedUserUID);
-        } else {
-            post.setLikesCount(postLikesCount + 1);
-            if (likedUsersUIDs == null) {
-                likedUsersUIDs = new HashMap<>();
-            }
-            likedUsersUIDs.put(mAuthenticatedUserUID, true);
-        }
-        post.setLikedUsersUIDs(likedUsersUIDs);
-        mutableData.setValue(post);
-        return mutableData;
-    }
-
-    @OnClick(R.id.fab_profile)
-    public void onClickFabProfile() {
-        String[] profileOptions = getResources().getStringArray(R.array.profile_stranger_options);
-        ArrayList<String> options = new ArrayList<>(Arrays.asList(profileOptions));
-        options.add(getRelationshipStatusString());
-
-        mActionDialog = new MaterialDialog.Builder(this)
-                .items(options)
-                .itemsCallback(new MaterialDialog.ListCallback() {
-                    @Override
-                    public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                        Log.d(TAG, "onSelection: which: " + which);
-                        switch (which) {
-                            case 0:
-                                launchChatActivity();
-                                break;
-                            case 1:
-                                onClickRelationshipAction();
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }).show();
-    }
-
-    private void launchChatActivity() {
-        Intent intent = new Intent(ProfileActivity.this, ChatActivity.class);
-        intent.putExtra(ChatActivity.KEY_CHAT_PARTNER_UID, mDisplayedUserUID);
-        startActivity(intent);
-    }
-
-    private String getRelationshipStatusString() {
-        String relationshipStatus = "UNKNOWN";
-        if (mRelationship == null) {
-            relationshipStatus = "Follow";
-        } else {
-            if (mRelationship.getStatus() == Constants.RS_FRIENDS) {
-                relationshipStatus = "Delete from friends";
-            } else if (mRelationship.getStatus() == Constants.RS_PENDING) {
-                if (mRelationship.getLastActionUserUID().equals(mAuthenticatedUserUID)) {
-                    relationshipStatus = "Unfollow";
-                } else {
-                    relationshipStatus = "Accept follow request";
-                }
-            }
-        }
-        return relationshipStatus;
-    }
-
-    private void onClickRelationshipAction() {
-        if (mRelationship == null) {
-            setRelationshipStatus(Constants.RS_PENDING);
-            setFollowers(mDisplayedUserUID, mAuthenticatedUserUID, true);
-        } else {
-            switch (mRelationship.getStatus()) {
-                /** users were friends, but now they are not*/
-                case Constants.RS_FRIENDS:
-                    setRelationshipStatus(Constants.RS_PENDING);
-                    setFriends(mAuthenticatedUserUID, mDisplayedUserUID, false);
-                    setFriends(mDisplayedUserUID, mAuthenticatedUserUID, false);
-                    setFollowers(mAuthenticatedUserUID, mDisplayedUserUID, true);
-                    break;
-
-                case Constants.RS_PENDING:
-                    if (mRelationship.getLastActionUserUID().equals(mAuthenticatedUserUID)) {
-                        setRelationshipStatus(Constants.RS_UNKNOWN);
-                        setFollowers(mDisplayedUserUID, mAuthenticatedUserUID, false);
-                    } else {
-                        setRelationshipStatus(Constants.RS_FRIENDS);
-                        setFriends(mAuthenticatedUserUID, mDisplayedUserUID, true);
-                        setFriends(mDisplayedUserUID, mAuthenticatedUserUID, true);
-                        setFollowers(mAuthenticatedUserUID, mDisplayedUserUID, false);
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
-    private void setFriends(String firstUserUID, String secondUserUID, boolean areFriends) {
-        database.child(Constants.F_USERS_FRIENDS)
-                .child(firstUserUID)
-                .child(secondUserUID).setValue((areFriends) ? true : null);
-    }
-
-    /** sets*/
-    private void setFollowers(String userToFollowUID, String followerUID, boolean areFollowers) {
-        database.child(Constants.F_USERS_FOLLOWERS)
-                .child(userToFollowUID)
-                .child(followerUID).setValue((areFollowers) ? true : null);
-        database.child(Constants.F_USERS_FOLLOWING)
-                .child(followerUID)
-                .child(userToFollowUID).setValue((areFollowers) ? true : null);
-    }
-
-    private void setRelationshipStatus(int status) {
-        mRelationship = new Relationship(status,
-                new Date().getTime(),
-                mAuthenticatedUserUID,);
-        if (status == Constants.RS_UNKNOWN) {
-            mRelationship = null;
-        }
-        database.child(Constants.F_RELATIONSHIPS)
-                .child(mAuthenticatedUserUID)
-                .child(mDisplayedUserUID)
-                .setValue(mRelationship);
-        database.child(Constants.F_RELATIONSHIPS)
-                .child(mDisplayedUserUID)
-                .child(mAuthenticatedUserUID)
-                .setValue(mRelationship);
-        mActionDialog.dismiss();
-    }
-
     @Override
     protected void onResume() {
         super.onResume();
-        if (mDisplayedUserUID != null) {
-            database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
-                    .addValueEventListener(mAuthenticatedUserListener);
-            database.child(Constants.F_USERS).child(mDisplayedUserUID)
-                    .addValueEventListener(mDisplayedUserListener);
-            database.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
-                    .addValueEventListener(locationListener);
-            database.child(Constants.F_RELATIONSHIPS)
-                    .child(mAuthenticatedUserUID)
-                    .child(mDisplayedUserUID)
-                    .addValueEventListener(mRelationshipListener);
-        }
+        mProfilePresenter.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mGoogleApiClient.disconnect();
-        database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
-                .removeEventListener(mAuthenticatedUserListener);
-        database.child(Constants.F_USERS).child(mDisplayedUserUID)
-                .removeEventListener(mDisplayedUserListener);
-        database.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
-                .removeEventListener(locationListener);
-        database.child(Constants.F_RELATIONSHIPS)
-                .child(mAuthenticatedUserUID)
-                .child(mDisplayedUserUID)
-                .removeEventListener(mRelationshipListener);
+        mProfilePresenter.onPause();
     }
 
-    class AddressResultReceiver extends ResultReceiver {
-        public AddressResultReceiver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        protected void onReceiveResult(final int resultCode, final Bundle resultData) {
-            if (resultCode == FetchAddressIntentService.SUCCESS_RESULT) {
-                final Address address = resultData.getParcelable(FetchAddressIntentService.RESULT_ADDRESS);
-                runOnUiThread(new Runnable() {
+    @Override
+    public void onDisplayedUserChanged(User user) {
+        collapsingToolbar.setTitle(user.getFullName());
+        imageLoader.loadImage(user.getAvatarURL(), displayImageOptions, new SimpleImageLoadingListener() {
+            @Override
+            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                super.onLoadingComplete(imageUri, view, loadedImage);
+                imageLoader.displayImage(imageUri, ivAvatar, displayImageOptions);
+                imageLoader.displayImage(imageUri, ivAvatarShared, displayImageOptions, new SimpleImageLoadingListener() {
                     @Override
-                    public void run() {
-                        Log.d(TAG, "run: address: " + address.toString());
-                        String featureName = address.getFeatureName();
-                        tvAddress.setText(featureName);
+                    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                        super.onLoadingComplete(imageUri, view, loadedImage);
+                        setStatusBarColor(loadedImage);
+                        supportStartPostponedEnterTransition();
                     }
                 });
-            } else if (resultCode == FetchAddressIntentService.FAILURE_RESULT) {
-                String errorMessage = resultData.getString(FetchAddressIntentService.RESULT_DATA_KEY);
-                tvAddress.setText(errorMessage);
             }
-        }
+        });
     }
+
+    @Override
+    public void onLastActiveChanged(String lastActive) {
+        tvLastActive.setText(lastActive);
+    }
+
+    @Override
+    public void onAddressFetchSuccess(String address) {
+        tvAddress.setText(address);
+    }
+
+    @Override
+    public void onAddressFetchFailure(String errorMessage) {
+        tvAddress.setText(errorMessage);
+    }
+
+    @OnClick(R.id.fab_profile)
+    public void onClickFAB() {
+        mProfilePresenter.onClickFAB();
+    }
+
+    @Override
+    public void onComplete(String message) {
+
+    }
+
+    @Override
+    public void onError(String errorMessage) {
+        makeToast(errorMessage);
+    }
+
+    @Override
+    public void onError(Exception e) {
+
+    }
+
+    @Override
+    public void onDatabaseError(DatabaseError databaseError) {
+        makeToast(databaseError.getMessage());
+    }
+
 
     @Override
     public void onBackPressed() {
         //super.onBackPressed();
-        supportFinishAfterTransition();
+        mProfilePresenter.onBackPressed();
     }
 
     /**

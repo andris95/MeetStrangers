@@ -2,30 +2,54 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rl_comment"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="@dimen/_16sdp">
-    <com.mikhaellopez.circularimageview.CircularImageView
-        android:layout_width="@dimen/_40sdp"
-        android:layout_height="@dimen/_40sdp"
-        app:civ_border="false"
-        android:layout_marginRight="@dimen/_8sdp"
-        android:id="@+id/iv_comment_author_avatar"
-        android:src="@drawable/lawrence"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/tv_comment_author_name"
-        android:layout_toRightOf="@+id/iv_comment_author_avatar"
-        android:textSize="@dimen/_14sdp"
-        android:text="Andras Sanislo"
-        android:textStyle="bold"/>
-    <TextView
+    android:background="@drawable/comment_background"
+    android:stateListAnimator="@animator/comment_selection"
+    android:padding="@dimen/_8sdp">
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/tv_comment_text"
-        android:text="@string/lorem"
-        android:layout_below="@+id/tv_comment_author_name"
-        android:layout_toRightOf="@+id/iv_comment_author_avatar"/>
+        android:id="@+id/rl_comment_body">
+        <com.mikhaellopez.circularimageview.CircularImageView
+            android:layout_width="@dimen/_36sdp"
+            android:layout_height="@dimen/_36sdp"
+            app:civ_border="false"
+            android:layout_marginRight="@dimen/_8sdp"
+            android:id="@+id/iv_comment_author_avatar"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_comment_author_name"
+            android:layout_toRightOf="@+id/iv_comment_author_avatar"
+            android:textSize="@dimen/_12sdp"
+            android:textStyle="bold"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_comment_text"
+            android:text="@string/lorem"
+            android:layout_below="@+id/tv_comment_author_name"
+            android:layout_toRightOf="@+id/iv_comment_author_avatar"/>
+    </RelativeLayout>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/rl_comment_body"
+        android:id="@+id/rl_comment_footer">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/_8sdp"
+            android:id="@+id/iv_liked_comment"
+            android:layout_alignParentRight="true"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="@dimen/_8sdp"
+            android:id="@+id/iv_like_comment"
+            android:layout_alignParentRight="true"/>
+    </RelativeLayout>
 </RelativeLayout>
