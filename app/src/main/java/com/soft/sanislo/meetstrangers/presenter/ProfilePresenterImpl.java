@@ -31,7 +31,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.ChatActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
-import com.soft.sanislo.meetstrangers.model.Comment;
+import com.soft.sanislo.meetstrangers.model.CommentModel;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.Relationship;
@@ -205,14 +205,14 @@ public class ProfilePresenterImpl implements ProfilePresenter {
                 .child(post.getAuthorUID())
                 .child(post.getKey());
         String newCommentKey = newCommentRef.push().getKey();
-        Comment comment = new Comment(newCommentKey,
+        CommentModel commentModel = new CommentModel(newCommentKey,
                 post.getKey(),
                 mAuthenticatedUserUID,
                 mAuthenticatedUser.getFullName(),
                 mAuthenticatedUser.getAvatarURL(),
                 commentText,
                 new Date().getTime());
-        newCommentRef.child(newCommentKey).setValue(comment)
+        newCommentRef.child(newCommentKey).setValue(commentModel, 0 - commentModel.getTimestamp())
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
@@ -365,23 +365,23 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     @Override
-    public void likeComment(Comment comment) {
-        if (comment.getLikedUsersUIDs() == null) comment.setLikedUsersUIDs(new HashMap<String, Boolean>());
-        comment.getLikedUsersUIDs().put(mAuthenticatedUserUID, isCommentLikedByUser(comment) ? null
+    public void likeComment(CommentModel commentModel) {
+        if (commentModel.getLikedUsersUIDs() == null) commentModel.setLikedUsersUIDs(new HashMap<String, Boolean>());
+        commentModel.getLikedUsersUIDs().put(mAuthenticatedUserUID, isCommentLikedByUser(commentModel) ? null
             : true);
 
         HashMap<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("likedUsersUIDs", comment.getLikedUsersUIDs());
+        childUpdates.put("likedUsersUIDs", commentModel.getLikedUsersUIDs());
         Utils.getDatabase().getReference()
                 .child(Constants.F_POSTS_COMMENTS)
-                .child(comment.getAuthorUID())
-                .child(comment.getPostKey())
-                .child(comment.getCommentKey())
+                .child(commentModel.getAuthorUID())
+                .child(commentModel.getPostKey())
+                .child(commentModel.getCommentKey())
                 .updateChildren(childUpdates);
     }
 
-    private boolean isCommentLikedByUser(Comment comment) {
-        HashMap<String, Boolean> likers = comment.getLikedUsersUIDs();
+    private boolean isCommentLikedByUser(CommentModel commentModel) {
+        HashMap<String, Boolean> likers = commentModel.getLikedUsersUIDs();
         if (likers == null) return false;
         return likers.containsKey(mAuthenticatedUserUID);
     }

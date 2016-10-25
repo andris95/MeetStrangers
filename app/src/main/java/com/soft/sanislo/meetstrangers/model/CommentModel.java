@@ -5,7 +5,7 @@ import java.util.HashMap;
 /**
  * Created by root on 09.10.16.
  */
-public class Comment {
+public class CommentModel {
     private String commentKey;
     private String postKey;
     private String authorUID;
@@ -16,9 +16,9 @@ public class Comment {
     private HashMap<String, Boolean> likedUsersUIDs;
     private long timestamp;
 
-    public Comment () {}
+    public CommentModel() {}
 
-    public Comment(String commentKey, String postKey, String authorUID, String authorFullName, String authorAvatarURL, String text, long timestamp) {
+    public CommentModel(String commentKey, String postKey, String authorUID, String authorFullName, String authorAvatarURL, String text, long timestamp) {
         this.commentKey = commentKey;
         this.postKey = postKey;
         this.authorUID = authorUID;
@@ -86,7 +86,7 @@ public class Comment {
 
     @Override
     public String toString() {
-        return "Comment{" +
+        return "CommentModel{" +
                 "commentKey='" + commentKey + '\'' +
                 ", postKey='" + postKey + '\'' +
                 ", authorUID='" + authorUID + '\'' +

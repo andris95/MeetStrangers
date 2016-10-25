@@ -54,6 +54,9 @@
         <activity
             android:name=".activity.ChatHeaderActivity"
             android:configChanges="orientation|screenSize"/>
+        <activity
+            android:name=".test.TestActivity"
+            android:configChanges="orientation|screenSize"/>
         <service
             android:name=".service.LocationService"
             android:exported="false"/>

@@ -189,7 +189,12 @@ public abstract class BaseActivity extends AppCompatActivity implements
 
     }
 
-    public void makeToast(String text) {
+    protected void makeToast(String text) {
         Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+    }
+
+    protected void startChoosenActivity(Class<?> activtyClass) {
+        Intent intent = new Intent(getApplicationContext(), activtyClass);
+        startActivity(intent);
     }
 }

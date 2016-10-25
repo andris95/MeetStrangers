@@ -29,6 +29,7 @@ import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.test.TestActivity;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
@@ -119,6 +120,8 @@ public class MainActivity extends BaseActivity {
                 .withName("Users");
         SecondaryDrawerItem itemSignOut = new SecondaryDrawerItem()
                 .withName(getString(R.string.btn_sign_out));
+        SecondaryDrawerItem testItem = new SecondaryDrawerItem()
+                .withName("TestActivity");
         drawerBuilder = new DrawerBuilder()
                 .withActivity(this)
                 .withAccountHeader(accountHeader)
@@ -127,7 +130,8 @@ public class MainActivity extends BaseActivity {
                         primaryItemMessages,
                         primaryItemFriends,
                         new DividerDrawerItem(),
-                        itemSignOut
+                        itemSignOut,
+                        testItem
                 )
                 .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
                     @Override
@@ -143,30 +147,23 @@ public class MainActivity extends BaseActivity {
         Log.d(TAG, "onItemClick: position clicked " + position);
         switch (position) {
             case 2:
-                startChatHeaderActivity();
+                startChoosenActivity(ChatHeaderActivity.class);
                 mDrawer.closeDrawer();
                 return true;
             case 3:
-                startRelationshipsActivity();
+                startChoosenActivity(RelationshipsActivity.class);
                 mDrawer.closeDrawer();
                 return true;
             case 5:
                 signOut();
                 mDrawer.closeDrawer();
                 return true;
+            case 6:
+                startChoosenActivity(TestActivity.class);
             default:
                 mDrawer.closeDrawer();
                 return false;
         }
-    }
-
-    private void startRelationshipsActivity() {
-        startActivity(new Intent(getApplicationContext(), RelationshipsActivity.class));
-    }
-
-    private void startChatHeaderActivity() {
-        Intent intent = new Intent(getApplicationContext(), ChatHeaderActivity.class);
-        startActivity(intent);
     }
 
     private ProfileDrawerItem initProfileDrawerItem(User user) {

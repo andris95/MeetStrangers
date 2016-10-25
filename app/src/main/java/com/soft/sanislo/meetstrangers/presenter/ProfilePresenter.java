@@ -1,9 +1,7 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
-import com.google.firebase.database.DatabaseError;
-import com.soft.sanislo.meetstrangers.model.Comment;
+import com.soft.sanislo.meetstrangers.model.CommentModel;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.model.Relationship;
 import com.soft.sanislo.meetstrangers.model.User;
 
 /**
@@ -12,7 +10,7 @@ import com.soft.sanislo.meetstrangers.model.User;
 
 public interface ProfilePresenter {
     void onDisplayedUserChanged(User user);
-    void likeComment(Comment comment);
+    void likeComment(CommentModel commentModel);
     void likePost(String postKey);
     void addComment(Post post, String commentText);
     void onClickFAB();

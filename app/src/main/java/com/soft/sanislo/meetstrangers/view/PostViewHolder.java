@@ -17,7 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.ImageSize;
@@ -25,14 +25,12 @@ import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListene
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.model.Comment;
+import com.soft.sanislo.meetstrangers.model.CommentModel;
 import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-
-import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -48,9 +46,10 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     private Post mPost;
     private Context mContext;
     private int mPostition;
+    private String mAuthUID;
     private PostAdapter.OnClickListener mOnClickListener;
     private boolean isExpanded;
-    private boolean isFirstTime;
+    private Query commentQuery;
 
     @BindView(R.id.iv_post_author_avatar)
     ImageView ivPostAuthorAvatar;
@@ -109,6 +108,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         mRootView = itemView;
         ButterKnife.bind(this, mRootView);
         rvComments.setLayoutManager(new LinearLayoutManager(mContext));
+        //((SimpleItemAnimator) rvComments.getItemAnimator()).setSupportsChangeAnimations(false);
     }
 
     public void populate(Context context,
@@ -121,6 +121,11 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         mContext = context;
         mPostition = position;
         mOnClickListener = onClickListener;
+        commentQuery = Utils.getDatabase().getReference()
+                .child(Constants.F_POSTS_COMMENTS)
+                .child(mPost.getAuthorUID())
+                .child(mPost.getKey())
+                .orderByPriority();
 
         setLikeIcon();
         setLikeCounter();
@@ -205,18 +210,14 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void showComments() {
-        rlComments.setVisibility(View.VISIBLE);
-        DatabaseReference commentRef = Utils.getDatabase().getReference()
-                .child(Constants.F_POSTS_COMMENTS)
-                .child(mPost.getAuthorUID())
-                .child(mPost.getKey());
-        mCommentAdapter = new CommentAdapter(Comment.class,
+        mCommentAdapter = new CommentAdapter(CommentModel.class,
                 R.layout.item_comment,
                 CommentViewHolder.class,
-                commentRef);
+                commentQuery);
+        mCommentAdapter.setContext(mContext);
         mCommentAdapter.setOnClickListener(new CommentAdapter.OnClickListener() {
             @Override
-            public void onClick(View view, int position, Comment comment) {
+            public void onClick(View view, int position, CommentModel commentModel) {
                 if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
                     int expanedPos = mCommentAdapter.getExpandedPos() == position ? -1 : position;
                     mCommentAdapter.setExpandedPos(expanedPos);
@@ -226,12 +227,13 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
             }
 
             @Override
-            public void onClickLikeComment(Comment comment) {
-                mOnClickListener.onClickLikeComment(comment);
+            public void onClickLikeComment(CommentModel commentModel) {
+                mOnClickListener.onClickLikeComment(commentModel);
             }
         });
         mCommentAdapter.setAuthUID(mAuthUserUID);
         rvComments.setAdapter(mCommentAdapter);
+        rlComments.setVisibility(View.VISIBLE);
     }
 
     private void hideComments() {
@@ -243,7 +245,6 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setLikeIcon() {
-        if (isFirstTime) return;
         ivLikePost.setSelected(mPost.isLikedByUser(mAuthUserUID));
     }
 
@@ -259,11 +260,17 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         this.isExpanded = expanded;
     }
 
+    public void setAuthUID(String authUID) {
+        mAuthUID = authUID;
+    }
+
     private void addComment() {
         String newCommentText = edtNewComment.getText().toString();
         if (!TextUtils.isEmpty(newCommentText)) {
             mOnClickListener.onClickAddComment(mPost, newCommentText);
             edtNewComment.setText("");
+        } else {
+            mOnClickListener.onClickAddComment(mPost, mContext.getString(R.string.lorem));
         }
     }
 

@@ -1,12 +1,13 @@
 package com.soft.sanislo.meetstrangers.adapter;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
-import com.soft.sanislo.meetstrangers.model.Comment;
+import com.soft.sanislo.meetstrangers.model.CommentModel;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 
@@ -14,6 +15,7 @@ import com.soft.sanislo.meetstrangers.view.PostViewHolder;
  * Created by root on 26.09.16.
  */
 public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
+    private static final String TAG = PostAdapter.class.getSimpleName();
     private OnClickListener mOnClickListener;
     private Context mContext;
     private String mAuthUserUID;
@@ -34,6 +36,8 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
     @Override
     protected void populateViewHolder(PostViewHolder viewHolder, Post model, int position) {
         viewHolder.setExpanded(position == mCommentsVisiblePos);
+        viewHolder.setAuthUID(mAuthUserUID);
+        Log.d(TAG, "populateViewHolder: " + mAuthUserUID);
         viewHolder.populate(mContext, model, mAuthUserUID, mOnClickListener, position);
     }
 
@@ -46,7 +50,7 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
         void onClickAddComment(Post post, String commentText);
         void onClickCancelComment();
         void onClickHighlightComment();
-        void onClickLikeComment(Comment comment);
+        void onClickLikeComment(CommentModel commentModel);
     }
 
     public OnClickListener getOnClickListener() {

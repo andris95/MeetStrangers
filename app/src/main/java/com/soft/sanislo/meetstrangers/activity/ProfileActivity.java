@@ -1,75 +1,41 @@
 package com.soft.sanislo.meetstrangers.activity;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
-import android.location.Address;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.ResultReceiver;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.Toolbar;
-import android.transition.Transition;
-import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.afollestad.materialdialogs.MaterialDialog;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.places.PlaceLikelihood;
-import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
-import com.google.android.gms.location.places.Places;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.Transaction;
-import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
-import com.soft.sanislo.meetstrangers.adapter.TransitionListenerAdapter;
-import com.soft.sanislo.meetstrangers.model.Comment;
-import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
+import com.soft.sanislo.meetstrangers.model.CommentModel;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.model.Relationship;
 import com.soft.sanislo.meetstrangers.presenter.ProfilePresenter;
 import com.soft.sanislo.meetstrangers.presenter.ProfilePresenterImpl;
-import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -113,10 +79,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     private FirebaseUser mFirebaseUser;
     private String mAuthenticatedUserUID;
     private String mDisplayedUserUID;
-
-    private Relationship mRelationship;
-    private String mLastActionUID;
-    private String mFirstActionUID;
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
             .cacheInMemory(true)
@@ -198,8 +160,8 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         }
 
         @Override
-        public void onClickLikeComment(Comment comment) {
-            mProfilePresenter.likeComment(comment);
+        public void onClickLikeComment(CommentModel commentModel) {
+            mProfilePresenter.likeComment(commentModel);
         }
     };
 
@@ -238,23 +200,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
             requestWindowFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
             requestWindowFeature(Window.FEATURE_CONTENT_TRANSITIONS);
 
-            Transition revealAvatarTrans = TransitionInflater.from(this).inflateTransition(R.transition.transition_reveal_avatar);
-            getWindow().setEnterTransition(revealAvatarTrans);
-            getWindow().getEnterTransition().addListener(new TransitionListenerAdapter() {
-                @Override
-                public void onTransitionStart(Transition transition) {
-                    super.onTransitionStart(transition);
-                    Log.d(TAG, "onTransitionStart: ");
-                }
-
-                @Override
-                public void onTransitionEnd(Transition transition) {
-                    super.onTransitionEnd(transition);
-                    Log.d(TAG, "onTransitionEnd: ");
-                    ivAvatar.setVisibility(View.VISIBLE);
-                    ivAvatarShared.setVisibility(View.INVISIBLE);
-                }
-            });
             postponeEnterTransition();
         }
     }

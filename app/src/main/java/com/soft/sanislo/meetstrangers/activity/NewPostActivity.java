@@ -75,7 +75,6 @@ public class NewPostActivity extends BaseActivity {
     private String uid;
 
     private Menu mMenu;
-    //private String mPhotoPath;
     private ArrayList<String> mPhotoPathList = new ArrayList<>();
     private Queue<String> mTempPhotoPathQueue;
     private ArrayList<String> postPhotoURLList;
@@ -281,12 +280,6 @@ public class NewPostActivity extends BaseActivity {
 
     private void uploadNextPhotoTask() {
         if (mTempPhotoPathQueue.isEmpty()) {
-            newPost.setPhotoURLList(postPhotoURLList);
-            int i = 0;
-            for (String url : postPhotoURLList) {
-                mMediaFiles.get(i).setUrl(url);
-                i++;
-            }
             newPost.setMediaFiles(mMediaFiles);
             sendPostJSONData();
         } else {

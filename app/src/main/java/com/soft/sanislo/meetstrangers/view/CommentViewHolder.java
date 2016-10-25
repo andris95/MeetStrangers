@@ -1,7 +1,6 @@
 package com.soft.sanislo.meetstrangers.view;
 
 import android.content.Context;
-import android.support.annotation.BoolRes;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -13,11 +12,7 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
-import com.soft.sanislo.meetstrangers.model.Comment;
-import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
-
-import java.util.HashMap;
+import com.soft.sanislo.meetstrangers.model.CommentModel;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -29,7 +24,7 @@ import butterknife.OnClick;
 public class CommentViewHolder extends RecyclerView.ViewHolder {
     private static final String TAG = CommentViewHolder.class.getSimpleName();
     private View mRootView;
-    private Comment mComment;
+    private CommentModel mCommentModel;
     private int mPosition;
     private Context mContext;
     private String mAuthUID;
@@ -55,9 +50,6 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.iv_like_comment)
     ImageView ivLikeComment;
 
-    @BindView(R.id.iv_liked_comment)
-    ImageView ivLikedComment;
-
     @BindView(R.id.rl_comment)
     RelativeLayout rlComment;
 
@@ -70,10 +62,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         ButterKnife.bind(this, mRootView);
     }
 
-    public void populate(Context context, final Comment comment, final int position,
+    public void populate(Context context, final CommentModel commentModel, final int position,
                          CommentAdapter.OnClickListener onClickListener) {
         mContext = context;
-        mComment = comment;
+        mCommentModel = commentModel;
         mPosition = position;
         mOnClickListener = onClickListener;
 
@@ -85,52 +77,41 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setFooterVisibility() {
-        if (isExpanded) {
-            rlCommentFooter.setVisibility(View.VISIBLE);
-        } else {
-            rlCommentFooter.setVisibility(View.GONE);
-        }
-        rlComment.setActivated(isExpanded);
-        //rlComment.setSelected(isExpanded);
+        rlCommentFooter.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
+        rlComment.setSelected(isExpanded);
     }
 
     private void setCommentLikeIcon() {
-        ivLikeComment.setImageResource(mComment.isLikedByUser(mAuthUID) ? R.drawable.heart_red
+        Log.d(TAG, "setCommentLikeIcon: liked by " + mAuthUID + ": " + mCommentModel.isLikedByUser(mAuthUID));
+        ivLikeComment.setImageResource(mCommentModel.isLikedByUser(mAuthUID) ? R.drawable.heart_red
                 : R.drawable.heart_outline);
     }
 
     @OnClick(R.id.rl_comment)
     public void onClickCommentRoot() {
-        mOnClickListener.onClick(rlComment, mPosition, mComment);
+        mOnClickListener.onClick(rlComment, mPosition, mCommentModel);
     }
 
     @OnClick(R.id.iv_like_comment)
     public void onClickLikeComment() {
-        mOnClickListener.onClickLikeComment(mComment);
+        mOnClickListener.onClickLikeComment(mCommentModel);
+        Log.d(TAG, "onClickLikeComment: ");
     }
 
     private void setAuthorAvatar() {
-        imageLoader.displayImage(mComment.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
+        imageLoader.displayImage(mCommentModel.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
     }
 
     private void setAuthorName() {
-        tvAuthorName.setText(mComment.getAuthorFullName());
+        tvAuthorName.setText(mCommentModel.getAuthorFullName());
     }
 
     private void setText() {
-        tvText.setText(mComment.getText());
-    }
-
-    public boolean isExpanded() {
-        return isExpanded;
+        tvText.setText(mCommentModel.getText());
     }
 
     public void setExpanded(boolean expanded) {
         isExpanded = expanded;
-    }
-
-    public String getAuthUID() {
-        return mAuthUID;
     }
 
     public void setAuthUID(String authUID) {
