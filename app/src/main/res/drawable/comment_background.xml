@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector
+<animated-selector
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:constantSize="true"
     android:enterFadeDuration="225"
     android:exitFadeDuration="225">
 
     <item android:state_activated="true"
-          android:drawable="@color/md_white_1000" />
-    <item android:drawable="@android:color/transparent" />
+          android:drawable="@color/md_grey_50" />
+    <item android:state_activated="false"
+        android:drawable="@color/md_white_1000" />
 
-</selector>
+</animated-selector>

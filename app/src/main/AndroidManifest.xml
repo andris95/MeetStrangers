@@ -49,7 +49,9 @@
             android:configChanges="orientation|screenSize"/>
         <activity
             android:name=".activity.ChatActivity"
-            android:configChanges="orientation|screenSize"/>
+            android:configChanges="orientation|screenSize"
+            android:windowSoftInputMode="stateVisible|adjustPan"
+            />
         <activity android:name=".activity.RelationshipsActivity"/>
         <activity
             android:name=".activity.ChatHeaderActivity"
@@ -63,7 +65,6 @@
         <service
             android:name=".service.FetchAddressIntentService"
             android:exported="false"/>
-        <receiver android:name=".activity.ProfileActivity$AddressReciever"></receiver>
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCqS2MtsYCbajcVvqJsnEW_PjnZYOv0jvY"/>

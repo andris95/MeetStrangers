@@ -52,7 +52,7 @@ import com.nostra13.universalimageloader.core.assist.FailReason;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
 import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListener;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
-import com.soft.sanislo.meetstrangers.model.CommentModel;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
@@ -246,14 +246,14 @@ public class ProfileYourselfActivity extends BaseActivity {
                     .child(post.getAuthorUID())
                     .child(post.getKey());
             String newCommentKey = newCommentRef.push().getKey();
-            CommentModel commentModel = new CommentModel(newCommentKey,
+            Comment comment = new Comment(newCommentKey,
                     post.getKey(),
                     user.getUid(),
                     user.getFullName(),
                     user.getAvatarURL(),
                     commentText,
                     new Date().getTime());
-            newCommentRef.child(newCommentKey).setValue(commentModel)
+            newCommentRef.child(newCommentKey).setValue(comment)
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception e) {
@@ -271,7 +271,7 @@ public class ProfileYourselfActivity extends BaseActivity {
         }
 
         @Override
-        public void onClickLikeComment(CommentModel commentModel) {
+        public void onClickLikeComment(Comment comment) {
 
         }
 
@@ -407,7 +407,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                     }
                 });
             } else if (resultCode == FetchAddressIntentService.FAILURE_RESULT) {
-                String errorMessage = resultData.getString(FetchAddressIntentService.RESULT_DATA_KEY);
+                String errorMessage = resultData.getString(FetchAddressIntentService.KEY_ERROR);
                 tvAddress.setText(errorMessage);
             }
         }

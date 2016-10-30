@@ -77,7 +77,6 @@ public class NewPostActivity extends BaseActivity {
     private Menu mMenu;
     private ArrayList<String> mPhotoPathList = new ArrayList<>();
     private Queue<String> mTempPhotoPathQueue;
-    private ArrayList<String> postPhotoURLList;
     private ArrayList<MediaFile> mMediaFiles;
 
     private Post newPost;
@@ -93,6 +92,7 @@ public class NewPostActivity extends BaseActivity {
             databaseError.toException().printStackTrace();
         }
     };
+    private int mCurrentMediaIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -267,14 +267,13 @@ public class NewPostActivity extends BaseActivity {
     private void uploadPostPhotos() {
         mTempPhotoPathQueue = new LinkedList<>();
         mTempPhotoPathQueue.addAll(mPhotoPathList);
-        postPhotoURLList = new ArrayList<>();
         mMediaFiles = new ArrayList<>();
         for (String photoFilePath : mPhotoPathList) {
-            String realPhotoFilePath = Utils.getPath(getApplicationContext(), Uri.parse(photoFilePath));
-            MediaFile mediaFile = ImageUtils.getPhotoSize(realPhotoFilePath);
+            MediaFile mediaFile = ImageUtils.getPhotoSize(getApplicationContext(), photoFilePath);
             mMediaFiles.add(mediaFile);
             Log.d(TAG, "uploadPostPhotos: " + mediaFile);
         }
+        mCurrentMediaIndex = 0;
         uploadNextPhotoTask();
     }
 
@@ -301,7 +300,8 @@ public class NewPostActivity extends BaseActivity {
     private OnSuccessListener<UploadTask.TaskSnapshot> photoUploadSuccessListener = new OnSuccessListener<UploadTask.TaskSnapshot>() {
         @Override
         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-            postPhotoURLList.add(taskSnapshot.getDownloadUrl().toString());
+            mMediaFiles.get(mCurrentMediaIndex).setUrl(taskSnapshot.getDownloadUrl().toString());
+            mCurrentMediaIndex++;
             uploadNextPhotoTask();
         }
     };

@@ -4,52 +4,35 @@ package com.soft.sanislo.meetstrangers.model;
  * Created by root on 04.10.16.
  */
 public class ChatHeader {
-    private String message;
-    private String senderUID;
-    private String senderName;
-    private String senderAvatarURL;
+    private String lastMessage;
+    private String authorUID;
+    private String chatPartnerUID;
     private long timestamp;
 
     public ChatHeader() {}
 
-    public ChatHeader(String message, String senderUID, String senderName, String senderAvatarURL, long timestamp) {
-        this.message = message;
-        this.senderUID = senderUID;
-        this.senderName = senderName;
-        this.senderAvatarURL = senderAvatarURL;
-        this.timestamp = timestamp;
+    public String getLastMessage() {
+        return lastMessage;
     }
 
-    public String getMessage() {
-        return message;
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
+    public String getAuthorUID() {
+        return authorUID;
     }
 
-    public String getSenderUID() {
-        return senderUID;
+    public void setAuthorUID(String authorUID) {
+        this.authorUID = authorUID;
     }
 
-    public void setSenderUID(String senderUID) {
-        this.senderUID = senderUID;
+    public String getChatPartnerUID() {
+        return chatPartnerUID;
     }
 
-    public String getSenderName() {
-        return senderName;
-    }
-
-    public void setSenderName(String senderName) {
-        this.senderName = senderName;
-    }
-
-    public String getSenderAvatarURL() {
-        return senderAvatarURL;
-    }
-
-    public void setSenderAvatarURL(String senderAvatarURL) {
-        this.senderAvatarURL = senderAvatarURL;
+    public void setChatPartnerUID(String chatPartnerUID) {
+        this.chatPartnerUID = chatPartnerUID;
     }
 
     public long getTimestamp() {
@@ -60,14 +43,10 @@ public class ChatHeader {
         this.timestamp = timestamp;
     }
 
-    @Override
-    public String toString() {
-        return "ChatHeader{" +
-                "message='" + message + '\'' +
-                ", senderUID='" + senderUID + '\'' +
-                ", senderName='" + senderName + '\'' +
-                ", senderAvatarURL='" + senderAvatarURL + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
+    public ChatHeader(String lastMessage, String authorUID, String chatPartnerUID, long timestamp) {
+        this.lastMessage = lastMessage;
+        this.authorUID = authorUID;
+        this.chatPartnerUID = chatPartnerUID;
+        this.timestamp = timestamp;
     }
 }

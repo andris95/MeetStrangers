@@ -125,4 +125,21 @@ public class Post {
     public boolean isLikedByUser(String uid) {
         return likedUsersUIDs != null && likedUsersUIDs.containsKey(uid);
     }
+
+    public void setLikedByUser(String uid) {
+        if (likedUsersUIDs == null) {
+            likedUsersUIDs = new HashMap<>();
+            likedUsersUIDs.put(uid, true);
+            likesCount++;
+        } else {
+            boolean isLikedByUser = isLikedByUser(uid);
+            if (isLikedByUser) {
+                likedUsersUIDs.remove(uid);
+                likesCount--;
+            } else {
+                likedUsersUIDs.put(uid, true);
+                likesCount++;
+            }
+        }
+    }
 }

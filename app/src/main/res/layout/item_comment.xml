@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/comment_background"
     android:stateListAnimator="@animator/comment_selection"
     android:padding="@dimen/_8sdp">
     <RelativeLayout

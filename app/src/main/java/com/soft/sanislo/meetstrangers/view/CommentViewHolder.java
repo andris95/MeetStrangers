@@ -1,7 +1,12 @@
 package com.soft.sanislo.meetstrangers.view;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.transition.Transition;
+import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -12,7 +17,7 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
-import com.soft.sanislo.meetstrangers.model.CommentModel;
+import com.soft.sanislo.meetstrangers.model.Comment;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -24,7 +29,7 @@ import butterknife.OnClick;
 public class CommentViewHolder extends RecyclerView.ViewHolder {
     private static final String TAG = CommentViewHolder.class.getSimpleName();
     private View mRootView;
-    private CommentModel mCommentModel;
+    private Comment mComment;
     private int mPosition;
     private Context mContext;
     private String mAuthUID;
@@ -62,10 +67,10 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         ButterKnife.bind(this, mRootView);
     }
 
-    public void populate(Context context, final CommentModel commentModel, final int position,
+    public void populate(Context context, final Comment comment, final int position,
                          CommentAdapter.OnClickListener onClickListener) {
         mContext = context;
-        mCommentModel = commentModel;
+        mComment = comment;
         mPosition = position;
         mOnClickListener = onClickListener;
 
@@ -77,37 +82,41 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setFooterVisibility() {
+        /*rlComment.setBackgroundColor(isExpanded ? mContext.getResources().getColor(R.color.md_blue_grey_50)
+                : mContext.getResources().getColor(R.color.md_white_1000));
+        rlComment.setTranslationZ(isExpanded ? mContext.getResources().getDimension(R.dimen._4sdp)
+                : 0);*/
         rlCommentFooter.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
         rlComment.setSelected(isExpanded);
+        rlComment.setActivated(isExpanded);
     }
 
     private void setCommentLikeIcon() {
-        Log.d(TAG, "setCommentLikeIcon: liked by " + mAuthUID + ": " + mCommentModel.isLikedByUser(mAuthUID));
-        ivLikeComment.setImageResource(mCommentModel.isLikedByUser(mAuthUID) ? R.drawable.heart_red
+        Log.d(TAG, "setCommentLikeIcon: liked by " + mAuthUID + ": " + mComment.isLikedByUser(mAuthUID));
+        ivLikeComment.setImageResource(mComment.isLikedByUser(mAuthUID) ? R.drawable.heart_red
                 : R.drawable.heart_outline);
     }
 
     @OnClick(R.id.rl_comment)
     public void onClickCommentRoot() {
-        mOnClickListener.onClick(rlComment, mPosition, mCommentModel);
+        mOnClickListener.onClick(rlComment, mPosition, mComment);
     }
 
     @OnClick(R.id.iv_like_comment)
     public void onClickLikeComment() {
-        mOnClickListener.onClickLikeComment(mCommentModel);
-        Log.d(TAG, "onClickLikeComment: ");
+        mOnClickListener.onClickLikeComment(mComment);
     }
 
     private void setAuthorAvatar() {
-        imageLoader.displayImage(mCommentModel.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
+        imageLoader.displayImage(mComment.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
     }
 
     private void setAuthorName() {
-        tvAuthorName.setText(mCommentModel.getAuthorFullName());
+        tvAuthorName.setText(mComment.getAuthorFullName());
     }
 
     private void setText() {
-        tvText.setText(mCommentModel.getText());
+        tvText.setText(mComment.getText());
     }
 
     public void setExpanded(boolean expanded) {

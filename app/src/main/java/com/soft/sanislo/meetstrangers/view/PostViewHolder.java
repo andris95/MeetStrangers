@@ -3,9 +3,12 @@ package com.soft.sanislo.meetstrangers.view;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.transition.AutoTransition;
+import android.transition.Transition;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,7 +28,8 @@ import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListene
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.model.CommentModel;
+import com.soft.sanislo.meetstrangers.adapter.TransitionListenerAdapter;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
@@ -48,6 +52,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     private int mPostition;
     private String mAuthUID;
     private PostAdapter.OnClickListener mOnClickListener;
+    private Transition expandCollapse;
     private boolean isExpanded;
     private Query commentQuery;
 
@@ -109,6 +114,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         ButterKnife.bind(this, mRootView);
         rvComments.setLayoutManager(new LinearLayoutManager(mContext));
         //((SimpleItemAnimator) rvComments.getItemAnimator()).setSupportsChangeAnimations(false);
+        rvComments.setItemAnimator(new DefaultItemAnimator());
     }
 
     public void populate(Context context,
@@ -210,14 +216,14 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void showComments() {
-        mCommentAdapter = new CommentAdapter(CommentModel.class,
+        mCommentAdapter = new CommentAdapter(Comment.class,
                 R.layout.item_comment,
                 CommentViewHolder.class,
                 commentQuery);
         mCommentAdapter.setContext(mContext);
         mCommentAdapter.setOnClickListener(new CommentAdapter.OnClickListener() {
             @Override
-            public void onClick(View view, int position, CommentModel commentModel) {
+            public void onClick(View view, int position, Comment comment) {
                 if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
                     int expanedPos = mCommentAdapter.getExpandedPos() == position ? -1 : position;
                     mCommentAdapter.setExpandedPos(expanedPos);
@@ -227,8 +233,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
             }
 
             @Override
-            public void onClickLikeComment(CommentModel commentModel) {
-                mOnClickListener.onClickLikeComment(commentModel);
+            public void onClickLikeComment(Comment comment) {
+                mOnClickListener.onClickLikeComment(comment);
             }
         });
         mCommentAdapter.setAuthUID(mAuthUserUID);

@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
@@ -31,7 +32,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.ChatActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
-import com.soft.sanislo.meetstrangers.model.CommentModel;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.Relationship;
@@ -39,14 +40,12 @@ import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
-import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 
 /**
  * Created by root on 17.10.16.
@@ -75,7 +74,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private ResultReceiver mResultReceiver;
     private MaterialDialog mActionDialog;
 
-    /** ValueEventListener for current logged in user */
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -88,7 +86,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         }
     };
 
-    /** ValueEventListener for displayed mDisplayedUser*/
     private ValueEventListener mDisplayedUserListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -108,7 +105,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         public void onDataChange(DataSnapshot dataSnapshot) {
             mRelationship = dataSnapshot.getValue(Relationship.class);
             if (mRelationship != null) {
-                Log.d(TAG, "onDataChange: " + mRelationship);
                 mFirstActionUID = mRelationship.getFirstActionUserUID();
                 mLastActionUID = mRelationship.getLastActionUserUID();
             }
@@ -124,21 +120,34 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
-            if (locationSnapshot != null) {
-                Intent intent = new Intent(mContext, FetchAddressIntentService.class);
-                intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
-                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
-                        LocationUtils.getLocation(locationSnapshot));
-                mContext.startService(intent);
-
-                String lastActive = DateUtils.getDateDisplay(locationSnapshot.getTimestamp());
-                mProfileView.onLastActiveChanged(lastActive);
-            }
+            startLocationFetcherService(locationSnapshot);
         }
 
         @Override
         public void onCancelled(DatabaseError databaseError) {
             mProfileView.onDatabaseError(databaseError);
+        }
+    };
+    private DatabaseReference mAuthenticatedUserRef;
+    private DatabaseReference mDisplayedUserRef;
+
+    private void startLocationFetcherService(LocationSnapshot locationSnapshot) {
+        if (locationSnapshot != null) {
+            /**Intent intent = new Intent(mContext, FetchAddressIntentService.class);
+            intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
+            intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
+                    LocationUtils.getLocation(locationSnapshot));
+            mContext.startService(intent);*/
+
+            String lastLocationUpdate = DateUtils.getDateDisplay(locationSnapshot.getTimestamp());
+            mProfileView.onLastActiveChanged(lastLocationUpdate);
+        }
+    }
+
+    private OnFailureListener mOnFailureListener = new OnFailureListener() {
+        @Override
+        public void onFailure(@NonNull Exception e) {
+            mProfileView.onError(e);
         }
     };
 
@@ -180,15 +189,16 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         mContext = context;
         mProfileView = profileView;
         mDisplayedUserUID = displayedUserUID;
+        mDisplayedUserRef = mDatabaseRef.child(Constants.F_USERS).child(mDisplayedUserUID);
 
         mFirebaseAuth = FirebaseAuth.getInstance();
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
         mAuthenticatedUserUID = mFirebaseUser.getUid();
-
-        initAddressFetcher();
+        mAuthenticatedUserRef = mDatabaseRef.child(Constants.F_USERS).child(mAuthenticatedUserUID);
+        initPlaceFethcer();
     }
 
-    private void initAddressFetcher() {
+    private void initPlaceFethcer() {
         mGoogleApiClient = new GoogleApiClient
                 .Builder(mContext)
                 .addApi(Places.GEO_DATA_API)
@@ -205,21 +215,15 @@ public class ProfilePresenterImpl implements ProfilePresenter {
                 .child(post.getAuthorUID())
                 .child(post.getKey());
         String newCommentKey = newCommentRef.push().getKey();
-        CommentModel commentModel = new CommentModel(newCommentKey,
+        Comment comment = new Comment(newCommentKey,
                 post.getKey(),
                 mAuthenticatedUserUID,
                 mAuthenticatedUser.getFullName(),
                 mAuthenticatedUser.getAvatarURL(),
                 commentText,
                 new Date().getTime());
-        newCommentRef.child(newCommentKey).setValue(commentModel, 0 - commentModel.getTimestamp())
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        e.printStackTrace();
-                        mProfileView.onError(e.getMessage());
-                    }
-                });
+        newCommentRef.child(newCommentKey).setValue(comment)
+                .addOnFailureListener(mOnFailureListener);
     }
 
     @Override
@@ -365,25 +369,27 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     @Override
-    public void likeComment(CommentModel commentModel) {
-        if (commentModel.getLikedUsersUIDs() == null) commentModel.setLikedUsersUIDs(new HashMap<String, Boolean>());
-        commentModel.getLikedUsersUIDs().put(mAuthenticatedUserUID, isCommentLikedByUser(commentModel) ? null
-            : true);
+    public void likeComment(Comment comment) {
+        mDatabaseRef.child(Constants.F_POSTS_COMMENTS).child(comment.getAuthorUID())
+                .child(comment.getPostKey())
+                .child(comment.getCommentKey())
+                .runTransaction(new Transaction.Handler() {
+                    @Override
+                    public Transaction.Result doTransaction(MutableData mutableData) {
+                        Comment comment = mutableData.getValue(Comment.class);
+                        if (comment == null) return Transaction.success(mutableData);
+                        comment.setLikedByUser(mAuthenticatedUserUID);
+                        mutableData.setValue(comment);
+                        return Transaction.success(mutableData);
+                    }
 
-        HashMap<String, Object> childUpdates = new HashMap<>();
-        childUpdates.put("likedUsersUIDs", commentModel.getLikedUsersUIDs());
-        Utils.getDatabase().getReference()
-                .child(Constants.F_POSTS_COMMENTS)
-                .child(commentModel.getAuthorUID())
-                .child(commentModel.getPostKey())
-                .child(commentModel.getCommentKey())
-                .updateChildren(childUpdates);
-    }
-
-    private boolean isCommentLikedByUser(CommentModel commentModel) {
-        HashMap<String, Boolean> likers = commentModel.getLikedUsersUIDs();
-        if (likers == null) return false;
-        return likers.containsKey(mAuthenticatedUserUID);
+                    @Override
+                    public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
+                        if (databaseError != null) {
+                            mProfileView.onError(databaseError.getMessage());
+                        }
+                    }
+                });
     }
 
     @Override
@@ -397,7 +403,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
                 if (post == null) {
                     return Transaction.success(mutableData);
                 } else {
-                    post = likePost(post);
+                    post.setLikedByUser(mAuthenticatedUserUID);
                     mutableData.setValue(post);
                     mutableData.setPriority(0 - post.getTimestamp());
                     return Transaction.success(mutableData);
@@ -407,27 +413,10 @@ public class ProfilePresenterImpl implements ProfilePresenter {
             @Override
             public void onComplete(DatabaseError databaseError, boolean b, DataSnapshot dataSnapshot) {
                 if (databaseError != null) {
-                    databaseError.toException().printStackTrace();
                     mProfileView.onDatabaseError(databaseError);
                 }
             }
         });
-    }
-
-    private Post likePost(Post post) {
-        long postLikesCount = post.getLikesCount();
-        HashMap<String, Boolean> likedUsersUIDs = post.getLikedUsersUIDs();
-        if (likedUsersUIDs != null &&
-                likedUsersUIDs.containsKey(mAuthenticatedUserUID)) {
-            post.setLikesCount(postLikesCount - 1);
-            likedUsersUIDs.remove(mAuthenticatedUserUID);
-        } else {
-            post.setLikesCount(postLikesCount + 1);
-            if (likedUsersUIDs == null) likedUsersUIDs = new HashMap<>();
-            likedUsersUIDs.put(mAuthenticatedUserUID, true);
-        }
-        post.setLikedUsersUIDs(likedUsersUIDs);
-        return post;
     }
 
     @Override
@@ -437,10 +426,8 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     @Override
     public void onResume() {
-        mDatabaseRef.child(Constants.F_USERS).child(mAuthenticatedUserUID)
-                .addValueEventListener(mAuthenticatedUserListener);
-        mDatabaseRef.child(Constants.F_USERS).child(mDisplayedUserUID)
-                .addValueEventListener(mDisplayedUserListener);
+        mAuthenticatedUserRef.addValueEventListener(mAuthenticatedUserListener);
+        mDisplayedUserRef.addValueEventListener(mDisplayedUserListener);
         mDatabaseRef.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                 .addValueEventListener(mUserLocationListener);
         mDatabaseRef.child(Constants.F_RELATIONSHIPS)
@@ -452,10 +439,8 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     @Override
     public void onPause() {
         mGoogleApiClient.disconnect();
-        mDatabaseRef.child(Constants.F_USERS).child(mAuthenticatedUserUID)
-                .removeEventListener(mAuthenticatedUserListener);
-        mDatabaseRef.child(Constants.F_USERS).child(mDisplayedUserUID)
-                .removeEventListener(mDisplayedUserListener);
+        mAuthenticatedUserRef.removeEventListener(mAuthenticatedUserListener);
+        mDisplayedUserRef.removeEventListener(mDisplayedUserListener);
         mDatabaseRef.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                 .removeEventListener(mUserLocationListener);
         mDatabaseRef.child(Constants.F_RELATIONSHIPS)
@@ -481,11 +466,17 @@ public class ProfilePresenterImpl implements ProfilePresenter {
                 final Address address = resultData.getParcelable(FetchAddressIntentService.RESULT_ADDRESS);
                 if (address != null) {
                     String featureName = address.getFeatureName();
-                    mProfileView.onAddressFetchSuccess(featureName);
+                    if (TextUtils.isEmpty(featureName)) {
+                        mProfileView.onAddressFetchFailure("ERROR");
+                    } else {
+                        mProfileView.onAddressFetchSuccess(featureName);
+                    }
+                    Log.d(TAG, "onReceiveResult: OK_RESULT: " + address);
                 }
             } else if (resultCode == FetchAddressIntentService.FAILURE_RESULT) {
-                String errorMessage = resultData.getString(FetchAddressIntentService.RESULT_DATA_KEY);
+                String errorMessage = resultData.getString(FetchAddressIntentService.KEY_ERROR);
                 mProfileView.onAddressFetchFailure(errorMessage);
+                Log.d(TAG, "onReceiveResult: FAILURE_RESULT: " + errorMessage);
             }
         }
     }

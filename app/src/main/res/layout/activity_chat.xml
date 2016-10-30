@@ -4,43 +4,42 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <RelativeLayout
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_height="?attr/actionBarSize"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/_150sdp"
-        android:id="@+id/rl_chat_header">
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:scaleType="centerCrop"
-            android:id="@+id/iv_chat_partner_bg"/>
+        android:background="@color/primary"
+        app:titleTextColor="@color/md_white_1000">
         <com.mikhaellopez.circularimageview.CircularImageView
-            android:layout_width="@dimen/_64sdp"
-            android:layout_height="@dimen/_64sdp"
+            android:layout_width="?attr/actionBarSize"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/_4sdp"
             android:id="@+id/iv_chat_partner_avatar"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
             android:transitionName="@string/transition_chat_avatar"
             app:civ_border="false"/>
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:minHeight="?attr/actionBarSize"
-            android:layout_width="match_parent"
-            android:title="CHAT"
-            android:layout_height="wrap_content">
-        </android.support.v7.widget.Toolbar>
-    </RelativeLayout>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_chat_partner"
+            android:textColor="@color/md_white_1000"
+            style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"/>
+    </android.support.v7.widget.Toolbar>
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/rl_chat_actions"
-        android:layout_below="@+id/rl_chat_header"
+        android:layout_below="@+id/toolbar"
         android:id="@+id/rv_chat">
     </android.support.v7.widget.RecyclerView>
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/_48sdp"
+        android:layout_height="@dimen/_36sdp"
         android:id="@+id/rl_chat_actions"
         android:layout_alignParentBottom="true">
         <EditText
@@ -48,7 +47,7 @@
             android:layout_height="match_parent"
             android:id="@+id/edt_chat_message"
             android:hint="@string/write_message"/>
-        <ImageView
+        <Button
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:padding="@dimen/_8sdp"
@@ -56,6 +55,6 @@
             android:id="@+id/iv_send_message"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:src="@drawable/send"/>
+            android:text="@string/btn_send"/>
     </RelativeLayout>
 </RelativeLayout>

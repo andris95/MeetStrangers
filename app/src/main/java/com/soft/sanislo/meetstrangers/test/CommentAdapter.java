@@ -2,7 +2,6 @@ package com.soft.sanislo.meetstrangers.test;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,8 +12,6 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.model.CommentModel;
-import com.soft.sanislo.meetstrangers.view.CommentViewHolder;
 
 import java.util.ArrayList;
 
@@ -27,25 +24,20 @@ import butterknife.OnClick;
  */
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentViewHolder> {
-    private ArrayList<Comment> mComments = new ArrayList<>();
+    private ArrayList<CommentTest> mCommentTests = new ArrayList<>();
     private Context mContext;
     private int mExpandedPos = -1;
     private OnClickListener mOnClickListener;
 
-    public CommentAdapter(Context context, ArrayList<Comment> commentModels) {
-        mComments = commentModels;
+    public CommentAdapter(Context context, ArrayList<CommentTest> commentTestModels) {
+        mCommentTests = commentTestModels;
         mContext = context;
     }
 
     @Override
     public CommentViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        Context context = parent.getContext();
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        // Inflate the custom layout
+        LayoutInflater inflater = LayoutInflater.from(mContext);
         View contactView = inflater.inflate(R.layout.item_comment, parent, false);
-
-        // Return a new holder instance
         CommentViewHolder viewHolder = new CommentViewHolder(contactView);
         return viewHolder;
     }
@@ -53,12 +45,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     @Override
     public void onBindViewHolder(CommentViewHolder holder, int position) {
         holder.setExpanded(mExpandedPos == position);
-        holder.populate(mContext, mComments.get(position), position, mOnClickListener);
+        holder.populate(mContext, mCommentTests.get(position), position, mOnClickListener);
     }
 
     @Override
     public int getItemCount() {
-        return mComments.size();
+        return mCommentTests.size();
     }
 
     public void setOnClickListener(OnClickListener onClickListener) {
@@ -74,15 +66,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     }
 
     public interface OnClickListener {
-        void onClick(View view, int position, Comment comment);
-        void onClickLikeComment(Comment comment);
+        void onClick(View view, int position, CommentTest commentTest);
+        void onClickLikeComment(CommentTest commentTest);
     }
 
     class CommentViewHolder extends RecyclerView.ViewHolder {
         private View mRootView;
         private OnClickListener mOnClickListener;
         private boolean isExpanded;
-        private Comment mComment;
+        private CommentTest mCommentTest;
         private int mPosition;
 
         private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
@@ -116,10 +108,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             ButterKnife.bind(this, mRootView);
         }
 
-        public void populate(Context context, final Comment comment, final int position,
+        public void populate(Context context, final CommentTest commentTest, final int position,
                              OnClickListener onClickListener) {
             mContext = context;
-            mComment = comment;
+            mCommentTest = commentTest;
             mPosition = position;
             mOnClickListener = onClickListener;
 
@@ -137,31 +129,31 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         }
 
         private void setCommentLikeIcon() {
-            ivLikeComment.setImageResource(mComment.isLiked() ? R.drawable.heart_red
+            ivLikeComment.setImageResource(mCommentTest.isLiked() ? R.drawable.heart_red
                     : R.drawable.heart_outline);
         }
 
         @OnClick(R.id.rl_comment)
         public void onClickCommentRoot() {
-            mOnClickListener.onClick(rlComment, mPosition, mComment);
+            mOnClickListener.onClick(rlComment, mPosition, mCommentTest);
         }
 
         @OnClick(R.id.iv_like_comment)
         public void onClickLikeComment() {
-            mOnClickListener.onClickLikeComment(mComment);
+            mOnClickListener.onClickLikeComment(mCommentTest);
 
         }
 
         private void setAuthorAvatar() {
-            imageLoader.displayImage(mComment.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
+            imageLoader.displayImage(mCommentTest.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
         }
 
         private void setAuthorName() {
-            tvAuthorName.setText(mComment.getAuthorName());
+            tvAuthorName.setText(mCommentTest.getAuthorName());
         }
 
         private void setText() {
-            tvText.setText(mComment.getText());
+            tvText.setText(mCommentTest.getText());
         }
 
         public void setExpanded(boolean expanded) {

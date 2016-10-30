@@ -7,7 +7,7 @@ public class ChatMessage {
     private String key;
     private String message;
     private String authorUID;
-    private String recipientUID;
+    private String recepientUID;
     private long timestamp;
 
     public ChatMessage() {}
@@ -16,7 +16,7 @@ public class ChatMessage {
         this.key = chatMessageKey;
         this.message = message;
         this.authorUID = authorUID;
-        this.recipientUID = recipientUID;
+        this.recepientUID = recipientUID;
         this.timestamp = timestamp;
     }
 
@@ -36,12 +36,12 @@ public class ChatMessage {
         this.authorUID = authorUID;
     }
 
-    public String getRecipientUID() {
-        return recipientUID;
+    public String getRecepientUID() {
+        return recepientUID;
     }
 
-    public void setRecipientUID(String recipientUID) {
-        this.recipientUID = recipientUID;
+    public void setRecepientUID(String recepientUID) {
+        this.recepientUID = recepientUID;
     }
 
     public long getTimestamp() {

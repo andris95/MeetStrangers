@@ -93,9 +93,7 @@ public class UserListFragment extends android.support.v4.app.Fragment {
         super.onActivityCreated(savedInstanceState);
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        if (firebaseUser != null) {
-            mAuthenticatedUserUID = firebaseUser.getUid();
-        }
+        mAuthenticatedUserUID = firebaseUser.getUid();
         mRelationshipStatus = getArguments().getInt(KEY_RELATIONSHIP_STATUS, USERS_ALL);
 
         setUserListRef();
@@ -121,9 +119,10 @@ public class UserListFragment extends android.support.v4.app.Fragment {
             View sharedView = view.findViewById(R.id.iv_user_avatar);
             Pair<View, String> sharedViews = new Pair<>(sharedView, getString(R.string.transition_user_avatar));
             if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                Bundle sharedBundle = ActivityOptions.makeSceneTransitionAnimation(getActivity(), sharedViews)
+                /**Bundle sharedBundle = ActivityOptions.makeSceneTransitionAnimation(getActivity(), sharedViews)
                         .toBundle();
-                startActivity(intent, sharedBundle);
+                startActivity(intent, sharedBundle);*/
+                startActivity(intent);
             } else {
                 startActivity(intent);
             }

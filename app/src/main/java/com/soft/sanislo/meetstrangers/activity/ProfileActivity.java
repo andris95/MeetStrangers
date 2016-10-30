@@ -1,5 +1,6 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.annotation.TargetApi;
 import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
@@ -10,8 +11,12 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.Toolbar;
+import android.transition.AutoTransition;
+import android.transition.Transition;
 import android.transition.TransitionManager;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.ImageView;
@@ -26,7 +31,8 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
-import com.soft.sanislo.meetstrangers.model.CommentModel;
+import com.soft.sanislo.meetstrangers.adapter.TransitionListenerAdapter;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.presenter.ProfilePresenter;
 import com.soft.sanislo.meetstrangers.presenter.ProfilePresenterImpl;
@@ -57,9 +63,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     @BindView(R.id.iv_avatar)
     ImageView ivAvatar;
 
-    @BindView(R.id.iv_avatar_shared)
-    ImageView ivAvatarShared;
-
     @BindView(R.id.tvProfileLastActive)
     TextView tvLastActive;
 
@@ -88,10 +91,13 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private PostAdapter mPostAdapter;
     private Query mPostQuery;
+    private Transition expandCollapse;
 
+    @TargetApi(21)
     private void setStatusBarColor(Bitmap loadedImage) {
         Palette.from(loadedImage)
-                .setRegion(0, 0,
+                .setRegion(0,
+                        0,
                         loadedImage.getWidth(),
                         64)
                 .generate(new Palette.PaletteAsyncListener() {
@@ -147,21 +153,21 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
 
         @Override
         public void onClickCancelComment() {
-            mPostAdapter.setCommentsVisiblePos(-1);
+            mPostAdapter.setCommentsVisiblePos(RecyclerView.NO_POSITION);
             if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                TransitionManager.beginDelayedTransition(rvPosts);
+                TransitionManager.beginDelayedTransition(rvPosts, expandCollapse);
                 mPostAdapter.notifyDataSetChanged();
             }
         }
 
         @Override
         public void onClickHighlightComment() {
-            TransitionManager.beginDelayedTransition(rvPosts);
+            supportBegindDelayedTransition(rvPosts, expandCollapse);
         }
 
         @Override
-        public void onClickLikeComment(CommentModel commentModel) {
-            mProfilePresenter.likeComment(commentModel);
+        public void onClickLikeComment(Comment comment) {
+            mProfilePresenter.likeComment(comment);
         }
     };
 
@@ -177,11 +183,17 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         mPostAdapter.notifyItemChanged(position);
     }
 
+    private View.OnTouchListener mTouchEater = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            return true;
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        initTransition();
+        //initTransition();
         setContentView(R.layout.activity_profile);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
@@ -193,14 +205,39 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         mProfilePresenter = new ProfilePresenterImpl(this, this, mDisplayedUserUID);
 
         initPosts();
+        initPostTransition();
     }
 
-    private void initTransition() {
+    /**private void initTransition() {
         if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
             requestWindowFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
             requestWindowFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-
             postponeEnterTransition();
+        }
+    }*/
+
+    @TargetApi(21)
+    private void initPostTransition() {
+        expandCollapse = new AutoTransition();
+        expandCollapse.setDuration(225);
+        expandCollapse.addListener(new TransitionListenerAdapter() {
+            @Override
+            public void onTransitionStart(Transition transition) {
+                super.onTransitionStart(transition);
+                rvPosts.setOnTouchListener(mTouchEater);
+            }
+
+            @Override
+            public void onTransitionEnd(Transition transition) {
+                super.onTransitionEnd(transition);
+                rvPosts.setOnTouchListener(null);
+            }
+        });
+    }
+
+    private void supportBegindDelayedTransition(ViewGroup sceneRoot, Transition transition) {
+        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            TransitionManager.beginDelayedTransition(sceneRoot, transition);
         }
     }
 
@@ -241,8 +278,7 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
             @Override
             public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                 super.onLoadingComplete(imageUri, view, loadedImage);
-                imageLoader.displayImage(imageUri, ivAvatar, displayImageOptions);
-                imageLoader.displayImage(imageUri, ivAvatarShared, displayImageOptions, new SimpleImageLoadingListener() {
+                imageLoader.displayImage(imageUri, ivAvatar, displayImageOptions, new SimpleImageLoadingListener() {
                     @Override
                     public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                         super.onLoadingComplete(imageUri, view, loadedImage);
@@ -301,21 +337,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         mProfilePresenter.onBackPressed();
     }
 
-    /**
-     * Schedules the shared element transition to be started immediately
-     * after the shared element has been measured and laid out within the
-     * activity's view hierarchy. Some common places where it might make
-     * sense to call this method are:
-     *
-     * (1) Inside a Fragment's onCreateView() method (if the shared element
-     *     lives inside a Fragment hosted by the called Activity).
-     *
-     * (2) Inside a Picasso Callback object (if you need to wait for Picasso to
-     *     asynchronously load/scale a bitmap before the transition can begin).
-     *
-     * (3) Inside a LoaderCallback's onLoadFinished() method (if the shared
-     *     element depends on data queried by a Loader).
-     */
     private void scheduleStartPostponedTransition(final View sharedElement) {
         sharedElement.getViewTreeObserver().addOnPreDrawListener(
                 new ViewTreeObserver.OnPreDrawListener() {

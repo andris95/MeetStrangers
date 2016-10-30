@@ -7,7 +7,6 @@ package com.soft.sanislo.meetstrangers.view;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -15,14 +14,9 @@ import android.widget.TextView;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatMessage;
-import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -52,6 +46,7 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
             .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private User mUser;
+    private int mPosition;
 
     public ChatMessageViewHolder(View itemView) {
         super(itemView);
@@ -79,12 +74,13 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
                          ChatMessage chatMessage,
                          final int position) {
         mChatMessage = chatMessage;
+        mPosition = position;
         mUser = user;
 
         setMessage();
+        setMessageDate();
         if (mUser != null) {
             setMessageAuthorAvatar();
-            setMessageDate();
         }
     }
 }

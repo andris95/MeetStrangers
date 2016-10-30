@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<animated-selector xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:state_selected="true">
         <set android:ordering="together">
             <objectAnimator
                 android:propertyName="backgroundColor"
                 android:valueFrom="@color/md_white_1000"
-                android:valueTo="@color/md_white_1000"
+                android:valueTo="@color/md_grey_50"
                 android:duration="@android:integer/config_shortAnimTime"
                 android:valueType="colorType" />
 
@@ -35,4 +35,4 @@
         </set>
     </item>
 
-</selector>
+</animated-selector>

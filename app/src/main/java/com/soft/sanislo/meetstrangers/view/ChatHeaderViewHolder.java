@@ -7,17 +7,18 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.ChatHeaderAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatHeader;
-import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 /**
  * Created by root on 04.10.16.
@@ -36,7 +37,8 @@ public class ChatHeaderViewHolder extends RecyclerView.ViewHolder {
     TextView tvSenderName;
     TextView tvLastMessage;
     TextView tvLastMessageDate;
-    ImageView ivSenderAvatar;
+    ImageView ivChatPartner;
+
     private ChatHeaderAdapter.OnClickListener mOnClickListener;
     private String mChatPartnerKey;
 
@@ -45,7 +47,7 @@ public class ChatHeaderViewHolder extends RecyclerView.ViewHolder {
         tvSenderName = (TextView) itemView.findViewById(R.id.tv_sender_name);
         tvLastMessage = (TextView) itemView.findViewById(R.id.tv_last_message);
         tvLastMessageDate = (TextView) itemView.findViewById(R.id.tv_last_message_date);
-        ivSenderAvatar = (ImageView) itemView.findViewById(R.id.iv_chat_header_avatar);
+        ivChatPartner = (ImageView) itemView.findViewById(R.id.iv_chat_header_avatar);
         mRootView = itemView;
     }
 
@@ -74,7 +76,20 @@ public class ChatHeaderViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setSenderName() {
-        tvSenderName.setText(mChatHeader.getSenderName());
+        Utils.getDatabase().getReference().child(Constants.F_USERS)
+                .child(mChatHeader.getAuthorUID())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User user = dataSnapshot.getValue(User.class);
+                        tvSenderName.setText(user.getFullName());
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     private void setLastMessageDate() {
@@ -83,12 +98,25 @@ public class ChatHeaderViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setLastMessage() {
-        if (!TextUtils.isEmpty(mChatHeader.getMessage())) {
-            tvLastMessage.setText(mChatHeader.getMessage());
+        if (!TextUtils.isEmpty(mChatHeader.getLastMessage())) {
+            tvLastMessage.setText(mChatHeader.getLastMessage());
         }
     }
 
     private void setHeaderAvatar() {
-        imageLoader.displayImage(mChatHeader.getSenderAvatarURL(), ivSenderAvatar, displayImageOptions);
+        Utils.getDatabase().getReference().child(Constants.F_USERS)
+                .child(mChatHeader.getChatPartnerUID())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User user = dataSnapshot.getValue(User.class);
+                        imageLoader.displayImage(user.getAvatarURL(), ivChatPartner, displayImageOptions);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 }

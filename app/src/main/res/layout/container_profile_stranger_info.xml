@@ -13,7 +13,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/_16sdp"
-        android:text="Pobeda street, 228"
         android:textSize="18sp"
         android:id="@+id/tvProfileLocation"
         android:layout_toRightOf="@+id/ivProfileMarker"

@@ -13,9 +13,6 @@ import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * Created by root on 02.10.16.
  */
@@ -28,7 +25,7 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
     private String mChatPartnerUID;
 
     private static final int VIEW_TYPE_YOURSELF = 333;
-    private static final int VIEW_TYPE_STRANGER = 444;
+    private static final int VIEW_TYPE_PARTNER = 444;
     private LayoutInflater mLayoutInflater;
 
     public ChatMessageAdapter(Class<ChatMessage> modelClass, int modelLayout, Class<ChatMessageViewHolder> viewHolderClass, Query ref, Context context) {
@@ -59,7 +56,7 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
             case VIEW_TYPE_YOURSELF:
                 view = mLayoutInflater.inflate(R.layout.item_chat_message, parent, false);
                 break;
-            case VIEW_TYPE_STRANGER:
+            case VIEW_TYPE_PARTNER:
                 view = mLayoutInflater.inflate(R.layout.item_chat_message_stranger, parent, false);
                 break;
             default:
@@ -73,22 +70,30 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
         if (mAuthenticatedUID.equals(getItem(position).getAuthorUID())) {
             return VIEW_TYPE_YOURSELF;
         } else {
-            return VIEW_TYPE_STRANGER;
+            return VIEW_TYPE_PARTNER;
         }
     }
 
     public void setAuthenticatedUser(User authenticatedUser) {
         mAuthenticatedUser = authenticatedUser;
-        notifyDataSetChanged();
+        notifyIfNeedTo();
     }
 
     public void setChatPartnerUser(User chatPartnerUser) {
         mChatPartnerUser = chatPartnerUser;
-        notifyDataSetChanged();
+        notifyIfNeedTo();
     }
 
     public void setChatPartnerUID(String chatPartnerUID) {
         mChatPartnerUID = chatPartnerUID;
+    }
+
+    private void notifyIfNeedTo() {
+        if (isNotifyNeeded()) notifyDataSetChanged();
+    }
+
+    private boolean isNotifyNeeded() {
+        return mChatPartnerUser != null && mAuthenticatedUser != null;
     }
 
     public void setAuthenticatedUID(String authenticatedUID) {

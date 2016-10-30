@@ -4,14 +4,14 @@ package com.soft.sanislo.meetstrangers.test;
  * Created by root on 25.10.16.
  */
 
-public class Comment {
+public class CommentTest {
     private String authorAvatarURL;
     private String authorName;
     private String text;
     boolean isLiked;
     private long timestamp;
 
-    public Comment(String authorAvatarURL, String authorName, String text, boolean isLiked, long timestamp) {
+    public CommentTest(String authorAvatarURL, String authorName, String text, boolean isLiked, long timestamp) {
         this.authorAvatarURL = authorAvatarURL;
         this.authorName = authorName;
         this.text = text;

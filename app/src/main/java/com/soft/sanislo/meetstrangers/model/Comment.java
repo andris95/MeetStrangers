@@ -1,11 +1,15 @@
 package com.soft.sanislo.meetstrangers.model;
 
+import com.google.firebase.database.DatabaseReference;
+import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
+
 import java.util.HashMap;
 
 /**
  * Created by root on 09.10.16.
  */
-public class CommentModel {
+public class Comment {
     private String commentKey;
     private String postKey;
     private String authorUID;
@@ -16,9 +20,9 @@ public class CommentModel {
     private HashMap<String, Boolean> likedUsersUIDs;
     private long timestamp;
 
-    public CommentModel() {}
+    public Comment() {}
 
-    public CommentModel(String commentKey, String postKey, String authorUID, String authorFullName, String authorAvatarURL, String text, long timestamp) {
+    public Comment(String commentKey, String postKey, String authorUID, String authorFullName, String authorAvatarURL, String text, long timestamp) {
         this.commentKey = commentKey;
         this.postKey = postKey;
         this.authorUID = authorUID;
@@ -86,7 +90,7 @@ public class CommentModel {
 
     @Override
     public String toString() {
-        return "CommentModel{" +
+        return "Comment{" +
                 "commentKey='" + commentKey + '\'' +
                 ", postKey='" + postKey + '\'' +
                 ", authorUID='" + authorUID + '\'' +
@@ -116,7 +120,26 @@ public class CommentModel {
     }
 
     public boolean isLikedByUser(String uid) {
-        HashMap<String, Boolean> likers = likedUsersUIDs;
-        return likers != null && likers.containsKey(uid);
+        return getLikedUsersUIDs() != null && getLikedUsersUIDs().containsKey(uid);
+    }
+
+    /**
+     * likes or dislikes the comment by user with uid
+     * @param uid
+     */
+    public void setLikedByUser(String uid) {
+        if (getLikedUsersUIDs() == null) {
+            likedUsersUIDs = new HashMap<>();
+            likedUsersUIDs.put(uid, true);
+            likesCount++;
+            return;
+        }
+        if (isLikedByUser(uid)) {
+            likedUsersUIDs.remove(uid);
+            likesCount--;
+        } else {
+            likedUsersUIDs.put(uid, true);
+            likesCount++;
+        }
     }
 }
