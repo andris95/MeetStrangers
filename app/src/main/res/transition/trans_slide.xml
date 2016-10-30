@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transitionSet xmlns:android="http://schemas.android.com/apk/res/android">
+    <slide>
+        <targets>
+            <target android:targetId="@+id/scv_profile_content" />
+        </targets>
+    </slide>
+    <changeBounds/>
+    <changeTransform/>
+    <changeClipBounds/>
+    <changeImageTransform/>
+</transitionSet>
