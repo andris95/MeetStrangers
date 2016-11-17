@@ -40,6 +40,7 @@ import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
+import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
 
@@ -58,6 +59,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     private GoogleApiClient mGoogleApiClient;
     private DatabaseReference mDatabaseRef = Utils.getDatabase().getReference();
+    private DatabaseReference mRelationshipRef;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
 
@@ -90,7 +92,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             mDisplayedUser = dataSnapshot.getValue(User.class);
-            onDisplayedUserChanged(mDisplayedUser);
+            mProfileView.onDisplayedUserChanged(mDisplayedUser);
             mGoogleApiClient.connect();
         }
 
@@ -133,11 +135,11 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     private void startLocationFetcherService(LocationSnapshot locationSnapshot) {
         if (locationSnapshot != null) {
-            /**Intent intent = new Intent(mContext, FetchAddressIntentService.class);
+            Intent intent = new Intent(mContext, FetchAddressIntentService.class);
             intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
             intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
                     LocationUtils.getLocation(locationSnapshot));
-            mContext.startService(intent);*/
+            mContext.startService(intent);
 
             String lastLocationUpdate = DateUtils.getDateDisplay(locationSnapshot.getTimestamp());
             mProfileView.onLastActiveChanged(lastLocationUpdate);
@@ -195,6 +197,9 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         mFirebaseUser = mFirebaseAuth.getCurrentUser();
         mAuthenticatedUserUID = mFirebaseUser.getUid();
         mAuthenticatedUserRef = mDatabaseRef.child(Constants.F_USERS).child(mAuthenticatedUserUID);
+        mRelationshipRef = mDatabaseRef.child(Constants.F_RELATIONSHIPS)
+                .child(mAuthenticatedUserUID)
+                .child(mDisplayedUserUID);
         initPlaceFethcer();
     }
 
@@ -215,15 +220,20 @@ public class ProfilePresenterImpl implements ProfilePresenter {
                 .child(post.getAuthorUID())
                 .child(post.getKey());
         String newCommentKey = newCommentRef.push().getKey();
-        Comment comment = new Comment(newCommentKey,
+        Comment comment = buildNewComment(post, newCommentKey, commentText);
+        newCommentRef.child(newCommentKey).setValue(comment)
+                .addOnFailureListener(mOnFailureListener);
+    }
+
+    private Comment buildNewComment(Post post, String commentKey, String commentText) {
+        Comment comment = new Comment(commentKey,
                 post.getKey(),
                 mAuthenticatedUserUID,
                 mAuthenticatedUser.getFullName(),
                 mAuthenticatedUser.getAvatarURL(),
                 commentText,
                 new Date().getTime());
-        newCommentRef.child(newCommentKey).setValue(comment)
-                .addOnFailureListener(mOnFailureListener);
+        return comment;
     }
 
     @Override
@@ -262,24 +272,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         if (mRelationship == null) {
             return "Follow";
         } else {
-            switch (mRelationship.getStatus()) {
-                case Constants.RS_FRIENDS:
-                    return "Delete from friends";
-                case Constants.RS_PENDING:
-                    if (mLastActionUID.equals(mAuthenticatedUserUID)) {
-                        return "Cancel follow request";
-                    } else {
-                        return "Accept follow request";
-                    }
-                case Constants.RS_DELETED:
-                    if (mLastActionUID.equals(mAuthenticatedUserUID)) {
-                        return "Accept follow request";
-                    } else {
-                        return "Cancel follow request";
-                    }
-                default:
-                    return "UNKNOWN";
-            }
+            return mRelationship.getRelationshipStatusString(mAuthenticatedUserUID);
         }
     }
 
@@ -400,14 +393,11 @@ public class ProfilePresenterImpl implements ProfilePresenter {
             @Override
             public Transaction.Result doTransaction(MutableData mutableData) {
                 Post post = mutableData.getValue(Post.class);
-                if (post == null) {
-                    return Transaction.success(mutableData);
-                } else {
-                    post.setLikedByUser(mAuthenticatedUserUID);
-                    mutableData.setValue(post);
-                    mutableData.setPriority(0 - post.getTimestamp());
-                    return Transaction.success(mutableData);
-                }
+                if (post == null) return Transaction.success(mutableData);
+                post.setLikedByUser(mAuthenticatedUserUID);
+                mutableData.setValue(post);
+                mutableData.setPriority(0 - post.getTimestamp());
+                return Transaction.success(mutableData);
             }
 
             @Override
@@ -420,28 +410,23 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     @Override
-    public void onDisplayedUserChanged(User user) {
-        mProfileView.onDisplayedUserChanged(user);
-    }
-
-    @Override
     public void onResume() {
         mAuthenticatedUserRef.addValueEventListener(mAuthenticatedUserListener);
         mDisplayedUserRef.addValueEventListener(mDisplayedUserListener);
         mDatabaseRef.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
                 .addValueEventListener(mUserLocationListener);
-        mDatabaseRef.child(Constants.F_RELATIONSHIPS)
-                .child(mAuthenticatedUserUID)
-                .child(mDisplayedUserUID)
-                .addValueEventListener(mRelationshipListener);
+        mRelationshipRef.removeEventListener(mRelationshipListener);
     }
 
     @Override
     public void onPause() {
-        mGoogleApiClient.disconnect();
+        if (mGoogleApiClient.isConnected() || mGoogleApiClient.isConnecting()) {
+            mGoogleApiClient.disconnect();
+        }
         mAuthenticatedUserRef.removeEventListener(mAuthenticatedUserListener);
         mDisplayedUserRef.removeEventListener(mDisplayedUserListener);
-        mDatabaseRef.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
+        mDatabaseRef.child(Constants.F_LOCATIONS)
+                .child(mDisplayedUserUID)
                 .removeEventListener(mUserLocationListener);
         mDatabaseRef.child(Constants.F_RELATIONSHIPS)
                 .child(mAuthenticatedUserUID)

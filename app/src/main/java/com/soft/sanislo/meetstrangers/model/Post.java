@@ -15,7 +15,6 @@ public class Post {
     private long timestamp;
     private long likesCount;
     private long commentsCount;
-    private List<String> photoURLList;
     private List<MediaFile> mediaFiles;
     private HashMap<String, Boolean> likedUsersUIDs;
 
@@ -30,7 +29,6 @@ public class Post {
         this.timestamp = timestamp;
         this.likesCount = likesCount;
         this.commentsCount = commentsCount;
-        this.photoURLList = photoURLList;
         this.likedUsersUIDs = likedUsersUIDs;
     }
 
@@ -96,14 +94,6 @@ public class Post {
 
     public void setCommentsCount(long commentsCount) {
         this.commentsCount = commentsCount;
-    }
-
-    public List<String> getPhotoURLList() {
-        return photoURLList;
-    }
-
-    public void setPhotoURLList(List<String> photoURLList) {
-        this.photoURLList = photoURLList;
     }
 
     public HashMap<String, Boolean> getLikedUsersUIDs() {

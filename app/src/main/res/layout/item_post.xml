@@ -100,12 +100,12 @@
             <android.support.v7.widget.RecyclerView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/rv_comments">
+                android:id="@+id/rv_test">
             </android.support.v7.widget.RecyclerView>
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/rv_comments"
+                android:layout_below="@+id/rv_test"
                 android:hint="Add a commentTest"
                 android:id="@+id/edt_new_comment"/>
             <Button

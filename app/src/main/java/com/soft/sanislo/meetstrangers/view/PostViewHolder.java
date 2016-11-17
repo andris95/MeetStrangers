@@ -7,7 +7,6 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.transition.AutoTransition;
 import android.transition.Transition;
 import android.util.Log;
 import android.view.View;
@@ -28,7 +27,6 @@ import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListene
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.adapter.TransitionListenerAdapter;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
@@ -83,7 +81,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.iv_comment_post)
     ImageView ivCommentPost;
 
-    @BindView(R.id.rv_comments)
+    @BindView(R.id.rv_test)
     RecyclerView rvComments;
 
     @BindView(R.id.btn_add_comment)

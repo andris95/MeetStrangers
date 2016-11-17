@@ -94,7 +94,6 @@ public class ProfileEditActivity extends BaseActivity {
             .showImageOnFail(R.drawable.ic_error) // resource or drawable
             */.build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
-    private ImageLoadingProgressListener progressListener;
 
     private ValueEventListener mUserValueEventListener = new ValueEventListener() {
         @Override

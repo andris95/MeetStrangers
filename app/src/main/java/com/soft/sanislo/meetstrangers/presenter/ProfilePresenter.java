@@ -9,7 +9,6 @@ import com.soft.sanislo.meetstrangers.model.User;
  */
 
 public interface ProfilePresenter {
-    void onDisplayedUserChanged(User user);
     void likeComment(Comment comment);
     void likePost(String postKey);
     void addComment(Post post, String commentText);

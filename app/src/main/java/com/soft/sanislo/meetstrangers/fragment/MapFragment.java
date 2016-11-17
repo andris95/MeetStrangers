@@ -1,11 +1,15 @@
 package com.soft.sanislo.meetstrangers.fragment;
 
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Property;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +39,7 @@ import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileYourselfActivity;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.utilities.ImageUtils;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
+import com.soft.sanislo.meetstrangers.view.LatLngEvaluator;
 
 import java.util.HashMap;
 
@@ -50,7 +54,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     private DatabaseReference locationReference = databaseReference.child("locations");
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
-    private String uid;
+    private String mUid;
     private HashMap<String, LocationSnapshot> locationModelMap = new HashMap<>();
     private HashMap<String, Marker> mMarkers = new HashMap<>();
 
@@ -100,7 +104,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        uid = firebaseUser.getUid();
+        mUid = firebaseUser.getUid();
         getMapAsync(this);
     }
 
@@ -141,7 +145,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     }
 
     private void moveCameraToMe(LocationSnapshot locationSnapshot) {
-        if (uid.equals(locationSnapshot.getId())) {
+        if (mUid.equals(locationSnapshot.getId())) {
             Location location = new Location("");//provider name is unecessary
             location.setLatitude(locationSnapshot.getLat());//your coords of course
             location.setLongitude(locationSnapshot.getLng());
@@ -158,7 +162,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         final Marker marker;
         if (mMarkers.containsKey(id)) {
             marker = mMarkers.get(id);
-            marker.setPosition(latLng);
+            animateMarkerMovement(marker, latLng);
         } else {
             marker = mMap.addMarker(options);
         }
@@ -197,12 +201,35 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         }
     }
 
+    private void animateMarkerMovement(Marker markerToAnimate, LatLng endLatLng) {
+        Property<Marker, LatLng> property = Property.of(Marker.class, LatLng.class, "position");
+        ObjectAnimator animator = ObjectAnimator.ofObject(markerToAnimate,
+                property,
+                new LatLngEvaluator(),
+                endLatLng);
+        animator.setDuration(500);
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                Log.d(TAG, "onAnimationStart: ");
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                Log.d(TAG, "onAnimationEnd: ");
+            }
+        });
+        animator.start();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         locationReference.addChildEventListener(locationEventListener);
-        if (mMarkers.containsKey(uid)) {
-            Marker marker = mMarkers.get(uid);
+        if (mMarkers.containsKey(mUid)) {
+            Marker marker = mMarkers.get(mUid);
             LatLng latLng = marker.getPosition();
             Location location = new Location("");
             location.setLatitude(latLng.latitude);
@@ -237,7 +264,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     public boolean onMarkerClick(Marker marker) {
         Log.d(TAG, "onMarkerClick: marker id " + marker.getTitle());
         Intent intent;
-        if (marker.getTitle().equals(uid)) {
+        if (marker.getTitle().equals(mUid)) {
             intent = new Intent(getActivity(), ProfileYourselfActivity.class);
         } else {
             intent = new Intent(getActivity(), ProfileActivity.class);

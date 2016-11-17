@@ -18,6 +18,7 @@ import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
     private static final String TAG = PostAdapter.class.getSimpleName();
     private OnClickListener mOnClickListener;
+    private LoadMoreListener mLoadMoreListener;
     private Context mContext;
     private String mAuthUserUID;
     private int mCommentsVisiblePos = RecyclerView.NO_POSITION;
@@ -43,6 +44,11 @@ public class PostAdapter extends FirebaseRecyclerAdapter<Post, PostViewHolder> {
 
     public void setOnClickListener(OnClickListener onClickListener) {
         mOnClickListener = onClickListener;
+
+    }
+
+    public void setLoadMoreListener(LoadMoreListener loadMoreListener) {
+        mLoadMoreListener = loadMoreListener;
     }
 
     public interface OnClickListener {

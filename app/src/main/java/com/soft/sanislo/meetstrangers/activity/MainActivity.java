@@ -30,6 +30,7 @@ import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.test.TestActivity;
+import com.soft.sanislo.meetstrangers.test.TestTwoActivity;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
@@ -122,6 +123,8 @@ public class MainActivity extends BaseActivity {
                 .withName(getString(R.string.btn_sign_out));
         SecondaryDrawerItem testItem = new SecondaryDrawerItem()
                 .withName("TestActivity");
+        SecondaryDrawerItem testTwoItem = new SecondaryDrawerItem()
+                .withName("TestTwoActivity");
         drawerBuilder = new DrawerBuilder()
                 .withActivity(this)
                 .withAccountHeader(accountHeader)
@@ -131,7 +134,8 @@ public class MainActivity extends BaseActivity {
                         primaryItemFriends,
                         new DividerDrawerItem(),
                         itemSignOut,
-                        testItem
+                        testItem,
+                        testTwoItem
                 )
                 .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
                     @Override
@@ -160,6 +164,12 @@ public class MainActivity extends BaseActivity {
                 return true;
             case 6:
                 startChoosenActivity(TestActivity.class);
+                mDrawer.closeDrawer();
+                return true;
+            case 7:
+                startChoosenActivity(TestTwoActivity.class);
+                mDrawer.closeDrawer();
+                return true;
             default:
                 mDrawer.closeDrawer();
                 return false;

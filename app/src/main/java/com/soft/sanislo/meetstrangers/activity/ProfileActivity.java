@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.widget.NestedScrollView;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,12 +15,14 @@ import android.support.v7.widget.Toolbar;
 import android.transition.AutoTransition;
 import android.transition.Transition;
 import android.transition.TransitionManager;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -75,6 +78,9 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     @BindView(R.id.rv_posts)
     RecyclerView rvPosts;
 
+/*    @BindView(R.id.scv_profile_content)
+    NestedScrollView nscProfileContent;*/
+
     private ProfilePresenter mProfilePresenter;
     private DatabaseReference database = Utils.getDatabase().getReference();
 
@@ -90,6 +96,13 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
             .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private PostAdapter mPostAdapter;
+    private LinearLayoutManager mLinearLayoutManager;
+    private int mTotalItemCount;
+    private int mLastVisibleItemPosition;
+    private int mFirstFullVisItemPos;
+    private int mFirstVisibleItemPos;
+    private int mVisibleItemCount;
+    private static final int VISIBLE_HOLDERS = 10;
     private Query mPostQuery;
     private Transition expandCollapse;
 
@@ -124,8 +137,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         public void onClick(View view, int position, Post post) {
             if (view.getTag() != null) {
                 int tag = (int) view.getTag();
-                makeToast("clicked photo position: " + tag + ", url: " +
-                        post.getPhotoURLList().get(tag));
                 return;
             }
             switch (view.getId()) {
@@ -244,7 +255,8 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     private void initPosts() {
         mPostQuery = database.child(Constants.F_POSTS)
                 .child(mDisplayedUserUID)
-                .orderByPriority();
+                .orderByPriority()
+                .limitToFirst(VISIBLE_HOLDERS);
         mPostAdapter = new PostAdapter(getApplicationContext(),
                 Post.class,
                 R.layout.item_post,
@@ -253,10 +265,34 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         mPostAdapter.setAuthUserUID(mAuthenticatedUserUID);
         mPostAdapter.setOnClickListener(mPostClickListener);
 
-        rvPosts.setLayoutManager(new LinearLayoutManager(this));
-        rvPosts.setNestedScrollingEnabled(false);
+        mLinearLayoutManager = new LinearLayoutManager(getApplicationContext());
+        rvPosts.setLayoutManager(mLinearLayoutManager);
+        //rvPosts.setNestedScrollingEnabled(false);
         ((SimpleItemAnimator) rvPosts.getItemAnimator()).setSupportsChangeAnimations(false);
         rvPosts.setAdapter(mPostAdapter);
+        rvPosts.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                Log.d(TAG, "onScrolled: dx: " + dx + " dy: " + dy);
+                //if (scrollY < oldScrollY) return;
+                mTotalItemCount = mLinearLayoutManager.getItemCount();
+                mVisibleItemCount = mLinearLayoutManager.getChildCount();
+                mFirstVisibleItemPos = mLinearLayoutManager.findFirstVisibleItemPosition();
+                mFirstFullVisItemPos = mLinearLayoutManager.findFirstCompletelyVisibleItemPosition();
+
+                Log.d(TAG, "onScrolled: mTotalItemCount: " + mTotalItemCount);
+                Log.d(TAG, "onScrolled: mVisibleItemCount: " + mVisibleItemCount);
+                Log.d(TAG, "onScrolled: mFirstVisibleItemPos: " + mFirstVisibleItemPos);
+                Log.d(TAG, "onScrolled: mFirstFullVisItemPos: " + mFirstFullVisItemPos);
+                //mLastVisibleItemPosition = mLinearLayoutManager.findLastVisibleItemPosition();
+                //Log.d(TAG, "onScrolled: mLastVisibleItem: " + mLastVisibleItemPosition);
+
+                if (mVisibleItemCount + mFirstVisibleItemPos >= mTotalItemCount) {
+                    Log.d(TAG, "onScrolled: ");
+                }
+            }
+        });
     }
 
     @Override

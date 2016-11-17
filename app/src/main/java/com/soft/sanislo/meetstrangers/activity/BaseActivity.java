@@ -81,7 +81,9 @@ public abstract class BaseActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
 
         firebaseAuth = FirebaseAuth.getInstance();
-
+        if (firebaseAuth.getCurrentUser() != null) {
+            mUID = firebaseAuth.getCurrentUser().getUid();
+        }
         /* Setup the Google API object to allow Google logins */
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
@@ -118,7 +120,6 @@ public abstract class BaseActivity extends AppCompatActivity implements
                         stopService(new Intent(getApplicationContext(), LocationService.class));
                         connectedRef.removeEventListener(onlineListener);
                     } else {
-                        Log.d(TAG, "onAuthStateChanged: ");
                         mUID = firebaseAuth.getCurrentUser().getUid();
                         connectedRef.addValueEventListener(onlineListener);
                     }
@@ -199,6 +200,10 @@ public abstract class BaseActivity extends AppCompatActivity implements
     protected void startChoosenActivity(Class<?> activtyClass) {
         Intent intent = new Intent(getApplicationContext(), activtyClass);
         startActivity(intent);
+    }
+
+    protected String getAuthenticatedUserUID() {
+        return mUID;
     }
 
     protected void setTranslucentStatusBar() {

@@ -74,7 +74,7 @@ public class ChatActivity extends BaseActivity implements ChatView {
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
             .cacheInMemory(true)
             .cacheOnDisk(true)
-            .showImageOnLoading(R.drawable.placeholder)
+            .showImageOnFail(R.drawable.placeholder)
             .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
 
@@ -84,9 +84,11 @@ public class ChatActivity extends BaseActivity implements ChatView {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        supportPostponeEnterTransition();
         setContentView(R.layout.activity_chat);
         ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
@@ -180,17 +182,17 @@ public class ChatActivity extends BaseActivity implements ChatView {
     @Override
     public void onAuthenticatedUserChange(User user) {
         mChatMessageAdapter.setAuthenticatedUser(user);
-        tvChatPartner.setText(user.getFullName());
     }
 
     @Override
     public void onChatPartnerChange(User user) {
         mChatMessageAdapter.setChatPartnerUser(user);
+        tvChatPartner.setText(user.getFullName());
         imageLoader.displayImage(user.getAvatarURL(), ivChatPartnerAvatar, displayImageOptions, new SimpleImageLoadingListener() {
             @Override
             public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                 super.onLoadingComplete(imageUri, view, loadedImage);
-                //transition
+                supportStartPostponedEnterTransition();
             }
 
             @Override
