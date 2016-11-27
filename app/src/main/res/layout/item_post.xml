@@ -6,6 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_marginBottom="@dimen/_16sdp"
     android:elevation="@dimen/_4sdp">
+    
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -14,12 +15,14 @@
             android:layout_height="@dimen/_72sdp"
             android:padding="@dimen/_16sdp"
             android:id="@+id/rl_post_header">
+            
             <com.mikhaellopez.circularimageview.CircularImageView
                 android:layout_width="@dimen/_40sdp"
                 android:layout_height="@dimen/_40sdp"
                 app:civ_border="false"
                 android:id="@+id/iv_post_author_avatar"
                 android:layout_alignParentLeft="true"/>
+            
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -29,6 +32,7 @@
                 android:textStyle="bold"
                 android:layout_toRightOf="@+id/iv_post_author_avatar"
                 android:text="Andras Szaniszlo"/>
+            
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -37,6 +41,7 @@
                 android:layout_below="@+id/tv_post_author"
                 android:id="@+id/tv_post_date"
                 android:text="12:28"/>
+            
             <ImageView
                 android:layout_width="@dimen/_24sdp"
                 android:layout_height="@dimen/_24sdp"
@@ -45,6 +50,7 @@
                 android:layout_alignParentRight="true"
                 android:src="@drawable/ic_more_vert_black_48dp"/>
         </RelativeLayout>
+        
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -56,13 +62,18 @@
                 android:id="@+id/ll_post_photos"
                 android:orientation="vertical">
             </LinearLayout>
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rv_posts_photos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+            </android.support.v7.widget.RecyclerView>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/ll_post_photos"
                 android:padding="@dimen/_16sdp"
-                android:id="@+id/tv_post_text"
-                android:text="@string/lorem"/>
+                android:id="@+id/tv_post_text"/>
         </RelativeLayout>
         <RelativeLayout
             android:layout_width="match_parent"

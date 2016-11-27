@@ -84,6 +84,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.rv_test)
     RecyclerView rvComments;
 
+    @BindView(R.id.)
+
     @BindView(R.id.btn_add_comment)
     Button btnAddComment;
 
@@ -111,7 +113,6 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         mRootView = itemView;
         ButterKnife.bind(this, mRootView);
         rvComments.setLayoutManager(new LinearLayoutManager(mContext));
-        //((SimpleItemAnimator) rvComments.getItemAnimator()).setSupportsChangeAnimations(false);
         rvComments.setItemAnimator(new DefaultItemAnimator());
     }
 
