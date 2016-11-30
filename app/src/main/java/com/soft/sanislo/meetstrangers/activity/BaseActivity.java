@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
@@ -20,17 +19,10 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
 
-import java.util.Date;
-import java.util.HashMap;
+import java.util.List;
 
 /**
  * BaseActivity class is used as a base class for all activities in the app
@@ -40,66 +32,68 @@ import java.util.HashMap;
 public abstract class BaseActivity extends AppCompatActivity implements
         GoogleApiClient.OnConnectionFailedListener {
     private static final String TAG = BaseActivity.class.getSimpleName();
-    protected String mProvider, mEncodedEmail;
-    /* Client used to interact with Google APIs. */
-    private GoogleApiClient mGoogleApiClient;
+    protected GoogleApiClient mGoogleApiClient;
+    protected GoogleSignInOptions gso;
     protected FirebaseAuth.AuthStateListener mAuthListener;
-    private FirebaseAuth firebaseAuth;
+    private FirebaseAuth mAuth;
     private String mUID;
-
-    private DatabaseReference connectedRef = Utils.getDatabase()
-            .getReference(".info/connected");
-    private ValueEventListener onlineListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            boolean isOnline = dataSnapshot.getValue(Boolean.class);
-            Log.d(TAG, "onDataChange: " + mUID + " online: " + isOnline);
-            updateUserOnlineStatus(isOnline);
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
-
-    private void updateUserOnlineStatus(boolean isOnline) {
-        HashMap<String, Object> updateValues = new HashMap<>();
-        updateValues.put("isOnline", isOnline);
-        updateValues.put("lastActiveTimestamp", new Date().getTime());
-
-        if (!TextUtils.isEmpty(mUID)) {
-            Utils.getDatabase().getReference()
-                    .child(Constants.F_USERS)
-                    .child(mUID)
-                    .updateChildren(updateValues);
-        }
-    }
+    private String mProvider;
+    private String mEncodedEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        if (firebaseAuth.getCurrentUser() != null) {
-            mUID = firebaseAuth.getCurrentUser().getUid();
+        mAuth = FirebaseAuth.getInstance();
+        if (mAuth.getCurrentUser() != null) {
+            mUID = mAuth.getCurrentUser().getUid();
         }
+
+        initGoogleApiClient();
+        initSharedPref();
+        initAuthStateListener();
+    }
+
+    private void initAuthStateListener() {
+        if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
+            mAuthListener = new FirebaseAuth.AuthStateListener() {
+                @Override
+                public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                    if (firebaseAuth.getCurrentUser() == null) {
+                        stopService(new Intent(getApplicationContext(), LocationService.class));
+                        logout();
+                        takeUserToLoginScreenOnUnAuth();
+                    } else {
+                        mUID = firebaseAuth.getCurrentUser().getUid();
+                        List<String> providers = firebaseAuth.getCurrentUser().getProviders();
+                        Log.d(TAG, "onAuthStateChanged: providers: " + providers);
+                        Log.d(TAG, "onAuthStateChanged: provider data: " + firebaseAuth.getCurrentUser().getProviderData());
+                    }
+                }
+            };
+        }
+    }
+
+    private void initGoogleApiClient() {
         /* Setup the Google API object to allow Google logins */
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken("568185669722-4o18jpcsav47fa23e8tten89h7j48ji5.apps.googleusercontent.com")
                 .requestEmail()
+                .requestProfile()
                 .build();
 
         /**
          * Build a GoogleApiClient with access to the Google Sign-In API and the
          * options specified by gso.
          */
-
         /* Setup the Google API object to allow Google+ logins */
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
+    }
 
+    private void initSharedPref() {
         /**
          * Getting mProvider and mEncodedEmail from SharedPreferences
          */
@@ -107,32 +101,13 @@ public abstract class BaseActivity extends AppCompatActivity implements
         /* Get mEncodedEmail and mProvider from SharedPreferences, use null as default value */
         mEncodedEmail = sp.getString(Constants.KEY_ENCODED_EMAIL, null);
         mProvider = sp.getString(Constants.KEY_PROVIDER, null);
-
-
-        if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
-            mAuthListener = new FirebaseAuth.AuthStateListener() {
-                @Override
-                public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                    if (firebaseAuth.getCurrentUser() == null) {
-                        Log.d(TAG, "onAuthStateChanged: log out");
-                        logout();
-                        takeUserToLoginScreenOnUnAuth();
-                        stopService(new Intent(getApplicationContext(), LocationService.class));
-                        connectedRef.removeEventListener(onlineListener);
-                    } else {
-                        mUID = firebaseAuth.getCurrentUser().getUid();
-                        connectedRef.addValueEventListener(onlineListener);
-                    }
-                }
-            };
-        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
-            firebaseAuth.addAuthStateListener(mAuthListener);
+            mAuth.addAuthStateListener(mAuthListener);
         }
     }
 
@@ -140,7 +115,7 @@ public abstract class BaseActivity extends AppCompatActivity implements
     public void onStop() {
         super.onStop();
         if (mAuthListener != null) {
-            firebaseAuth.removeAuthStateListener(mAuthListener);
+            mAuth.removeAuthStateListener(mAuthListener);
         }
     }
 
@@ -149,25 +124,18 @@ public abstract class BaseActivity extends AppCompatActivity implements
         super.onDestroy();
         /* Cleanup the AuthStateListener */
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
-            firebaseAuth.removeAuthStateListener(mAuthListener);
+            mAuth.removeAuthStateListener(mAuthListener);
         }
-
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
     /**
      * Logs out the user from their current session and starts LoginActivity.
      * Also disconnects the mGoogleApiClient if connected and provider is Google
      */
     protected void logout() {
-
         /* Logout if mProvider is not null */
         if (mProvider != null) {
             if (mProvider.equals(Constants.GOOGLE_PROVIDER)) {
-
                 /* Logout from Google+ */
                 Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
                         new ResultCallback<Status>() {

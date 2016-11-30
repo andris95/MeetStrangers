@@ -73,4 +73,6 @@
 
     <string name="transition_user_avatar">TRANSITION_USER_AVATAR</string>
     <string name="transition_chat_avatar">TRANSITION_CHAT_AVATAR</string>
+    
+    <string name="google_client_id">568185669722-4o18jpcsav47fa23e8tten89h7j48ji5.apps.googleusercontent.com</string>
 </resources>

@@ -6,6 +6,7 @@ import android.os.Build;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.text.TextUtils;
 import android.transition.Transition;
 import android.util.Log;
@@ -25,6 +26,7 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.ImageSize;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
+import com.soft.sanislo.meetstrangers.adapter.PhotoAdapter;
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Comment;
@@ -84,7 +86,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.rv_test)
     RecyclerView rvComments;
 
-    @BindView(R.id.)
+    @BindView(R.id.rv_posts_photos)
+    RecyclerView rvPostPhotos;
 
     @BindView(R.id.btn_add_comment)
     Button btnAddComment;
@@ -114,6 +117,8 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         ButterKnife.bind(this, mRootView);
         rvComments.setLayoutManager(new LinearLayoutManager(mContext));
         rvComments.setItemAnimator(new DefaultItemAnimator());
+        rvPostPhotos.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
+        rvPostPhotos.setItemAnimator(new DefaultItemAnimator());
     }
 
     public void populate(Context context,
@@ -139,6 +144,7 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
         setPostAuthorAvatar();
         setPostDate();
         setPostPhotosList();
+        //setPostPhotoRecycler();
         setCommentsListVisibility();
     }
 
@@ -186,13 +192,17 @@ public class PostViewHolder extends RecyclerView.ViewHolder {
                 }
             });
             ivPhoto.setTag(counter);
-            ImageSize imageSize = new ImageSize(mediaFile.getWidth(), mediaFile.getHeight());
             imageLoader.displayImage(mediaFile.getUrl(),
                     ivPhoto,
                     displayImageOptions,
                     getPostPhotoLoadingListener(ivPhoto));
             counter++;
         }
+    }
+
+    private void setPostPhotoRecycler() {
+        PhotoAdapter photoAdapter = new PhotoAdapter(mPost.getMediaFiles());
+        rvPostPhotos.setAdapter(photoAdapter);
     }
 
     private SimpleImageLoadingListener getPostPhotoLoadingListener(final ImageView ivPhoto) {

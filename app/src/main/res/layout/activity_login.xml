@@ -48,14 +48,20 @@
         </android.support.design.widget.TextInputLayout>
 
         <!-- Login Button -->
-
         <Button
             android:id="@+id/btn_login"
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dip"
             android:text="@string/btn_login"
             />
+
+        <com.google.android.gms.common.SignInButton
+            android:id="@+id/btn_login_google"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </com.google.android.gms.common.SignInButton>
 
         <Button
             android:id="@+id/btn_reset_password"

@@ -8,6 +8,7 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
@@ -97,11 +98,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     private ImageLoader imageLoader = ImageLoader.getInstance();
     private PostAdapter mPostAdapter;
     private LinearLayoutManager mLinearLayoutManager;
-    private int mTotalItemCount;
-    private int mLastVisibleItemPosition;
-    private int mFirstFullVisItemPos;
-    private int mFirstVisibleItemPos;
-    private int mVisibleItemCount;
     private static final int VISIBLE_HOLDERS = 10;
     private Query mPostQuery;
     private Transition expandCollapse;
@@ -116,17 +112,24 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
                 .generate(new Palette.PaletteAsyncListener() {
                     @Override
                     public void onGenerated(Palette palette) {
-                        int defColor = palette.getVibrantColor(getResources().getColor(R.color.primary_dark));
-                        int color = defColor;
-                        if (palette.getVibrantSwatch() != null) {
-                            color = palette.getVibrantColor(defColor);
+                        int color;
+                        if (palette.getDarkVibrantSwatch() != null) {
+                            color = palette.getDarkVibrantSwatch().getRgb();
+                            Log.d(TAG, "onGenerated: darkmutedswatch: " + color);
+                        } else if (palette.getDarkMutedSwatch() != null) {
+                            color = palette.getDarkMutedSwatch().getRgb();
+                            Log.d(TAG, "onGenerated: darkvibrantswatch: " + color);
+                        } else if (palette.getLightVibrantSwatch() != null) {
+                            color = palette.getLightVibrantSwatch().getRgb();
+                            Log.d(TAG, "onGenerated: lightvibrantswatch: " + color);
+                        } else {
+                            color = palette.getDominantColor(getResources().getColor(R.color.primary_dark));
+                            Log.d(TAG, "onGenerated: default");
                         }
-                        if (palette.getLightVibrantSwatch() != null) {
-                            color = palette.getLightVibrantColor(defColor);
-                        }
-                        if (palette.getDominantSwatch() != null) {
-                            color = palette.getDominantColor(defColor);
-                        }
+                        color = palette.getDominantColor(getResources().getColor(R.color.primary_dark));
+
+                        Log.d(TAG, "onGenerated: " +
+                                palette.getDominantColor(getResources().getColor(R.color.primary_dark)));
                         getWindow().setStatusBarColor(color);
                     }
                 });
@@ -165,10 +168,11 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         @Override
         public void onClickCancelComment() {
             mPostAdapter.setCommentsVisiblePos(RecyclerView.NO_POSITION);
-            if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+            /*if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
                 TransitionManager.beginDelayedTransition(rvPosts, expandCollapse);
                 mPostAdapter.notifyDataSetChanged();
-            }
+            }*/
+            mPostAdapter.notifyDataSetChanged();
         }
 
         @Override
@@ -184,13 +188,13 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
 
     private void onClickCommentPost(int position) {
         if (mPostAdapter.getCommentsVisiblePos() == position) {
-            mPostAdapter.setCommentsVisiblePos(-1);
+            mPostAdapter.setCommentsVisiblePos(RecyclerView.NO_POSITION);
         } else {
             mPostAdapter.setCommentsVisiblePos(position);
         }
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
+        /*if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
             TransitionManager.beginDelayedTransition(rvPosts);
-        }
+        }*/
         mPostAdapter.notifyItemChanged(position);
     }
 
@@ -204,7 +208,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //initTransition();
         setContentView(R.layout.activity_profile);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
@@ -218,14 +221,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         initPosts();
         initPostTransition();
     }
-
-    /**private void initTransition() {
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            requestWindowFeature(Window.FEATURE_ACTIVITY_TRANSITIONS);
-            requestWindowFeature(Window.FEATURE_CONTENT_TRANSITIONS);
-            postponeEnterTransition();
-        }
-    }*/
 
     @TargetApi(21)
     private void initPostTransition() {
@@ -267,32 +262,10 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
 
         mLinearLayoutManager = new LinearLayoutManager(getApplicationContext());
         rvPosts.setLayoutManager(mLinearLayoutManager);
-        //rvPosts.setNestedScrollingEnabled(false);
+        rvPosts.setNestedScrollingEnabled(false);
+        rvPosts.setItemAnimator(new DefaultItemAnimator());
         ((SimpleItemAnimator) rvPosts.getItemAnimator()).setSupportsChangeAnimations(false);
         rvPosts.setAdapter(mPostAdapter);
-        rvPosts.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                Log.d(TAG, "onScrolled: dx: " + dx + " dy: " + dy);
-                //if (scrollY < oldScrollY) return;
-                mTotalItemCount = mLinearLayoutManager.getItemCount();
-                mVisibleItemCount = mLinearLayoutManager.getChildCount();
-                mFirstVisibleItemPos = mLinearLayoutManager.findFirstVisibleItemPosition();
-                mFirstFullVisItemPos = mLinearLayoutManager.findFirstCompletelyVisibleItemPosition();
-
-                Log.d(TAG, "onScrolled: mTotalItemCount: " + mTotalItemCount);
-                Log.d(TAG, "onScrolled: mVisibleItemCount: " + mVisibleItemCount);
-                Log.d(TAG, "onScrolled: mFirstVisibleItemPos: " + mFirstVisibleItemPos);
-                Log.d(TAG, "onScrolled: mFirstFullVisItemPos: " + mFirstFullVisItemPos);
-                //mLastVisibleItemPosition = mLinearLayoutManager.findLastVisibleItemPosition();
-                //Log.d(TAG, "onScrolled: mLastVisibleItem: " + mLastVisibleItemPosition);
-
-                if (mVisibleItemCount + mFirstVisibleItemPos >= mTotalItemCount) {
-                    Log.d(TAG, "onScrolled: ");
-                }
-            }
-        });
     }
 
     @Override
@@ -305,6 +278,12 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     protected void onPause() {
         super.onPause();
         mProfilePresenter.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mPostAdapter.cleanup();
     }
 
     @Override
@@ -369,19 +348,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
 
     @Override
     public void onBackPressed() {
-        //super.onBackPressed();
         mProfilePresenter.onBackPressed();
-    }
-
-    private void scheduleStartPostponedTransition(final View sharedElement) {
-        sharedElement.getViewTreeObserver().addOnPreDrawListener(
-                new ViewTreeObserver.OnPreDrawListener() {
-                    @Override
-                    public boolean onPreDraw() {
-                        sharedElement.getViewTreeObserver().removeOnPreDrawListener(this);
-                        supportStartPostponedEnterTransition();
-                        return true;
-                    }
-                });
     }
 }
