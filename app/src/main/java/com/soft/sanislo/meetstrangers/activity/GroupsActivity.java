@@ -2,7 +2,6 @@ package com.soft.sanislo.meetstrangers.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.BoolRes;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -19,14 +18,11 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.adapter.ChatMessageAdapter;
 import com.soft.sanislo.meetstrangers.adapter.GroupsAdapter;
-import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.Group;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
-import com.soft.sanislo.meetstrangers.view.GroupViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.GroupViewHolder;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -68,7 +64,8 @@ public class GroupsActivity extends BaseActivity {
         mGroupsAdapter.setOnClickListener(new GroupsAdapter.OnClickListener() {
             @Override
             public void onClick(View view, Group group, int position) {
-                Intent intent = new Intent(GroupsActivity.this, GroupProfileActivity.class);
+                Intent intent = new Intent(GroupsActivity.this, GroupEditActivity.class);
+                intent.putExtra(GroupEditActivity.KEY_GROUP_KEY, group.getGroupID());
                 startActivity(intent);
             }
         });
@@ -123,9 +120,23 @@ public class GroupsActivity extends BaseActivity {
         HashMap<String, Boolean> members = new HashMap<>();
         members.put(getAuthenticatedUserUID(), true);
         group.setMembers(members);
+        group.setMembersCount(1);
+
+        setNewGroup(groupKey, group);
+    }
+
+    private void setNewGroup(final String groupKey, Group group) {
         mDatabaseReference.child(Constants.F_GROUPS)
                 .child(groupKey)
-                .setValue(group);
+                .setValue(group)
+                .addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        Intent intent = new Intent(GroupsActivity.this, GroupEditActivity.class);
+                        intent.putExtra(GroupEditActivity.KEY_GROUP_KEY, groupKey);
+                        startActivity(intent);
+                    }
+                });
         mDatabaseReference.child(Constants.F_USERS_GROUPS)
                 .child(getAuthenticatedUserUID())
                 .child(groupKey)

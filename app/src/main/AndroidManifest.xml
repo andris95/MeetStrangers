@@ -59,6 +59,7 @@
         <activity android:name=".activity.RelationshipsActivity"/>
         <activity android:name=".activity.GroupsActivity" />
         <activity android:name=".activity.GroupProfileActivity" />
+        <activity android:name=".activity.GroupEditActivity" />
         <activity
             android:name=".activity.ChatHeaderActivity"
             android:configChanges="orientation|screenSize"/>

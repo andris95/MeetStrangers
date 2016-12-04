@@ -6,17 +6,9 @@ import android.support.v4.widget.NestedScrollView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.widget.LinearLayout;
 
-import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.BaseActivity;
-import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
-import com.soft.sanislo.meetstrangers.model.Comment;
-import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.PostViewHolder;
 
 import java.util.ArrayList;
 import java.util.Date;

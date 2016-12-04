@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers.view;
+package com.soft.sanislo.meetstrangers.viewholders;
 
 /**
  * Created by root on 02.10.16.

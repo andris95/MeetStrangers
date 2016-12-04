@@ -61,7 +61,7 @@ import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.PostViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.UserPostViewHolder;
 
 import java.util.Date;
 
@@ -321,7 +321,7 @@ public class ProfileYourselfActivity extends BaseActivity {
         mPostAdapter = new PostAdapter(getApplicationContext(),
                 Post.class,
                 R.layout.item_post,
-                PostViewHolder.class,
+                UserPostViewHolder.class,
                 mPostRef);
         mPostAdapter.setOnClickListener(mPostClickListener);
         rvPosts.setLayoutManager(new LinearLayoutManager(this));

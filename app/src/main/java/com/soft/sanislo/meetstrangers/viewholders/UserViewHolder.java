@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers.view;
+package com.soft.sanislo.meetstrangers.viewholders;
 
 import android.content.Context;
 import android.os.Build;

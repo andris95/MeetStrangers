@@ -1,14 +1,11 @@
 package com.soft.sanislo.meetstrangers.test;
 
-import android.animation.ObjectAnimator;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
 
 import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.R;
@@ -18,7 +15,7 @@ import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.PostViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.UserPostViewHolder;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -52,7 +49,7 @@ public class TestActivity extends BaseActivity {
                 .child(Constants.F_POSTS)
                 .child(getAuthenticatedUserUID())
                 .limitToFirst(HOLDER_COUNT);
-        mPostAdatper = new PostAdapter(this, Post.class, R.layout.item_post, PostViewHolder.class, postQuery);
+        mPostAdatper = new PostAdapter(this, Post.class, R.layout.item_post, UserPostViewHolder.class, postQuery);
         mPostAdatper.setOnClickListener(new PostAdapter.OnClickListener() {
             @Override
             public void onClick(View view, int position, Post post) {

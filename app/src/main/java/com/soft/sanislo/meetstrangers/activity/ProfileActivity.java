@@ -6,7 +6,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.widget.NestedScrollView;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,10 +19,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -44,7 +40,7 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.PostViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.UserPostViewHolder;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
 
 import butterknife.BindView;
@@ -255,7 +251,7 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         mPostAdapter = new PostAdapter(getApplicationContext(),
                 Post.class,
                 R.layout.item_post,
-                PostViewHolder.class,
+                UserPostViewHolder.class,
                 mPostQuery);
         mPostAdapter.setAuthUserUID(mAuthenticatedUserUID);
         mPostAdapter.setOnClickListener(mPostClickListener);

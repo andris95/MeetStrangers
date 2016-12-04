@@ -10,9 +10,7 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.model.ChatHeader;
-import com.soft.sanislo.meetstrangers.model.User;
-import com.soft.sanislo.meetstrangers.view.ChatHeaderViewHolder;
-import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.ChatHeaderViewHolder;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

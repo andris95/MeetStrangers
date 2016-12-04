@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers.view;
+package com.soft.sanislo.meetstrangers.viewholders;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;

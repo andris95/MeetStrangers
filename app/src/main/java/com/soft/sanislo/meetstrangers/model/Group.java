@@ -7,6 +7,8 @@ import java.util.HashMap;
  */
 
 public class Group {
+    public static final String PROPERTY_GROUP_AVATAR = "groupAvatar";
+    public static final String PROPERTY_GROUP_STATUS = "status";
     private String groupID;
     private String ownerUID;
     private long createdAt;
@@ -91,6 +93,25 @@ public class Group {
 
     public void setGroupAvatar(String groupAvatar) {
         this.groupAvatar = groupAvatar;
+    }
+
+    public boolean isMember(String uid) {
+        return members != null && members.containsKey(uid);
+    }
+
+    public void addMember(String uid) {
+        if (members == null) {
+            members = new HashMap<>();
+        }
+        members.put(uid, true);
+        membersCount++;
+    }
+
+    public void removeMember(String uid) {
+        if (members != null && members.containsKey(uid)) {
+            members.remove(uid);
+            membersCount--;
+        }
     }
 
     @Override

@@ -170,11 +170,6 @@ public class NewPostActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE) {
-            if (data == null) {
-                Log.d(TAG, "onActivityResult: data null");
-                Toast.makeText(getApplicationContext(), "Error choosing photo", Toast.LENGTH_SHORT).show();
-                return;
-            }
             if (data.getClipData() != null) {
                 fetchClipData(data.getClipData());
             } else {

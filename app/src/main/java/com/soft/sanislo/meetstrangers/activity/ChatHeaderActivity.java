@@ -1,31 +1,20 @@
 package com.soft.sanislo.meetstrangers.activity;
 
-import android.app.ActivityOptions;
-import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.ChatHeaderAdapter;
 import com.soft.sanislo.meetstrangers.model.ChatHeader;
-import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.presenter.ChatHeaderPresenter;
 import com.soft.sanislo.meetstrangers.presenter.ChatHeaderPresenterImpl;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ChatHeaderView;
-import com.soft.sanislo.meetstrangers.view.ChatHeaderViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.ChatHeaderViewHolder;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

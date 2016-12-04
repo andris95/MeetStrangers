@@ -2,7 +2,6 @@ package com.soft.sanislo.meetstrangers.test;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +13,7 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
-import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
-import com.soft.sanislo.meetstrangers.view.LoadingViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.LoadingViewHolder;
 
 import java.util.ArrayList;
 

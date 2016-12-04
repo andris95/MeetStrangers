@@ -11,7 +11,7 @@ import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.User;
-import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.ChatMessageViewHolder;
 
 /**
  * Created by root on 02.10.16.

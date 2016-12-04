@@ -8,7 +8,7 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.model.Comment;
-import com.soft.sanislo.meetstrangers.view.CommentViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.CommentViewHolder;
 
 /**
  * Created by root on 09.10.16.

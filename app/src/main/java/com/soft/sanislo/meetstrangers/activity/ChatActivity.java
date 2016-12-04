@@ -28,7 +28,7 @@ import com.soft.sanislo.meetstrangers.presenter.ChatPresenter;
 import com.soft.sanislo.meetstrangers.presenter.ChatPresenterImpl;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.ChatMessageViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.ChatMessageViewHolder;
 import com.soft.sanislo.meetstrangers.view.ChatView;
 
 import java.util.Date;

@@ -5,14 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.MediaFile;
-import com.soft.sanislo.meetstrangers.view.PhotViewHolder;
+import com.soft.sanislo.meetstrangers.viewholders.PhotViewHolder;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.Inflater;
 
 /**
  * Created by root on 27.11.16.

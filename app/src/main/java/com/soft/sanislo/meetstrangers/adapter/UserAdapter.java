@@ -1,19 +1,13 @@
 package com.soft.sanislo.meetstrangers.adapter;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.model.User;
-import com.soft.sanislo.meetstrangers.view.UserViewHolder;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.soft.sanislo.meetstrangers.viewholders.UserViewHolder;
 
 /**
  * Created by root on 10.10.16.

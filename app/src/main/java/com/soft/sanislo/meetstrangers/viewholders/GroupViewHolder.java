@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers.view;
+package com.soft.sanislo.meetstrangers.viewholders;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -9,7 +9,6 @@ import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.GroupsAdapter;
-import com.soft.sanislo.meetstrangers.model.ChatMessage;
 import com.soft.sanislo.meetstrangers.model.Group;
 
 import butterknife.BindView;

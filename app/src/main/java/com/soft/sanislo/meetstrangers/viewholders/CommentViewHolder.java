@@ -1,12 +1,7 @@
-package com.soft.sanislo.meetstrangers.view;
+package com.soft.sanislo.meetstrangers.viewholders;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.transition.Transition;
-import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;

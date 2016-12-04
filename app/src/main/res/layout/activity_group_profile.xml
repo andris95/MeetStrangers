@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/tv_group_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BRAZZERS"/>
+    <TextView
+        android:id="@+id/tv_group_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxHeight="@dimen/_48sdp"
+        android:layout_below="@+id/tv_group_name"
+        android:scrollHorizontally="true"
+        android:lines="1"
+        android:ellipsize="marquee"
+        android:marqueeRepeatLimit="marquee_forever"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:text="@string/lorem"/>
+
+    <com.mikhaellopez.circularimageview.CircularImageView
+        android:id="@+id/iv_group_avatar"
+        android:layout_width="@dimen/_64sdp"
+        android:layout_height="@dimen/_64sdp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        app:civ_border="false"/>
+
+    <TextView
+        android:id="@+id/tv_group_members"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_group_status"
+        android:text="300 members"/>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_groups_posts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/tv_group_members">
+    </android.support.v7.widget.RecyclerView>
+</RelativeLayout>
