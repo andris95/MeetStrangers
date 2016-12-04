@@ -119,6 +119,8 @@ public class MainActivity extends BaseActivity {
                 .withName(getString(R.string.messages));
         PrimaryDrawerItem primaryItemFriends = new PrimaryDrawerItem()
                 .withName("Users");
+        PrimaryDrawerItem primaryItemGroups = new PrimaryDrawerItem()
+                .withName("Groups");
         SecondaryDrawerItem itemSignOut = new SecondaryDrawerItem()
                 .withName(getString(R.string.btn_sign_out));
         SecondaryDrawerItem testItem = new SecondaryDrawerItem()
@@ -132,6 +134,7 @@ public class MainActivity extends BaseActivity {
                         primaryItemMap,
                         primaryItemMessages,
                         primaryItemFriends,
+                        primaryItemGroups,
                         new DividerDrawerItem(),
                         itemSignOut,
                         testItem,
@@ -157,6 +160,9 @@ public class MainActivity extends BaseActivity {
             case 3:
                 startChoosenActivity(RelationshipsActivity.class);
                 mDrawer.closeDrawer();
+                return true;
+            case 4:
+                startChoosenActivity(GroupsActivity.class);
                 return true;
             case 5:
                 signOut();

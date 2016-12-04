@@ -73,7 +73,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
 
         @Override
         public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            Log.d(TAG, "onChildChanged: key: " + dataSnapshot.getKey());
             LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
             locationModelMap.put(locationSnapshot.getId(), locationSnapshot);
             addMarker(locationSnapshot);
@@ -99,7 +98,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate: ");
         initListeners();
 
         firebaseAuth = FirebaseAuth.getInstance();
@@ -110,7 +108,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView: ");
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -139,7 +136,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
             int zoom = 15;
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
-            Log.d(TAG, "moveCamera: ");
             isCameraMoved = true;
         }
     }
@@ -208,19 +204,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
                 new LatLngEvaluator(),
                 endLatLng);
         animator.setDuration(500);
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                super.onAnimationStart(animation);
-                Log.d(TAG, "onAnimationStart: ");
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                super.onAnimationEnd(animation);
-                Log.d(TAG, "onAnimationEnd: ");
-            }
-        });
         animator.start();
     }
 
@@ -246,13 +229,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
-    }
-
-    @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady: ");
         mMap = googleMap;
         mMap.setOnMarkerClickListener(this);
         mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);

@@ -6,6 +6,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 
@@ -89,5 +90,6 @@ public class ChatHeaderActivity extends BaseActivity implements ChatHeaderView {
     public void onDestroy() {
         super.onDestroy();
         mChatHeaderAdapter.cleanup();
+        mChatHeaderAdapter = null;
     }
 }

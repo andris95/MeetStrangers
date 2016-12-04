@@ -28,7 +28,6 @@ public class LocationUtils {
         boolean isSignificantlyNewer = timeDelta > TIME_DELTA;
         boolean isSignificantlyOlder = timeDelta < -TIME_DELTA;
         boolean isNewer = timeDelta > 0;
-        Log.d(TAG, "isNewer: " + isNewer);
 
         // If it's been more than two minutes since the current location, use the new location
         // because the user has likely moved

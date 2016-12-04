@@ -20,11 +20,13 @@ public final class Constants {
     public static final String F_USERS_ALL = "users_all";
     public static final String F_USERS_FOLLOWERS = "users_followers";
     public static final String F_USERS_FOLLOWING = "users_following";
+    public static final String F_USERS_GROUPS = "users_groups";
     public static final String F_LOCATIONS = "locations";
     public static final String F_POSTS = "posts";
     public static final String F_POSTS_COMMENTS = "posts_comments";
     public static final String F_CHATS = "chats";
     public static final String F_CHATS_HEADERS = "chats_headers";
+    public static final String F_GROUPS = "groups";
     public static final String STORAGE_PHOTO_ALBUMS = "photo_albums";
     public static final String STORAGE_ALBUM_PROFILE_PHOTOS = "profile_photos";
 
