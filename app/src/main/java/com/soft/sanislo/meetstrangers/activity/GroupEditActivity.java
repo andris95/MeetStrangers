@@ -2,9 +2,9 @@ package com.soft.sanislo.meetstrangers.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -12,18 +12,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.soft.sanislo.meetstrangers.R;
+import com.soft.sanislo.meetstrangers.adapter.GroupPostAdapter;
+import com.soft.sanislo.meetstrangers.interfaces.PostClickListener;
+import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Group;
+import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.presenter.GroupEditPresenter;
 import com.soft.sanislo.meetstrangers.presenter.GroupEditPresenterImpl;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.GroupEditView;
-
-import java.util.Date;
-import java.util.HashMap;
+import com.soft.sanislo.meetstrangers.viewholders.GroupPostViewHolder;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -52,6 +56,14 @@ public class GroupEditActivity extends BaseActivity implements GroupEditView {
     @BindView(R.id.btn_group_action)
     Button btnGroupAction;
 
+    @BindView(R.id.rv_groups_posts)
+    RecyclerView rvGroupPosts;
+
+    private DatabaseReference mDatabaseReference = Utils.getDatabase().getReference();
+    private Group mGroup;
+    private GroupPostAdapter mGroupPostAdapter;
+    private Query mQuery;
+
     private GroupEditPresenter mGroupEditPresenter;
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
             .cacheInMemory(true)
@@ -69,11 +81,46 @@ public class GroupEditActivity extends BaseActivity implements GroupEditView {
         setSupportActionBar(mToolbar);
 
         mGroupEditPresenter = new GroupEditPresenterImpl(GroupEditActivity.this, getIntent());
-        initGroupsPosts();
     }
 
     private void initGroupsPosts() {
+        mQuery = mDatabaseReference.child(Constants.F_POSTS)
+                .child(mGroup.getGroupID())
+                .orderByPriority();
+        mGroupPostAdapter = new GroupPostAdapter(Post.class,
+                R.layout.item_post,
+                GroupPostViewHolder.class,
+                mQuery);
+        mGroupPostAdapter.setContext(this);
+        mGroupPostAdapter.setPostClickListener(new PostClickListener() {
+            @Override
+            public void onClick(View view, int position, Post post) {
 
+            }
+
+            @Override
+            public void onClickAddComment(Post post, String commentText) {
+
+            }
+
+            @Override
+            public void onClickCancelComment() {
+
+            }
+
+            @Override
+            public void onClickHighlightComment() {
+
+            }
+
+            @Override
+            public void onClickLikeComment(Comment comment) {
+
+            }
+        });
+
+        rvGroupPosts.setLayoutManager(new LinearLayoutManager(this));
+        rvGroupPosts.setAdapter(mGroupPostAdapter);
     }
 
     @OnClick(R.id.tv_group_status)
@@ -146,12 +193,22 @@ public class GroupEditActivity extends BaseActivity implements GroupEditView {
         Log.d(TAG, "bindGroupData: " + group);
         tvGroupName.setText(group.getName());
         mToolbar.setTitle(group.getName());
+        mGroup = group;
+        setGroupStatus(group);
+        setGroupButtonText(group);
+        imageLoader.displayImage(group.getAvatarURL(), ivGroupAvatar, displayImageOptions);
+        if (mGroupPostAdapter == null) initGroupsPosts();
+    }
+
+    private void setGroupStatus(Group group) {
         if (!TextUtils.isEmpty(group.getStatus())) {
             tvGroupStatus.setText(group.getStatus());
         } else {
             tvGroupStatus.setText("Change group status");
         }
-        imageLoader.displayImage(group.getGroupAvatar(), ivGroupAvatar, displayImageOptions);
+    }
+
+    private void setGroupButtonText(Group group) {
         if (group.isMember(getAuthenticatedUserUID())) {
             btnGroupAction.setText("joined");
         } else {

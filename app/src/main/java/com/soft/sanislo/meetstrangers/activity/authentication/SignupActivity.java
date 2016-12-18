@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers.activity;
+package com.soft.sanislo.meetstrangers.activity.authentication;
 
 /**
  * Created by root on 04.09.16.
@@ -18,6 +18,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.soft.sanislo.meetstrangers.R;
+import com.soft.sanislo.meetstrangers.activity.BaseActivity;
+import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 

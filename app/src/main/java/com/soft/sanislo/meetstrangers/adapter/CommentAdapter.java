@@ -1,6 +1,7 @@
 package com.soft.sanislo.meetstrangers.adapter;
 
 import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 
@@ -17,7 +18,7 @@ public class CommentAdapter extends FirebaseRecyclerAdapter<Comment, CommentView
     private static final String TAG = CommentAdapter.class.getSimpleName();
     private OnClickListener mOnClickListener;
     private Context mContext;
-    private int mExpandedPos = -1;
+    private int mExpandedPos = RecyclerView.NO_POSITION;
     private String mAuthUID;
 
     public CommentAdapter(Class<Comment> modelClass, int modelLayout, Class<CommentViewHolder> viewHolderClass, Query ref) {

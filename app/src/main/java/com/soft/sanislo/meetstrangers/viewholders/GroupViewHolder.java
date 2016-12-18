@@ -62,7 +62,7 @@ public class GroupViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setGroupAvatar() {
-        imageLoader.displayImage(mGroup.getGroupAvatar(), ivGroupAvatar, displayImageOptions);
+        imageLoader.displayImage(mGroup.getAvatarURL(), ivGroupAvatar, displayImageOptions);
     }
 
     private void setGroupName() {

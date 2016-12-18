@@ -24,24 +24,15 @@
             android:id="@+id/tv_group_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="NAME"
             android:textSize="@dimen/_20sdp"/>
 
         <TextView
             android:id="@+id/tv_group_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toStartOf="@+id/iv_group_avatar"
-            android:layout_toLeftOf="@+id/iv_group_avatar"
             android:maxHeight="@dimen/_48sdp"
             android:layout_below="@+id/tv_group_name"
-            android:scrollHorizontally="true"
             android:lines="1"
-            android:ellipsize="marquee"
-            android:marqueeRepeatLimit="marquee_forever"
-            android:focusable="true"
-            android:focusableInTouchMode="true"
-            android:text="@string/lorem"
             android:textSize="@dimen/_18sdp"/>
 
         <com.mikhaellopez.circularimageview.CircularImageView

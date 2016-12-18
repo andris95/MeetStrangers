@@ -1,4 +1,4 @@
-package com.soft.sanislo.meetstrangers.activity;
+package com.soft.sanislo.meetstrangers.activity.authentication;
 
 
 
@@ -20,10 +20,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.SignInButton;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
@@ -31,12 +29,17 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.service.LocationService;
+import com.soft.sanislo.meetstrangers.activity.BaseActivity;
+import com.soft.sanislo.meetstrangers.activity.MainActivity;
+import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.Utils;
 
-import java.util.List;
+import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class LoginActivity extends BaseActivity {
 
@@ -62,9 +65,11 @@ public class LoginActivity extends BaseActivity {
     Button btnResetPassword;
 
     public static final String TAG = LoginActivity.class.getSimpleName();
-    private static final int RC_SIGN_IN = 22228;
-    private FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private static final int RC_GOOGLE_SIGNIN = 22228;
+
+    private FirebaseAuth mFirebaseAuth = FirebaseAuth.getInstance();
     private String email, password;
+    private User mUser;
 
     private SharedPreferences mSharedPreferences;
     private GoogleSignInOptions gso;
@@ -93,7 +98,7 @@ public class LoginActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (mAuth.getCurrentUser() != null) {
+        if (mFirebaseAuth.getCurrentUser() != null) {
             startActivity(new Intent(LoginActivity.this, MainActivity.class));
             finish();
         }
@@ -101,45 +106,9 @@ public class LoginActivity extends BaseActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        initGoogleApiClient();
         initAuthStateListener();
-
-        btnSignUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(LoginActivity.this, SignupActivity.class));
-            }
-        });
-
-        btnResetPassword.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(LoginActivity.this, ResetPasswordActivity.class));
-            }
-        });
-
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onClickLogin();
-            }
-        });
-
-        btnLoginGoogle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onClickLoginGoogle();
-            }
-        });
-
+        initGoogleSignIn();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-    }
-
-    private void initGoogleApiClient() {
-        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build();
     }
 
     private void initAuthStateListener() {
@@ -149,26 +118,34 @@ public class LoginActivity extends BaseActivity {
                 FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
                 if (firebaseUser != null) {
                     Log.d(TAG, "onAuthStateChanged: " + firebaseUser.getEmail() + " " + firebaseUser.getUid());
-                } else {
-                    Log.d(TAG, "onAuthStateChanged: " + firebaseUser + " null");
                 }
             }
         };
     }
 
+    private void initGoogleSignIn() {
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                //.requestIdToken(getString(R.string.default_web_client_id))
+                .requestIdToken("568185669722-4o18jpcsav47fa23e8tten89h7j48ji5.apps.googleusercontent.com")
+                .requestEmail()
+                .requestProfile()
+                .build();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
-        mAuth.addAuthStateListener(mAuthListener);
+        mFirebaseAuth.addAuthStateListener(mAuthListener);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mAuth.removeAuthStateListener(mAuthListener);
+        mFirebaseAuth.removeAuthStateListener(mAuthListener);
     }
 
-    private void onClickLogin() {
+    @OnClick(R.id.btn_login)
+    public void onClickLogin() {
         pbProgressBar.setVisibility(View.VISIBLE);
         email = edtEmail.getText().toString();
         password = edtPassword.getText().toString();
@@ -183,50 +160,79 @@ public class LoginActivity extends BaseActivity {
             return;
         }
 
-        mAuth.signInWithEmailAndPassword(email, password)
+        mFirebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(onSignInCompleteListener)
                 .addOnFailureListener(onSignInFailureListener);
     }
 
-    private void onClickLoginGoogle() {
+    @OnClick(R.id.btn_login_google)
+    public void onClickLoginGoogle() {
         Intent intent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
-        startActivityForResult(intent, RC_SIGN_IN);
-    }
-
-    private void firebaseAuthWithGoogle(GoogleSignInAccount googleSignInAccount) {
-        Log.d(TAG, "firebaseAuthWithGoogle:" + googleSignInAccount.getId());
-
-        AuthCredential credential = GoogleAuthProvider.getCredential(googleSignInAccount.getIdToken(), null);
-        Log.d(TAG, "firebaseAuthWithGoogle: " + credential.getProvider());
-        mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-            @Override
-            public void onComplete(@NonNull Task<AuthResult> task) {
-                Log.d(TAG, "onComplete: HYPE");
-                Log.d(TAG, "onComplete: " + task.isSuccessful() + " " + task.isComplete());
-            }
-        })
-        .addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                e.printStackTrace();
-                Log.d(TAG, "onFailure: " + e.getMessage());
-            }
-        });
+        startActivityForResult(intent, RC_GOOGLE_SIGNIN);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == RC_SIGN_IN) {
-            GoogleSignInResult googleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
-            if (googleSignInResult.isSuccess()) {
-                GoogleSignInAccount googleSignInAccount = googleSignInResult.getSignInAccount();
-                Log.d(TAG, "onActivityResult: " + googleSignInAccount.getDisplayName());
-                firebaseAuthWithGoogle(googleSignInAccount);
-            } else {
-                Log.d(TAG, "onActivityResult: " + googleSignInResult.isSuccess());
-                Log.d(TAG, "onActivityResult: " + googleSignInResult.getStatus().getStatusMessage());
+        if (requestCode == RC_GOOGLE_SIGNIN) {
+            if (resultCode == RESULT_OK) {
+                GoogleSignInResult googleSignInResult = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+                handeGoogleSignInResult(googleSignInResult);
+            } else if (resultCode == RESULT_CANCELED) {
+                Log.d(TAG, "onActivityResult: canceled");
             }
         }
+    }
+
+    private void handeGoogleSignInResult(GoogleSignInResult googleSignInResult) {
+        if (googleSignInResult.isSuccess()) {
+            // Google Sign In was successful, authenticate with Firebase
+            GoogleSignInAccount resultSignInAccount = googleSignInResult.getSignInAccount();
+            String displayName = resultSignInAccount.getDisplayName();
+            String email = resultSignInAccount.getEmail();
+            String id = resultSignInAccount.getId();
+            String photoURL = resultSignInAccount.getPhotoUrl().toString();
+            mUser = new User.Builder().setFullName(displayName)
+                    .setFirstName(resultSignInAccount.getGivenName())
+                    .setLastName(resultSignInAccount.getFamilyName())
+                    .setAvatarURL(photoURL)
+                    .setUid(id)
+                    .build();
+            Log.d(TAG, "handeGoogleSignInResult: photoURL: " + photoURL + " x " + displayName + " x" + email);
+
+            firebaseAuthWithGoogle(resultSignInAccount);
+            Log.d(TAG, "onActivityResult: " + resultSignInAccount);
+        } else {
+            Log.d(TAG, "onActivityResult: sing in failed " + googleSignInResult.getStatus().toString());
+        }
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount googleSignInAccount) {
+        AuthCredential authCredential = GoogleAuthProvider.getCredential(googleSignInAccount.getIdToken(), null);
+        Log.d(TAG, "firebaseAuthWithGoogle: " + authCredential.toString());
+        mFirebaseAuth.signInWithCredential(authCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                Log.d(TAG, "onComplete: SIGNED IN BY G+" );
+                HashMap<String, Object> updateMap = new HashMap<String, Object>();
+                updateMap.put("firstName", mUser.getFirstName());
+                updateMap.put("lastName", mUser.getLastName());
+                updateMap.put("fullName", mUser.getFullName());
+                updateMap.put("emailAddress", mUser.getEmailAddress());
+
+                Utils.getDatabase().getReference()
+                        .child(Constants.F_USERS)
+                        .child(mUser.getUid())
+                        .updateChildren(updateMap)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                startActivity(intent);
+                                finish();
+                            }
+                        });
+            }
+        });
     }
 }

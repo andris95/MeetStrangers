@@ -1,12 +1,15 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -37,7 +40,6 @@ import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.Relationship;
 import com.soft.sanislo.meetstrangers.model.User;
-import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
@@ -57,7 +59,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private ProfileActivity mContext;
     private ProfileView mProfileView;
 
-    private GoogleApiClient mGoogleApiClient;
     private DatabaseReference mDatabaseRef = Utils.getDatabase().getReference();
     private DatabaseReference mRelationshipRef;
     private FirebaseAuth mFirebaseAuth;
@@ -71,7 +72,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     /** relationship between the authenticated and displayed users */
     private Relationship mRelationship;
     private String mLastActionUID;
-    private String mFirstActionUID;
 
     private ResultReceiver mResultReceiver;
     private MaterialDialog mActionDialog;
@@ -93,7 +93,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         public void onDataChange(DataSnapshot dataSnapshot) {
             mDisplayedUser = dataSnapshot.getValue(User.class);
             mProfileView.onDisplayedUserChanged(mDisplayedUser);
-            mGoogleApiClient.connect();
         }
 
         @Override
@@ -107,7 +106,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         public void onDataChange(DataSnapshot dataSnapshot) {
             mRelationship = dataSnapshot.getValue(Relationship.class);
             if (mRelationship != null) {
-                mFirstActionUID = mRelationship.getFirstActionUserUID();
                 mLastActionUID = mRelationship.getLastActionUserUID();
             }
         }
@@ -122,7 +120,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
-            startLocationFetcherService(locationSnapshot);
         }
 
         @Override
@@ -133,57 +130,10 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private DatabaseReference mAuthenticatedUserRef;
     private DatabaseReference mDisplayedUserRef;
 
-    private void startLocationFetcherService(LocationSnapshot locationSnapshot) {
-        if (locationSnapshot != null) {
-            Intent intent = new Intent(mContext, FetchAddressIntentService.class);
-            intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
-            intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
-                    LocationUtils.getLocation(locationSnapshot));
-            mContext.startService(intent);
-
-            String lastLocationUpdate = DateUtils.getDateDisplay(locationSnapshot.getTimestamp());
-            mProfileView.onLastActiveChanged(lastLocationUpdate);
-        }
-    }
-
     private OnFailureListener mOnFailureListener = new OnFailureListener() {
         @Override
         public void onFailure(@NonNull Exception e) {
             mProfileView.onError(e);
-        }
-    };
-
-    private GoogleApiClient.ConnectionCallbacks mConnectionCallback = new GoogleApiClient.ConnectionCallbacks() {
-        @Override
-        public void onConnected(@Nullable Bundle bundle) {
-            Log.d(TAG, "onConnected: ");
-            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
-                    .getCurrentPlace(mGoogleApiClient, null);
-            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                @Override
-                public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                    Log.d(TAG, "onResult: likelyPlace size: " + likelyPlaces.toString());
-                    Status status = likelyPlaces.getStatus();
-                    int statusCode = status.getStatusCode();
-                    Log.d(TAG, "onResult: statusCOde " + statusCode);
-                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                        Log.d(TAG, "onResult: place: " + placeLikelihood.getPlace().getName());
-                    }
-                    likelyPlaces.release();
-                }
-            });
-        }
-
-        @Override
-        public void onConnectionSuspended(int i) {
-
-        }
-    };
-
-    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
-        @Override
-        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-            Log.d(TAG, "onConnectionFailed: " + connectionResult.getErrorMessage());
         }
     };
 
@@ -200,25 +150,13 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         mRelationshipRef = mDatabaseRef.child(Constants.F_RELATIONSHIPS)
                 .child(mAuthenticatedUserUID)
                 .child(mDisplayedUserUID);
-        initPlaceFethcer();
-    }
-
-    private void initPlaceFethcer() {
-        mGoogleApiClient = new GoogleApiClient
-                .Builder(mContext)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .addConnectionCallbacks(mConnectionCallback)
-                .addOnConnectionFailedListener(mConnectionFailedListener)
-                .build();
-        mResultReceiver = new AddressResultReceiver(new Handler());
     }
 
     @Override
     public void addComment(Post post, String commentText) {
         DatabaseReference newCommentRef = mDatabaseRef.child(Constants.F_POSTS_COMMENTS)
                 .child(post.getAuthorUID())
-                .child(post.getKey());
+                .child(post.getPostUID());
         String newCommentKey = newCommentRef.push().getKey();
         Comment comment = buildNewComment(post, newCommentKey, commentText);
         newCommentRef.child(newCommentKey).setValue(comment)
@@ -227,7 +165,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     private Comment buildNewComment(Post post, String commentKey, String commentText) {
         Comment comment = new Comment(commentKey,
-                post.getKey(),
+                post.getPostUID(),
                 mAuthenticatedUserUID,
                 mAuthenticatedUser.getFullName(),
                 mAuthenticatedUser.getAvatarURL(),
@@ -420,9 +358,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     @Override
     public void onPause() {
-        if (mGoogleApiClient.isConnected() || mGoogleApiClient.isConnecting()) {
-            mGoogleApiClient.disconnect();
-        }
         mAuthenticatedUserRef.removeEventListener(mAuthenticatedUserListener);
         mDisplayedUserRef.removeEventListener(mDisplayedUserListener);
         mDatabaseRef.child(Constants.F_LOCATIONS)
@@ -437,32 +372,5 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     @Override
     public void onBackPressed() {
         mContext.supportFinishAfterTransition();
-    }
-
-    private class AddressResultReceiver extends ResultReceiver {
-
-        AddressResultReceiver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        protected void onReceiveResult(final int resultCode, final Bundle resultData) {
-            if (resultCode == FetchAddressIntentService.SUCCESS_RESULT) {
-                final Address address = resultData.getParcelable(FetchAddressIntentService.RESULT_ADDRESS);
-                if (address != null) {
-                    String featureName = address.getFeatureName();
-                    if (TextUtils.isEmpty(featureName)) {
-                        mProfileView.onAddressFetchFailure("ERROR");
-                    } else {
-                        mProfileView.onAddressFetchSuccess(featureName);
-                    }
-                    Log.d(TAG, "onReceiveResult: OK_RESULT: " + address);
-                }
-            } else if (resultCode == FetchAddressIntentService.FAILURE_RESULT) {
-                String errorMessage = resultData.getString(FetchAddressIntentService.KEY_ERROR);
-                mProfileView.onAddressFetchFailure(errorMessage);
-                Log.d(TAG, "onReceiveResult: FAILURE_RESULT: " + errorMessage);
-            }
-        }
     }
 }

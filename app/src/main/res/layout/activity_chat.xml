@@ -55,6 +55,6 @@
             android:id="@+id/iv_send_message"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:text="@string/btn_send"/>
+            android:content="@string/btn_send"/>
     </RelativeLayout>
 </RelativeLayout>

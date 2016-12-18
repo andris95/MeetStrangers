@@ -140,13 +140,12 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
             }
             switch (view.getId()) {
                 case R.id.iv_post_author_avatar:
-                    makeToast("clicked " + post.getAuthFullName() + "'s photo");
                     break;
                 case R.id.iv_post_options:
                     makeToast("options");
                     break;
                 case R.id.iv_like_post:
-                    mProfilePresenter.likePost(post.getKey());
+                    mProfilePresenter.likePost(post.getPostUID());
                     break;
                 case R.id.iv_comment_post:
                     onClickCommentPost(position);

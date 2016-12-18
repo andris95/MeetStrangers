@@ -20,7 +20,10 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
@@ -31,6 +34,7 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
+import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.DateUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
@@ -47,6 +51,7 @@ public class UserPostViewHolder extends RecyclerView.ViewHolder {
 
     private View mRootView;
     private Post mPost;
+    private User mAuthorUser;
     private Context mContext;
     private int mPostition;
     private PostAdapter.OnClickListener mOnClickListener;
@@ -132,7 +137,7 @@ public class UserPostViewHolder extends RecyclerView.ViewHolder {
         commentQuery = Utils.getDatabase().getReference()
                 .child(Constants.F_POSTS_COMMENTS)
                 .child(mPost.getAuthorUID())
-                .child(mPost.getKey())
+                .child(mPost.getPostUID())
                 .orderByPriority();
 
         setLikeIcon();
@@ -142,17 +147,34 @@ public class UserPostViewHolder extends RecyclerView.ViewHolder {
         setPostAuthorAvatar();
         setPostDate();
         setPostPhotosList();
-        //setPostPhotoRecycler();
         setCommentsListVisibility();
+        getAuthorData();
+    }
+
+    private void getAuthorData() {
+        Utils.getDatabase().getReference()
+                .child(Constants.F_USERS)
+                .child(mPost.getAuthorUID())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        mAuthorUser = dataSnapshot.getValue(User.class);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 
     private void setAuthorName() {
-        tvPostAuthor.setText(mPost.getAuthFullName());
+        tvPostAuthor.setText(mAuthorUser.getFullName());
     }
 
     private void setPostText() {
-        if (!TextUtils.isEmpty(mPost.getText())) {
-            tvPostText.setText(mPost.getText());
+        if (!TextUtils.isEmpty(mPost.getContent())) {
+            tvPostText.setText(mPost.getContent());
         } else {
             tvPostText.setVisibility(View.GONE);
         }
@@ -164,7 +186,7 @@ public class UserPostViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setPostAuthorAvatar() {
-        imageLoader.displayImage(mPost.getAuthorAvatarURL(), ivPostAuthorAvatar,
+        imageLoader.displayImage(mAuthorUser.getAvatarURL(), ivPostAuthorAvatar,
                 displayImageOptions);
     }
 

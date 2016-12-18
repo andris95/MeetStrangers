@@ -15,13 +15,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.vision.text.Text;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -68,6 +66,7 @@ public class NewPostActivity extends BaseActivity {
 
     private static final String TAG = NewPostActivity.class.getSimpleName();
     private static final int PICK_IMAGE = 30000;
+    public static final String KEY_GROUP_KEY = "GROUP_KEY";
 
     private DatabaseReference mDatabaseReference = Utils.getDatabase().getReference();
     private FirebaseStorage mStorage = FirebaseStorage.getInstance();
@@ -75,14 +74,16 @@ public class NewPostActivity extends BaseActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User user;
-    private String mAuthUID;
+
+    private String mPostAuthorUID;
+    private String mGroupUID;
 
     private Menu mMenu;
     private ArrayList<String> mPhotoPathList = new ArrayList<>();
     private Queue<String> mTempPhotoPathQueue;
     private ArrayList<MediaFile> mMediaFiles;
-
-    private Post newPost;
+    private Post.Builder mPostBuilder;
+    private String mPostUID;
 
     private ValueEventListener userValueEventLisener = new ValueEventListener() {
         @Override
@@ -106,7 +107,7 @@ public class NewPostActivity extends BaseActivity {
 
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        mAuthUID = firebaseUser.getUid();
+        mGroupUID = getIntent().getStringExtra(KEY_GROUP_KEY);
 
         addSendPostEnabledListener();
     }
@@ -199,20 +200,25 @@ public class NewPostActivity extends BaseActivity {
     private void buildNewPost() {
         long timestamp = new Date().getTime();
         String postText = edtPostText.getText().toString();
-        String postKey = mDatabaseReference.child(Constants.F_POSTS)
-                .child(mAuthUID)
+        if (TextUtils.isEmpty(mGroupUID)) {
+            mPostAuthorUID = getAuthenticatedUserUID();
+        } else {
+            mPostAuthorUID = mGroupUID;
+        }
+        mPostUID = mDatabaseReference.child(Constants.F_POSTS)
+                .child(mPostAuthorUID)
                 .push()
                 .getKey();
 
-        newPost = new Post();
-        newPost.setKey(postKey);
-        newPost.setAuthorUID(user.getUid());
-        newPost.setAuthFullName(user.getFullName());
-        newPost.setAuthorAvatarURL(user.getAvatarURL());
-        newPost.setLikesCount(0);
-        newPost.setCommentsCount(0);
-        newPost.setText(postText);
-        newPost.setTimestamp(timestamp);
+        mPostBuilder = new Post.Builder();
+        mPostBuilder
+                .setAuthorUID(mPostAuthorUID)
+                .setPostUID(mPostUID)
+                .setCommentsCount(0)
+                .setLikesCount(0)
+                .setDislikesCount(0)
+                .setContent(postText)
+                .setTimestamp(timestamp);
     }
 
     private OnCompleteListener<Void> getPostCompleteListener() {
@@ -236,10 +242,11 @@ public class NewPostActivity extends BaseActivity {
     };
 
     private void sendPostJSONData() {
+        Post post = mPostBuilder.build();
         mDatabaseReference.child(Constants.F_POSTS)
-                .child(mAuthUID)
-                .child(newPost.getKey())
-                .setValue(newPost, 0 - new Date().getTime())
+                .child(mPostAuthorUID)
+                .child(post.getPostUID())
+                .setValue(post, 0 - new Date().getTime())
                 .addOnCompleteListener(getPostCompleteListener())
                 .addOnFailureListener(postFailureListener);
     }
@@ -259,15 +266,15 @@ public class NewPostActivity extends BaseActivity {
 
     private void uploadNextPhotoTask() {
         if (mTempPhotoPathQueue.isEmpty()) {
-            newPost.setMediaFiles(mMediaFiles);
+            mPostBuilder.setMediaFiles(mMediaFiles);
             sendPostJSONData();
         } else {
             String photoFileName = Utils.getFileName(getApplicationContext(),
                     Uri.parse(mTempPhotoPathQueue.peek()));
 
             StorageReference postPhotoRef = storageRef.child(Constants.F_POSTS)
-                    .child(mAuthUID)
-                    .child(newPost.getKey())
+                    .child(mPostAuthorUID)
+                    .child(mPostUID)
                     .child(photoFileName + ".jpg");
             Uri photoUri = Uri.parse(mTempPhotoPathQueue.remove());
             UploadTask uploadTask = postPhotoRef.putFile(photoUri);
@@ -304,14 +311,14 @@ public class NewPostActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mDatabaseReference.child(Constants.F_USERS).child(mAuthUID)
+        mDatabaseReference.child(Constants.F_USERS).child(getAuthenticatedUserUID())
                 .addValueEventListener(userValueEventLisener);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mDatabaseReference.child(Constants.F_USERS).child(mAuthUID)
+        mDatabaseReference.child(Constants.F_USERS).child(getAuthenticatedUserUID())
                 .removeEventListener(userValueEventLisener);
     }
 }

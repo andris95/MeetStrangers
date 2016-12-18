@@ -225,7 +225,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                     onClickPostOptions(post);
                 case R.id.iv_like_post:
                     makeToast("like");
-                    //onClickLikePost(post.getKey());
+                    //onClickLikePost(post.getPostUID());
                     break;
                 case R.id.iv_comment_post:
                     onClickCommentPost(position);
@@ -244,10 +244,10 @@ public class ProfileYourselfActivity extends BaseActivity {
         public void onClickAddComment(Post post, String commentText) {
             DatabaseReference newCommentRef = database.child(Constants.F_POSTS_COMMENTS)
                     .child(post.getAuthorUID())
-                    .child(post.getKey());
+                    .child(post.getPostUID());
             String newCommentKey = newCommentRef.push().getKey();
             Comment comment = new Comment(newCommentKey,
-                    post.getKey(),
+                    post.getPostUID(),
                     user.getUid(),
                     user.getFullName(),
                     user.getAvatarURL(),
@@ -339,7 +339,7 @@ public class ProfileYourselfActivity extends BaseActivity {
                         Log.d(TAG, "onSelection: which: " + which + " " + text.toString());
                         switch (which) {
                             case 0:
-                                removeUserPost(post.getKey());
+                                removeUserPost(post.getPostUID());
                                 break;
                             default:
                                 break;

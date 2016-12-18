@@ -19,6 +19,8 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.auth.FirebaseAuth;
+import com.soft.sanislo.meetstrangers.activity.authentication.LoginActivity;
+import com.soft.sanislo.meetstrangers.activity.authentication.SignupActivity;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 

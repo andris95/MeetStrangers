@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/tv_chat_message"
         android:layout_toRightOf="@+id/iv_chat_author_avatar"
-        android:text="@string/lorem"/>
+        android:content="@string/lorem"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

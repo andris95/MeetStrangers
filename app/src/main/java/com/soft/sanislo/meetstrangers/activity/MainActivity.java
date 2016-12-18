@@ -1,6 +1,7 @@
 package com.soft.sanislo.meetstrangers.activity;
 
 
+import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,6 +27,7 @@ import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
+import com.soft.sanislo.meetstrangers.fragment.NewsFragment;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
@@ -33,6 +35,9 @@ import com.soft.sanislo.meetstrangers.test.TestActivity;
 import com.soft.sanislo.meetstrangers.test.TestTwoActivity;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -69,7 +74,7 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initMapFragment();
+        initNewsFragment();
         startService(new Intent(this, LocationService.class));
 
         firebaseAuth = FirebaseAuth.getInstance();
@@ -82,8 +87,25 @@ public class MainActivity extends BaseActivity {
         mapFragment = new com.soft.sanislo.meetstrangers.fragment.MapFragment();
         FragmentTransaction fragmentTransaction =
                 getFragmentManager().beginTransaction();
-        fragmentTransaction.add(R.id.fl_map_container, mapFragment);
+        fragmentTransaction.add(R.id.fl_fragment_container, mapFragment);
         fragmentTransaction.commit();
+    }
+
+    private void getFragment(String TAG) {
+        Fragment fragment;
+        switch (TAG) {
+            case "NewsFragment":
+                fragment = NewsFragment.newInstance();
+                break;
+            case "":
+        }
+    }
+
+    private void initNewsFragment() {
+        Fragment fragment = NewsFragment.newInstance();
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.replace(R.id.fl_fragment_container, fragment);
+        ft.commit();
     }
 
     private void initDrawer() {
@@ -102,6 +124,7 @@ public class MainActivity extends BaseActivity {
                         return false;
                     }
                 });
+
         if (!TextUtils.isEmpty(user.getAvatarBlurURL())) {
             ImageHolder imageHolder = new ImageHolder(user.getAvatarBlurURL());
             headerBuilder.withHeaderBackground(imageHolder);
@@ -127,26 +150,25 @@ public class MainActivity extends BaseActivity {
                 .withName("TestActivity");
         SecondaryDrawerItem testTwoItem = new SecondaryDrawerItem()
                 .withName("TestTwoActivity");
+        List<IDrawerItem> drawerItems = new ArrayList<>();
+        drawerItems.add(primaryItemMap);
+        drawerItems.add(primaryItemFriends);
+        drawerItems.add(primaryItemGroups);
+        drawerItems.add(primaryItemMessages);
+        drawerItems.add(new DividerDrawerItem());
+        drawerItems.add(itemSignOut);
+
         drawerBuilder = new DrawerBuilder()
                 .withActivity(this)
                 .withAccountHeader(accountHeader)
-                .addDrawerItems(
-                        primaryItemMap,
-                        primaryItemMessages,
-                        primaryItemFriends,
-                        primaryItemGroups,
-                        new DividerDrawerItem(),
-                        itemSignOut,
-                        testItem,
-                        testTwoItem
-                )
+                .withDrawerItems(drawerItems)
                 .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
                     @Override
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
-                        // do something with the clicked item :D
                         return onDrawerItemClick(view, position, drawerItem);
                     }
-                });
+                })
+                .withShowDrawerOnFirstLaunch(true);
         mDrawer = drawerBuilder.build();
     }
 

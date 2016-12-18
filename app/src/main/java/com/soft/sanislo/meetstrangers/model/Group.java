@@ -7,26 +7,26 @@ import java.util.HashMap;
  */
 
 public class Group {
-    public static final String PROPERTY_GROUP_AVATAR = "groupAvatar";
+    public static final String PROPERTY_GROUP_AVATAR = "avatarURL";
     public static final String PROPERTY_GROUP_STATUS = "status";
     private String groupID;
     private String ownerUID;
     private long createdAt;
     private String name;
     private String status;
-    private String groupAvatar;
+    private String avatarURL;
     private long membersCount;
     private HashMap<String, Boolean> members;
 
     public Group() {}
 
-    public Group(String groupID, String ownerUID, long createdAt, String name, String status, String groupAvatar, long membersCount, HashMap<String, Boolean> members) {
+    private Group(String groupID, String ownerUID, long createdAt, String name, String status, String groupAvatar, long membersCount, HashMap<String, Boolean> members) {
         this.groupID = groupID;
         this.ownerUID = ownerUID;
         this.createdAt = createdAt;
         this.name = name;
         this.status = status;
-        this.groupAvatar = groupAvatar;
+        this.avatarURL = groupAvatar;
         this.membersCount = membersCount;
         this.members = members;
     }
@@ -87,12 +87,12 @@ public class Group {
         this.status = status;
     }
 
-    public String getGroupAvatar() {
-        return groupAvatar;
+    public String getAvatarURL() {
+        return avatarURL;
     }
 
-    public void setGroupAvatar(String groupAvatar) {
-        this.groupAvatar = groupAvatar;
+    public void setAvatarURL(String avatarURL) {
+        this.avatarURL = avatarURL;
     }
 
     public boolean isMember(String uid) {

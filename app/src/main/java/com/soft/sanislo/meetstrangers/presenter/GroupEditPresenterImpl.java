@@ -24,6 +24,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.GroupEditActivity;
+import com.soft.sanislo.meetstrangers.activity.NewPostActivity;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Group;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
@@ -193,7 +194,9 @@ public class GroupEditPresenterImpl implements GroupEditPresenter {
 
     @Override
     public void onCLickNewGroupPost() {
-
+        Intent intent = new Intent(mContext, NewPostActivity.class);
+        intent.putExtra(NewPostActivity.KEY_GROUP_KEY, mGroupKey);
+        mContext.startActivity(intent);
     }
 
     @Override
@@ -242,6 +245,7 @@ public class GroupEditPresenterImpl implements GroupEditPresenter {
                     public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                         float progress = taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount();
                         Log.d(TAG, "onProgress: " + taskSnapshot.getBytesTransferred() + " " + taskSnapshot.getTotalByteCount());
+                        Log.d(TAG, "onProgress: progress: " + progress);
                     }
                 });
     }
