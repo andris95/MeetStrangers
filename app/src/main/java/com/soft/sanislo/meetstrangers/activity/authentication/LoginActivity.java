@@ -26,7 +26,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.BaseActivity;
@@ -106,21 +105,8 @@ public class LoginActivity extends BaseActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
 
-        initAuthStateListener();
         initGoogleSignIn();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-    }
-
-    private void initAuthStateListener() {
-        mAuthListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
-                if (firebaseUser != null) {
-                    Log.d(TAG, "onAuthStateChanged: " + firebaseUser.getEmail() + " " + firebaseUser.getUid());
-                }
-            }
-        };
     }
 
     private void initGoogleSignIn() {
@@ -135,13 +121,13 @@ public class LoginActivity extends BaseActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mFirebaseAuth.addAuthStateListener(mAuthListener);
+        mFirebaseAuth.addAuthStateListener(mAuthStateListener);
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        mFirebaseAuth.removeAuthStateListener(mAuthListener);
+        mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
     }
 
     @OnClick(R.id.btn_login)
@@ -222,7 +208,7 @@ public class LoginActivity extends BaseActivity {
 
                 Utils.getDatabase().getReference()
                         .child(Constants.F_USERS)
-                        .child(mUser.getUid())
+                        .child(mFirebaseAuth.getCurrentUser().getUid())
                         .updateChildren(updateMap)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override

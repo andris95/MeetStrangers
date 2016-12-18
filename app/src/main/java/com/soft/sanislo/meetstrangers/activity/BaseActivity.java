@@ -36,7 +36,7 @@ public abstract class BaseActivity extends AppCompatActivity implements
     private static final String TAG = BaseActivity.class.getSimpleName();
     protected GoogleApiClient mGoogleApiClient;
     protected GoogleSignInOptions gso;
-    protected FirebaseAuth.AuthStateListener mAuthListener;
+    protected FirebaseAuth.AuthStateListener mAuthStateListener;
     private FirebaseAuth mAuth;
     private String mUID;
     private String mProvider;
@@ -58,7 +58,7 @@ public abstract class BaseActivity extends AppCompatActivity implements
 
     private void initAuthStateListener() {
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
-            mAuthListener = new FirebaseAuth.AuthStateListener() {
+            mAuthStateListener = new FirebaseAuth.AuthStateListener() {
                 @Override
                 public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                     if (firebaseAuth.getCurrentUser() == null) {
@@ -109,15 +109,15 @@ public abstract class BaseActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
-            mAuth.addAuthStateListener(mAuthListener);
+            mAuth.addAuthStateListener(mAuthStateListener);
         }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (mAuthListener != null) {
-            mAuth.removeAuthStateListener(mAuthListener);
+        if (mAuthStateListener != null) {
+            mAuth.removeAuthStateListener(mAuthStateListener);
         }
     }
 
@@ -126,7 +126,7 @@ public abstract class BaseActivity extends AppCompatActivity implements
         super.onDestroy();
         /* Cleanup the AuthStateListener */
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
-            mAuth.removeAuthStateListener(mAuthListener);
+            mAuth.removeAuthStateListener(mAuthStateListener);
         }
     }
 

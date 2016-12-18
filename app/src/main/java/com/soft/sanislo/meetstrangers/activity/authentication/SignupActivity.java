@@ -21,6 +21,7 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.BaseActivity;
 import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import butterknife.BindView;
@@ -115,7 +116,7 @@ public class SignupActivity extends BaseActivity {
                 user.setFirstName(mFirstName);
                 user.setLastName(mLastName);
                 user.setFullName(mFirstName + " " + mLastName);
-                reference.child("users").child(firebaseUser.getUid()).setValue(user)
+                reference.child(Constants.F_USERS).child(firebaseUser.getUid()).setValue(user)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
