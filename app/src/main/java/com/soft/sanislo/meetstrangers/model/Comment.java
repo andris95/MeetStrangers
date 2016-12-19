@@ -13,8 +13,6 @@ public class Comment {
     private String commentKey;
     private String postKey;
     private String authorUID;
-    private String authorFullName;
-    private String authorAvatarURL;
     private String text;
     private long likesCount;
     private HashMap<String, Boolean> likedUsersUIDs;
@@ -22,12 +20,10 @@ public class Comment {
 
     public Comment() {}
 
-    public Comment(String commentKey, String postKey, String authorUID, String authorFullName, String authorAvatarURL, String text, long timestamp) {
+    public Comment(String commentKey, String postKey, String authorUID, String text, long timestamp) {
         this.commentKey = commentKey;
         this.postKey = postKey;
         this.authorUID = authorUID;
-        this.authorFullName = authorFullName;
-        this.authorAvatarURL = authorAvatarURL;
         this.text = text;
         this.timestamp = timestamp;
     }
@@ -56,22 +52,6 @@ public class Comment {
         this.authorUID = authorUID;
     }
 
-    public String getAuthorFullName() {
-        return authorFullName;
-    }
-
-    public void setAuthorFullName(String authorFullName) {
-        this.authorFullName = authorFullName;
-    }
-
-    public String getAuthorAvatarURL() {
-        return authorAvatarURL;
-    }
-
-    public void setAuthorAvatarURL(String authorAvatarURL) {
-        this.authorAvatarURL = authorAvatarURL;
-    }
-
     public String getText() {
         return text;
     }
@@ -94,8 +74,6 @@ public class Comment {
                 "commentKey='" + commentKey + '\'' +
                 ", postKey='" + postKey + '\'' +
                 ", authorUID='" + authorUID + '\'' +
-                ", authorFullName='" + authorFullName + '\'' +
-                ", authorAvatarURL='" + authorAvatarURL + '\'' +
                 ", text='" + text + '\'' +
                 ", likesCount=" + likesCount +
                 ", likedUsersUIDs=" + likedUsersUIDs +
@@ -130,9 +108,6 @@ public class Comment {
     public void setLikedByUser(String uid) {
         if (getLikedUsersUIDs() == null) {
             likedUsersUIDs = new HashMap<>();
-            likedUsersUIDs.put(uid, true);
-            likesCount++;
-            return;
         }
         if (isLikedByUser(uid)) {
             likedUsersUIDs.remove(uid);

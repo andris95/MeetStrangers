@@ -1,18 +1,10 @@
 package com.soft.sanislo.meetstrangers.activity;
 
-import android.annotation.TargetApi;
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.location.Address;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
@@ -21,22 +13,12 @@ import android.transition.TransitionManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.location.places.PlaceLikelihood;
-import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -54,12 +36,10 @@ import com.nostra13.universalimageloader.core.listener.ImageLoadingProgressListe
 import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
-import com.soft.sanislo.meetstrangers.service.FetchAddressIntentService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.viewholders.UserPostViewHolder;
 
@@ -101,9 +81,8 @@ public class ProfileYourselfActivity extends BaseActivity {
     private DatabaseReference mPostRef;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
-    private User user;
-    private String uid;
-    private String avatarURL;
+    private User mUser;
+    private String mUID;
     private PostAdapter mPostAdapter;
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
@@ -116,10 +95,9 @@ public class ProfileYourselfActivity extends BaseActivity {
     private ValueEventListener userValueEventListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            user = dataSnapshot.getValue(User.class);
-            avatarURL = user.getAvatarURL();
-            collapsingToolbar.setTitle(user.getFullName());
-            imageLoader.displayImage(avatarURL, ivAvatar, displayImageOptions, new ImageLoadingListener() {
+            mUser = dataSnapshot.getValue(User.class);
+            collapsingToolbar.setTitle(mUser.getFullName());
+            imageLoader.displayImage(mUser.getAvatarURL(), ivAvatar, displayImageOptions, new ImageLoadingListener() {
                 @Override
                 public void onLoadingStarted(String imageUri, View view) {
 
@@ -202,9 +180,9 @@ public class ProfileYourselfActivity extends BaseActivity {
             String newCommentKey = newCommentRef.push().getKey();
             Comment comment = new Comment(newCommentKey,
                     post.getPostUID(),
-                    user.getUid(),
-                    user.getFullName(),
-                    user.getAvatarURL(),
+                    mUser.getUid(),
+                    mUser.getFullName(),
+                    mUser.getAvatarURL(),
                     commentText,
                     new Date().getTime());
             newCommentRef.child(newCommentKey).setValue(comment)
@@ -250,7 +228,7 @@ public class ProfileYourselfActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
-        uid = firebaseUser.getUid();
+        mUID = firebaseUser.getUid();
 
         setContentView(R.layout.activity_profile_yourself);
         ButterKnife.bind(this);
@@ -260,7 +238,7 @@ public class ProfileYourselfActivity extends BaseActivity {
     }
 
     private void initPosts() {
-        mPostRef = database.child(Constants.F_POSTS).child(uid);
+        mPostRef = database.child(Constants.F_POSTS).child(mUID);
         mPostAdapter = new PostAdapter(getApplicationContext(),
                 Post.class,
                 R.layout.item_post,
@@ -308,10 +286,10 @@ public class ProfileYourselfActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (uid != null) {
-            database.child(Constants.F_USERS).child(uid)
+        if (mUID != null) {
+            database.child(Constants.F_USERS).child(mUID)
                     .addValueEventListener(userValueEventListener);
-            database.child(Constants.F_LOCATIONS).child(uid)
+            database.child(Constants.F_LOCATIONS).child(mUID)
                     .addValueEventListener(locationListener);
         }
     }
@@ -320,9 +298,9 @@ public class ProfileYourselfActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
         mGoogleApiClient.disconnect();
-        database.child(Constants.F_USERS).child(uid)
+        database.child(Constants.F_USERS).child(mUID)
                 .removeEventListener(userValueEventListener);
-        database.child(Constants.F_LOCATIONS).child(uid)
+        database.child(Constants.F_LOCATIONS).child(mUID)
                 .removeEventListener(locationListener);
     }
 

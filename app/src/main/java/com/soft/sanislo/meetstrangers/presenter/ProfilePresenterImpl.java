@@ -167,8 +167,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         Comment comment = new Comment(commentKey,
                 post.getPostUID(),
                 mAuthenticatedUserUID,
-                mAuthenticatedUser.getFullName(),
-                mAuthenticatedUser.getAvatarURL(),
                 commentText,
                 new Date().getTime());
         return comment;
