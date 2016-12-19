@@ -73,7 +73,7 @@ public class LoginActivity extends BaseActivity {
     private SharedPreferences mSharedPreferences;
     private GoogleSignInOptions gso;
 
-    private OnCompleteListener<AuthResult>  onSignInCompleteListener = new OnCompleteListener() {
+    private OnCompleteListener<AuthResult> onSignInCompleteListener = new OnCompleteListener() {
         @Override
         public void onComplete(@NonNull Task task) {
             if (task.isSuccessful()) {
@@ -111,7 +111,6 @@ public class LoginActivity extends BaseActivity {
 
     private void initGoogleSignIn() {
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                //.requestIdToken(getString(R.string.default_web_client_id))
                 .requestIdToken("568185669722-4o18jpcsav47fa23e8tten89h7j48ji5.apps.googleusercontent.com")
                 .requestEmail()
                 .requestProfile()
@@ -183,13 +182,10 @@ public class LoginActivity extends BaseActivity {
                     .setLastName(resultSignInAccount.getFamilyName())
                     .setAvatarURL(photoURL)
                     .setUid(id)
+                    .setEmailAddress(email)
                     .build();
-            Log.d(TAG, "handeGoogleSignInResult: photoURL: " + photoURL + " x " + displayName + " x" + email);
 
             firebaseAuthWithGoogle(resultSignInAccount);
-            Log.d(TAG, "onActivityResult: " + resultSignInAccount);
-        } else {
-            Log.d(TAG, "onActivityResult: sing in failed " + googleSignInResult.getStatus().toString());
         }
     }
 
@@ -199,17 +195,10 @@ public class LoginActivity extends BaseActivity {
         mFirebaseAuth.signInWithCredential(authCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
-                Log.d(TAG, "onComplete: SIGNED IN BY G+" );
-                HashMap<String, Object> updateMap = new HashMap<String, Object>();
-                updateMap.put("firstName", mUser.getFirstName());
-                updateMap.put("lastName", mUser.getLastName());
-                updateMap.put("fullName", mUser.getFullName());
-                updateMap.put("emailAddress", mUser.getEmailAddress());
-
                 Utils.getDatabase().getReference()
                         .child(Constants.F_USERS)
                         .child(mFirebaseAuth.getCurrentUser().getUid())
-                        .updateChildren(updateMap)
+                        .updateChildren(mUser.toHashMap())
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {

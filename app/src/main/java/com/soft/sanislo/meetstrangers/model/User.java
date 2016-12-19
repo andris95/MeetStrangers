@@ -303,6 +303,15 @@ public class User {
         this.socialLinks = socialLinks;
     }
 
+    public HashMap<String, Object> toHashMap() {
+        HashMap<String, Object> hashMap = new HashMap<>();
+        hashMap.put("firstName", getFirstName());
+        hashMap.put("lastName", getLastName());
+        hashMap.put("fullName", getFullName());
+        hashMap.put("emailAddress", getEmailAddress());
+        return hashMap;
+    }
+
     @Override
     public String toString() {
         return "User{" +

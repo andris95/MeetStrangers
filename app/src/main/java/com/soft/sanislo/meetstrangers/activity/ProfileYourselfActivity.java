@@ -78,19 +78,25 @@ public class ProfileYourselfActivity extends BaseActivity {
 
     @BindView(R.id.collapsingToolbar)
     CollapsingToolbarLayout collapsingToolbar;
-    @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.iv_avatar) ImageView ivAvatar;
-    @BindView(R.id.tvProfileLastActive) TextView tvLastActive;
-    @BindView(R.id.tvProfileLocation) TextView tvAddress;
-    @BindView(R.id.pbProfileAvatar) ProgressBar pbAvatar;
-    @BindView(R.id.btn_new_post)
-    Button btnNewPost;
+
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+
+    @BindView(R.id.iv_avatar)
+    ImageView ivAvatar;
+
+    @BindView(R.id.tvProfileLastActive)
+    TextView tvLastActive;
+
+    @BindView(R.id.tvProfileLocation)
+    TextView tvAddress;
+
+    @BindView(R.id.pbProfileAvatar)
+    ProgressBar pbAvatar;
+
     @BindView(R.id.rv_posts)
     RecyclerView rvPosts;
-    @BindView(R.id.fab_profile)
-    FloatingActionButton fabProfile;
 
-    private GoogleApiClient mGoogleApiClient;
     private DatabaseReference database = Utils.getDatabase().getReference();
     private DatabaseReference mPostRef;
     private FirebaseAuth firebaseAuth;
@@ -99,9 +105,6 @@ public class ProfileYourselfActivity extends BaseActivity {
     private String uid;
     private String avatarURL;
     private PostAdapter mPostAdapter;
-
-    private ResultReceiver mResultReceiver;
-    private boolean isAddressRequested;
 
     private DisplayImageOptions displayImageOptions = new DisplayImageOptions.Builder()
             .cacheInMemory(true)
@@ -114,34 +117,29 @@ public class ProfileYourselfActivity extends BaseActivity {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             user = dataSnapshot.getValue(User.class);
-            if (user != null) {
-                avatarURL = user.getAvatarURL();
-                collapsingToolbar.setTitle(user.getFullName());
-                Log.d(TAG, "onDataChange: avatarURL " + user.getAvatarURL() + " " + user.getFullName());
-                mGoogleApiClient.connect();
-                imageLoader.displayImage(avatarURL, ivAvatar, displayImageOptions, new ImageLoadingListener() {
-                    @Override
-                    public void onLoadingStarted(String imageUri, View view) {
+            avatarURL = user.getAvatarURL();
+            collapsingToolbar.setTitle(user.getFullName());
+            imageLoader.displayImage(avatarURL, ivAvatar, displayImageOptions, new ImageLoadingListener() {
+                @Override
+                public void onLoadingStarted(String imageUri, View view) {
 
-                    }
+                }
 
-                    @Override
-                    public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
-                        pbAvatar.setVisibility(View.GONE);
-                    }
+                @Override
+                public void onLoadingFailed(String imageUri, View view, FailReason failReason) {
+                    pbAvatar.setVisibility(View.GONE);
+                }
 
-                    @Override
-                    public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                        pbAvatar.setVisibility(View.GONE);
-                    }
+                @Override
+                public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
+                    pbAvatar.setVisibility(View.GONE);
+                }
 
-                    @Override
-                    public void onLoadingCancelled(String imageUri, View view) {
-                        pbAvatar.setVisibility(View.GONE);
-                    }
-                });
-
-            }
+                @Override
+                public void onLoadingCancelled(String imageUri, View view) {
+                    pbAvatar.setVisibility(View.GONE);
+                }
+            });
         }
 
         @Override
@@ -154,55 +152,11 @@ public class ProfileYourselfActivity extends BaseActivity {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             LocationSnapshot locationSnapshot = dataSnapshot.getValue(LocationSnapshot.class);
-            if (locationSnapshot != null && !isAddressRequested) {
-                Intent intent = new Intent(getApplicationContext(), FetchAddressIntentService.class);
-                intent.putExtra(FetchAddressIntentService.RECEIVER, mResultReceiver);
-                intent.putExtra(FetchAddressIntentService.LOCATION_DATA_EXTRA,
-                        LocationUtils.getLocation(locationSnapshot));
-                startService(intent);
-                isAddressRequested = true;
-                tvLastActive.setText(Utils.getLastOnline(locationSnapshot));
-            }
         }
 
         @Override
         public void onCancelled(DatabaseError databaseError) {
 
-        }
-    };
-
-    private GoogleApiClient.ConnectionCallbacks mConnectionCallback = new GoogleApiClient.ConnectionCallbacks() {
-        @Override
-        public void onConnected(@Nullable Bundle bundle) {
-            Log.d(TAG, "onConnected: ");
-            PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
-                    .getCurrentPlace(mGoogleApiClient, null);
-            result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-                @Override
-                public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                    Log.d(TAG, "onResult: likelyPlace size: " + likelyPlaces.toString());
-
-                    for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                        Log.i(TAG, String.format("Place '%s' has likelihood: %g",
-                                placeLikelihood.getPlace().getName(),
-                                placeLikelihood.getLikelihood()));
-                        tvAddress.setText(placeLikelihood.getPlace().getName());
-                    }
-                    likelyPlaces.release();
-                }
-            });
-        }
-
-        @Override
-        public void onConnectionSuspended(int i) {
-
-        }
-    };
-
-    private GoogleApiClient.OnConnectionFailedListener mConnectionFailedListener = new GoogleApiClient.OnConnectionFailedListener() {
-        @Override
-        public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-            Log.d(TAG, "onConnectionFailed: " + connectionResult.getErrorMessage());
         }
     };
 
@@ -283,7 +237,7 @@ public class ProfileYourselfActivity extends BaseActivity {
 
     private void onClickCommentPost(int position) {
         if (mPostAdapter.getCommentsVisiblePos() == position) {
-            mPostAdapter.setCommentsVisiblePos(-1);
+            mPostAdapter.setCommentsVisiblePos(RecyclerView.NO_POSITION);
         } else {
             mPostAdapter.setCommentsVisiblePos(position);
         }
@@ -299,21 +253,10 @@ public class ProfileYourselfActivity extends BaseActivity {
         uid = firebaseUser.getUid();
 
         setContentView(R.layout.activity_profile_yourself);
-        themeNavAndStatusBar(this);
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
         initPosts();
-
-        mGoogleApiClient = new GoogleApiClient
-                .Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .addConnectionCallbacks(mConnectionCallback)
-                .addOnConnectionFailedListener(mConnectionFailedListener)
-                .build();
-
-        mResultReceiver = new AddressResultReceiver(new Handler());
     }
 
     private void initPosts() {
@@ -389,53 +332,10 @@ public class ProfileYourselfActivity extends BaseActivity {
         startActivity(intent);
     }
 
-    class AddressResultReceiver extends ResultReceiver {
-        public AddressResultReceiver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        protected void onReceiveResult(final int resultCode, final Bundle resultData) {
-            if (resultCode == FetchAddressIntentService.SUCCESS_RESULT) {
-                final Address address = resultData.getParcelable(FetchAddressIntentService.RESULT_ADDRESS);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Log.d(TAG, "run: address: " + address.toString());
-                        String featureName = address.getFeatureName();
-                        tvAddress.setText(featureName);
-                    }
-                });
-            } else if (resultCode == FetchAddressIntentService.FAILURE_RESULT) {
-                String errorMessage = resultData.getString(FetchAddressIntentService.KEY_ERROR);
-                tvAddress.setText(errorMessage);
-            }
-        }
-    }
-
     @Override
     public void onDestroy() {
         super.onDestroy();
         mPostAdapter.cleanup();
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public void themeNavAndStatusBar(Activity activity)
-    {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
-            return;
-
-        Window w = activity.getWindow();
-        w.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        w.setFlags(
-                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
-                WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-        w.setFlags(
-                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
-                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        w.setNavigationBarColor(activity.getResources().getColor(android.R.color.transparent));
-
-        w.setStatusBarColor(activity.getResources().getColor(android.R.color.transparent));
     }
 
     @OnClick(R.id.fab_profile)
