@@ -11,6 +11,8 @@ public class Post {
     public static final int BY_GROUP = 222;
     private String key;
     private String authorUID;
+    private String authorName;
+    private String authorAvatarURL;
     private int createdBy;
     private String content;
     private long timestamp;
@@ -24,9 +26,11 @@ public class Post {
 
     public Post() {}
 
-    public Post(String key, String authorUID, int createdBy, String content, long timestamp, long likesCount, long dislikesCount, long commentsCount, String photoURL, List<MediaFile> mediaFiles, HashMap<String, Boolean> likedUsersUIDs, HashMap<String, Boolean> dislikedUsersUIDs) {
+    public Post(String key, String authorUID, String authorName, String authorAvatarURL, int createdBy, String content, long timestamp, long likesCount, long dislikesCount, long commentsCount, String photoURL, List<MediaFile> mediaFiles, HashMap<String, Boolean> likedUsersUIDs, HashMap<String, Boolean> dislikedUsersUIDs) {
         this.key = key;
         this.authorUID = authorUID;
+        this.authorName = authorName;
+        this.authorAvatarURL = authorAvatarURL;
         this.createdBy = createdBy;
         this.content = content;
         this.timestamp = timestamp;
@@ -115,6 +119,38 @@ public class Post {
         this.mediaFiles = mediaFiles;
     }
 
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
+    }
+
+    public String getAuthorAvatarURL() {
+        return authorAvatarURL;
+    }
+
+    public void setAuthorAvatarURL(String authorAvatarURL) {
+        this.authorAvatarURL = authorAvatarURL;
+    }
+
+    public long getDislikesCount() {
+        return dislikesCount;
+    }
+
+    public void setDislikesCount(long dislikesCount) {
+        this.dislikesCount = dislikesCount;
+    }
+
+    public HashMap<String, Boolean> getDislikedUsersUIDs() {
+        return dislikedUsersUIDs;
+    }
+
+    public void setDislikedUsersUIDs(HashMap<String, Boolean> dislikedUsersUIDs) {
+        this.dislikedUsersUIDs = dislikedUsersUIDs;
+    }
+
     public boolean isLikedByUser(String uid) {
         return likedUsersUIDs != null && likedUsersUIDs.containsKey(uid);
     }
@@ -139,6 +175,8 @@ public class Post {
     public static class Builder {
         private String postUID;
         private String authorUID;
+        private String authorName;
+        private String authorAvatarURL;
         private String content;
         private int createdBy;
         private long timestamp;
@@ -210,10 +248,22 @@ public class Post {
             return this;
         }
 
+        public Builder setAuthorName(String authorName) {
+            this.authorName = authorName;
+            return this;
+        }
+
+        public Builder setAuthorAvatarURL(String authorAvatarURL) {
+            this.authorAvatarURL = authorAvatarURL;
+            return this;
+        }
+
         //Return the finally consrcuted User object
         public Post build() {
             Post post = new Post(postUID,
                     authorUID,
+                    authorName,
+                    authorAvatarURL,
                     createdBy,
                     content,
                     timestamp,

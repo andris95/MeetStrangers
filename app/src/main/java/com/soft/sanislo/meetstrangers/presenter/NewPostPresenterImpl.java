@@ -110,6 +110,8 @@ public class NewPostPresenterImpl implements NewPostPresenter {
         mPostBuilder = new Post.Builder();
         mPostBuilder
                 .setAuthorUID(mUID)
+                .setAuthorName(mUser.getFullName())
+                .setAuthorAvatarURL(mUser.getAvatarURL())
                 .setPostUID(mPostUID)
                 .setCommentsCount(0)
                 .setLikesCount(0)

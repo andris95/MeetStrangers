@@ -75,9 +75,6 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.iv_post_options)
     ImageView ivPostOptions;
 
-    @BindView(R.id.ll_post_photos)
-    LinearLayout llPostPhotos;
-
     @BindView(R.id.iv_like_post)
     ImageButton ivLikePost;
 
@@ -89,9 +86,6 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
 
     @BindView(R.id.rv_test)
     RecyclerView rvComments;
-
-    @BindView(R.id.rv_posts_photos)
-    RecyclerView rvPostPhotos;
 
     @BindView(R.id.btn_add_comment)
     Button btnAddComment;
@@ -120,8 +114,6 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
         ButterKnife.bind(this, mRootView);
         rvComments.setLayoutManager(new LinearLayoutManager(mContext));
         rvComments.setItemAnimator(new DefaultItemAnimator());
-        rvPostPhotos.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
-        rvPostPhotos.setItemAnimator(new DefaultItemAnimator());
     }
 
     public void populate(Context context,
@@ -142,7 +134,6 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
         setLikeCounter();
         setPostText();
         setPostDate();
-        setPostPhotosList();
         setCommentsListVisibility();
         getAuthorData();
     }
@@ -186,47 +177,6 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
     private void setPostAuthorAvatar() {
         imageLoader.displayImage(mGroup.getAvatarURL(), ivPostAuthorAvatar,
                 displayImageOptions);
-    }
-
-    private void setPostPhotosList() {
-        int counter = 0;
-        llPostPhotos.removeAllViews();
-        if (mPost.getMediaFiles() == null) return;
-        for (MediaFile mediaFile : mPost.getMediaFiles()) {
-            Log.d(TAG, "setPostPhotosList: " + mediaFile);
-            final ImageView ivPhoto = new ImageView(mContext);
-            ivPhoto.setAdjustViewBounds(true);
-            ivPhoto.setLayoutParams(new RecyclerView.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            ));
-            final int finalCounter = counter;
-            ivPhoto.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (mOnClickListener != null) {
-                        mOnClickListener.onClick(view, finalCounter, mPost);
-                    }
-                }
-            });
-            ivPhoto.setTag(counter);
-            imageLoader.displayImage(mediaFile.getUrl(),
-                    ivPhoto,
-                    displayImageOptions,
-                    getPostPhotoLoadingListener(ivPhoto));
-            counter++;
-        }
-    }
-
-    private SimpleImageLoadingListener getPostPhotoLoadingListener(final ImageView ivPhoto) {
-        SimpleImageLoadingListener postPhotoLoadingListener = new SimpleImageLoadingListener() {
-            @Override
-            public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-                super.onLoadingComplete(imageUri, view, loadedImage);
-                llPostPhotos.addView(ivPhoto);
-            }
-        };
-        return postPhotoLoadingListener;
     }
 
     private void setCommentsListVisibility() {
@@ -311,11 +261,6 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
     @OnClick(R.id.iv_post_options)
     public void onClickPostOptions() {
         mOnClickListener.onClick(ivPostOptions, mPostition, mPost);
-    }
-
-    @OnClick(R.id.ll_post_photos)
-    public void onClickPostPhotos() {
-        mOnClickListener.onClick(llPostPhotos, mPostition, mPost);
     }
 
     @OnClick(R.id.iv_like_post)
