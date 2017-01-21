@@ -28,6 +28,7 @@ import com.soft.sanislo.meetstrangers.activity.NewPostActivity;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Group;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.GroupEditView;
 
@@ -57,8 +58,8 @@ public class GroupEditPresenterImpl implements GroupEditPresenter {
 
         mAuthUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mFirebaseStorage = FirebaseStorage.getInstance();
-        mStorageReference = mFirebaseStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
-        mDatabaseReference = Utils.getDatabase().getReference();
+        mStorageReference = FirebaseUtils.getStorageRef();
+        mDatabaseReference = FirebaseUtils.getDatabaseReference();
         mGroupKey = intent.getStringExtra(GroupEditActivity.KEY_GROUP_KEY);
     }
 

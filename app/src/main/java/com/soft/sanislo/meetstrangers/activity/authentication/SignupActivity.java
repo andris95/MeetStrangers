@@ -22,6 +22,7 @@ import com.soft.sanislo.meetstrangers.activity.BaseActivity;
 import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import butterknife.BindView;
@@ -49,8 +50,6 @@ public class SignupActivity extends BaseActivity {
     ProgressBar pbProgressBar;
 
     private FirebaseAuth auth;
-    private FirebaseDatabase database;
-    private DatabaseReference reference;
 
     private String email, password;
     private String mFirstName;
@@ -61,9 +60,7 @@ public class SignupActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
         ButterKnife.bind(this);
-        database = Utils.getDatabase().getInstance();
         auth = FirebaseAuth.getInstance();
-        reference = database.getReference();
     }
 
     @OnClick(R.id.sign_in_button)
@@ -116,7 +113,9 @@ public class SignupActivity extends BaseActivity {
                 user.setFirstName(mFirstName);
                 user.setLastName(mLastName);
                 user.setFullName(mFirstName + " " + mLastName);
-                reference.child(Constants.F_USERS).child(firebaseUser.getUid()).setValue(user)
+                FirebaseUtils.getDatabaseReference().child(Constants.F_USERS)
+                        .child(firebaseUser.getUid())
+                        .setValue(user)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {

@@ -43,6 +43,7 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.BlurBuilder;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.io.ByteArrayInputStream;
@@ -134,10 +135,9 @@ public class ProfileEditActivity extends BaseActivity {
         firebaseUser = firebaseAuth.getCurrentUser();
         uid = firebaseUser.getUid();
 
-        mUserDatabaseRef = Utils.getDatabase().getReference()
+        mUserDatabaseRef = FirebaseUtils.getDatabaseReference()
                 .child(Constants.F_USERS).child(uid);
-        mFirebaseStorage = FirebaseStorage.getInstance();
-        mUserStorageRef = mFirebaseStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
+        mUserStorageRef = FirebaseUtils.getStorageRef();
     }
 
     @Override

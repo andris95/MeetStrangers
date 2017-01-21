@@ -33,6 +33,7 @@ import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
 import java.util.HashMap;
@@ -185,7 +186,7 @@ public class LoginActivity extends BaseActivity {
         mFirebaseAuth.signInWithCredential(authCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
-                Utils.getDatabase().getReference()
+                FirebaseUtils.getDatabaseReference()
                         .child(Constants.F_USERS)
                         .child(mFirebaseAuth.getCurrentUser().getUid())
                         .updateChildren(mUser.toHashMap())

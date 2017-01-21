@@ -15,17 +15,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -33,10 +30,12 @@ import com.google.firebase.storage.UploadTask;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.MediaFile;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.presenter.NewPostPresenter;
+import com.soft.sanislo.meetstrangers.presenter.NewPostPresenterImpl;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.ImageUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
+import com.soft.sanislo.meetstrangers.view.NewPostView;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -51,7 +50,7 @@ import me.zhanghai.android.materialprogressbar.MaterialProgressBar;
 /**
  * Created by root on 24.09.16.
  */
-public class NewPostActivity extends BaseActivity {
+public class NewPostActivity extends BaseActivity implements NewPostView {
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
 
@@ -61,42 +60,19 @@ public class NewPostActivity extends BaseActivity {
     @BindView(R.id.pb_new_post)
     MaterialProgressBar progressBar;
 
-    @BindView(R.id.btn_add_photos)
+    @BindView(R.id.btn_select_photo)
     Button btnAddPhotos;
 
     private static final String TAG = NewPostActivity.class.getSimpleName();
-    private static final int PICK_IMAGE = 30000;
+    public static final int PICK_IMAGE = 30000;
     public static final String KEY_GROUP_KEY = "GROUP_KEY";
-
-    private DatabaseReference mDatabaseReference = Utils.getDatabase().getReference();
-    private FirebaseStorage mStorage = FirebaseStorage.getInstance();
-    private StorageReference storageRef = mStorage.getReferenceFromUrl(Constants.STORAGE_BUCKET);
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
-    private User user;
 
     private String mPostAuthorUID;
     private String mGroupUID;
 
     private Menu mMenu;
-    private ArrayList<String> mPhotoPathList = new ArrayList<>();
-    private Queue<String> mTempPhotoPathQueue;
-    private ArrayList<MediaFile> mMediaFiles;
-    private Post.Builder mPostBuilder;
-    private String mPostUID;
 
-    private ValueEventListener userValueEventLisener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            user = dataSnapshot.getValue(User.class);
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-            databaseError.toException().printStackTrace();
-        }
-    };
-    private int mCurrentMediaIndex;
+    private NewPostPresenter mNewPostPresenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,22 +81,27 @@ public class NewPostActivity extends BaseActivity {
         ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
 
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUser = firebaseAuth.getCurrentUser();
         mGroupUID = getIntent().getStringExtra(KEY_GROUP_KEY);
-
         addSendPostEnabledListener();
+        mNewPostPresenter = new NewPostPresenterImpl(this, getAuthenticatedUserUID());
     }
 
-    @OnClick(R.id.btn_add_photos)
-    public void onClickAddPhotos() {
+    @OnClick(R.id.btn_select_photo)
+    public void selectPhoto() {
         Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
         getIntent.setType("image/*");
+        Intent сhooserIntent = Intent.createChooser(getIntent, "Select Image");
+        startActivityForResult(сhooserIntent, PICK_IMAGE);
+    }
+
+    /*private void selectManyPhotos() {
+        Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        getIntent.setType("image*//*");
         getIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
 
         Intent сhooserIntent = Intent.createChooser(getIntent, "Select Image");
         startActivityForResult(сhooserIntent, PICK_IMAGE);
-    }
+    }*/
 
     private void addSendPostEnabledListener() {
         edtPostText.addTextChangedListener(new TextWatcher() {
@@ -133,11 +114,7 @@ public class NewPostActivity extends BaseActivity {
             public void onTextChanged(CharSequence s, int start,
                                       int count, int after) {
                 String text = edtPostText.getText().toString();
-                if (TextUtils.isEmpty(text) && mPhotoPathList.isEmpty()) {
-                    mMenu.findItem(R.id.menu_send_post).setEnabled(false);
-                } else {
-                    mMenu.findItem(R.id.menu_send_post).setEnabled(true);
-                }
+                mNewPostPresenter.canPushPost(text);
             }
 
             @Override
@@ -160,7 +137,7 @@ public class NewPostActivity extends BaseActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_send_post:
-                sendPost();
+                mNewPostPresenter.pushPost(NewPostActivity.this, edtPostText.getText().toString());
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -171,154 +148,35 @@ public class NewPostActivity extends BaseActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE) {
-            if (data.getClipData() != null) {
-                fetchClipData(data.getClipData());
-            } else {
-                mPhotoPathList.add(data.getData().toString());
-            }
             mMenu.findItem(R.id.menu_send_post).setEnabled(true);
+            mNewPostPresenter.onActivityResult(requestCode, resultCode, data);
         }
     }
-
-    private void fetchClipData(ClipData clipData) {
-        for (int i = 0; i < clipData.getItemCount(); i++) {
-            Uri photoFileUri = clipData.getItemAt(i).getUri();
-            mPhotoPathList.add(photoFileUri.toString());
-        }
-    }
-
-    private void sendPost() {
-        progressBar.setVisibility(View.VISIBLE);
-        buildNewPost();
-        if (!mPhotoPathList.isEmpty()) {
-            uploadPostPhotos();
-        } else {
-            sendPostJSONData();
-        }
-    }
-
-    private void buildNewPost() {
-        long timestamp = new Date().getTime();
-        String postText = edtPostText.getText().toString();
-        if (TextUtils.isEmpty(mGroupUID)) {
-            mPostAuthorUID = getAuthenticatedUserUID();
-        } else {
-            mPostAuthorUID = mGroupUID;
-        }
-        mPostUID = mDatabaseReference.child(Constants.F_POSTS)
-                .child(mPostAuthorUID)
-                .push()
-                .getKey();
-
-        mPostBuilder = new Post.Builder();
-        mPostBuilder
-                .setAuthorUID(mPostAuthorUID)
-                .setPostUID(mPostUID)
-                .setCommentsCount(0)
-                .setLikesCount(0)
-                .setDislikesCount(0)
-                .setContent(postText)
-                .setTimestamp(timestamp);
-    }
-
-    private OnCompleteListener<Void> getPostCompleteListener() {
-        OnCompleteListener<Void> postCompleteListener = new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                progressBar.setVisibility(View.GONE);
-                finish();
-            }
-        };
-        return postCompleteListener;
-    }
-
-    private OnFailureListener postFailureListener = new OnFailureListener() {
-        @Override
-        public void onFailure(@NonNull Exception e) {
-            progressBar.setVisibility(View.GONE);
-            e.printStackTrace();
-            makeToast("Posting failed, please try again later...");
-        }
-    };
-
-    private void sendPostJSONData() {
-        Post post = mPostBuilder.build();
-        mDatabaseReference.child(Constants.F_POSTS)
-                .child(mPostAuthorUID)
-                .child(post.getKey())
-                .setValue(post, 0 - new Date().getTime())
-                .addOnCompleteListener(getPostCompleteListener())
-                .addOnFailureListener(postFailureListener);
-    }
-
-    private void uploadPostPhotos() {
-        mTempPhotoPathQueue = new LinkedList<>();
-        mTempPhotoPathQueue.addAll(mPhotoPathList);
-        mMediaFiles = new ArrayList<>();
-        for (String photoFilePath : mPhotoPathList) {
-            MediaFile mediaFile = ImageUtils.getPhotoSize(getApplicationContext(), photoFilePath);
-            mMediaFiles.add(mediaFile);
-            Log.d(TAG, "uploadPostPhotos: " + mediaFile);
-        }
-        mCurrentMediaIndex = 0;
-        uploadNextPhotoTask();
-    }
-
-    private void uploadNextPhotoTask() {
-        if (mTempPhotoPathQueue.isEmpty()) {
-            mPostBuilder.setMediaFiles(mMediaFiles);
-            sendPostJSONData();
-        } else {
-            String photoFileName = Utils.getFileName(getApplicationContext(),
-                    Uri.parse(mTempPhotoPathQueue.peek()));
-
-            StorageReference postPhotoRef = storageRef.child(Constants.F_POSTS)
-                    .child(mPostAuthorUID)
-                    .child(mPostUID)
-                    .child(photoFileName + ".jpg");
-            Uri photoUri = Uri.parse(mTempPhotoPathQueue.remove());
-            UploadTask uploadTask = postPhotoRef.putFile(photoUri);
-            uploadTask.addOnSuccessListener(photoUploadSuccessListener)
-                    .addOnProgressListener(photoUploadProgressListener)
-                    .addOnFailureListener(photoUploadFailureListener);
-        }
-    }
-
-    private OnSuccessListener<UploadTask.TaskSnapshot> photoUploadSuccessListener = new OnSuccessListener<UploadTask.TaskSnapshot>() {
-        @Override
-        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-            mMediaFiles.get(mCurrentMediaIndex).setUrl(taskSnapshot.getDownloadUrl().toString());
-            mCurrentMediaIndex++;
-            uploadNextPhotoTask();
-        }
-    };
-
-    private OnProgressListener<UploadTask.TaskSnapshot> photoUploadProgressListener = new OnProgressListener<UploadTask.TaskSnapshot>() {
-        @Override
-        public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
-            Log.d(TAG, "onProgress: " + taskSnapshot.getBytesTransferred() / (float) taskSnapshot.getTotalByteCount());
-        }
-    };
-
-    private OnFailureListener photoUploadFailureListener = new OnFailureListener() {
-        @Override
-        public void onFailure(@NonNull Exception e) {
-            e.printStackTrace();
-            makeToast(e.getMessage());
-        }
-    };
 
     @Override
     protected void onResume() {
         super.onResume();
-        mDatabaseReference.child(Constants.F_USERS).child(getAuthenticatedUserUID())
-                .addValueEventListener(userValueEventLisener);
+        mNewPostPresenter.onResume();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mDatabaseReference.child(Constants.F_USERS).child(getAuthenticatedUserUID())
-                .removeEventListener(userValueEventLisener);
+        mNewPostPresenter.onPause();
+    }
+
+    @Override
+    public void onCanPushPostChecked(boolean canPushPost) {
+        mMenu.findItem(R.id.menu_send_post).setEnabled(canPushPost);
+    }
+
+    @Override
+    public void onPostPushed() {
+        Toast.makeText(this, "Post published", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onError(String error, Exception e) {
+        Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
     }
 }

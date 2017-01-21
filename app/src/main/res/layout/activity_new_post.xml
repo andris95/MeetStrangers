@@ -25,8 +25,8 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/btn_add_photos"
-        android:text="Add photos"
+        android:id="@+id/btn_select_photo"
+        android:text="Select photo"
         android:layout_alignParentBottom="true"/>
 
     <me.zhanghai.android.materialprogressbar.MaterialProgressBar

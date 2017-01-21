@@ -27,10 +27,8 @@ import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
-import com.soft.sanislo.meetstrangers.test.TestActivity;
-import com.soft.sanislo.meetstrangers.test.TestTwoActivity;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
+import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +43,7 @@ public class MainActivity extends BaseActivity {
     private Drawer mDrawer;
     private List<IDrawerItem> mDrawerItems;
 
-    private DatabaseReference database;
+    private DatabaseReference mDatabaseReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private User mUser;
@@ -56,7 +54,6 @@ public class MainActivity extends BaseActivity {
         public void onDataChange(DataSnapshot dataSnapshot) {
             mUser = dataSnapshot.getValue(User.class);
             Log.d(TAG, "onDataChange: mUser: " + mUser);
-            Log.d(TAG, "onDataChange: mUID " + mUID);
             initDrawer();
         }
 
@@ -78,13 +75,13 @@ public class MainActivity extends BaseActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseUser = firebaseAuth.getCurrentUser();
         mUID = firebaseUser.getUid();
-        database = Utils.getDatabase().getReference();
+        mDatabaseReference = FirebaseUtils.getDatabaseReference();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        database.child(Constants.F_USERS)
+        mDatabaseReference.child(Constants.F_USERS)
                 .child(mUID)
                 .addValueEventListener(mUserValueEventListener);
     }
@@ -92,7 +89,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        database.child(Constants.F_USERS)
+        mDatabaseReference.child(Constants.F_USERS)
                 .child(mUID)
                 .removeEventListener(mUserValueEventListener);
     }
@@ -183,15 +180,15 @@ public class MainActivity extends BaseActivity {
                 mDrawer.closeDrawer();
                 return true;
             case 2:
-                startChoosenActivity(RelationshipsActivity.class);
                 mDrawer.closeDrawer();
+                startChoosenActivity(RelationshipsActivity.class);
                 return true;
             case 3:
                 startChoosenActivity(GroupsActivity.class);
                 return true;
             case 4:
-                startChoosenActivity(ChatHeaderActivity.class);
                 mDrawer.closeDrawer();
+                startChoosenActivity(ChatHeaderActivity.class);
                 return true;
             case 6:
                 mDrawer.closeDrawer();

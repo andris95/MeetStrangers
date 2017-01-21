@@ -37,11 +37,6 @@ public final class Constants {
     public static final String POST_AUTH_FULL_NAME = "authFullName";
 
     /**
-     * Constants for Firebase URL
-     */
-    public static final String STORAGE_BUCKET = "gs://meetstranger-142314.appspot.com";
-
-    /**
      * Constants for bundles, extras and shared preferences keys
      */
     public static final String KEY_PROVIDER = "PROVIDER";

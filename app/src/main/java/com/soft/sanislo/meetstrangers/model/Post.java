@@ -17,13 +17,14 @@ public class Post {
     private long likesCount;
     private long dislikesCount;
     private long commentsCount;
+    private String photoURL;
     private List<MediaFile> mediaFiles;
     private HashMap<String, Boolean> likedUsersUIDs;
     private HashMap<String, Boolean> dislikedUsersUIDs;
 
     public Post() {}
 
-    public Post(String key, String authorUID, int createdBy, String content, long timestamp, long likesCount, long dislikesCount, long commentsCount, List<MediaFile> mediaFiles, HashMap<String, Boolean> likedUsersUIDs, HashMap<String, Boolean> dislikedUsersUIDs) {
+    public Post(String key, String authorUID, int createdBy, String content, long timestamp, long likesCount, long dislikesCount, long commentsCount, String photoURL, List<MediaFile> mediaFiles, HashMap<String, Boolean> likedUsersUIDs, HashMap<String, Boolean> dislikedUsersUIDs) {
         this.key = key;
         this.authorUID = authorUID;
         this.createdBy = createdBy;
@@ -32,9 +33,18 @@ public class Post {
         this.likesCount = likesCount;
         this.dislikesCount = dislikesCount;
         this.commentsCount = commentsCount;
+        this.photoURL = photoURL;
         this.mediaFiles = mediaFiles;
         this.likedUsersUIDs = likedUsersUIDs;
         this.dislikedUsersUIDs = dislikedUsersUIDs;
+    }
+
+    public String getPhotoURL() {
+        return photoURL;
+    }
+
+    public void setPhotoURL(String photoURL) {
+        this.photoURL = photoURL;
     }
 
     public String getAuthorUID() {
@@ -135,6 +145,7 @@ public class Post {
         private long likesCount;
         private long dislikesCount;
         private long commentsCount;
+        private String photoURL;
         private List<MediaFile> mediaFiles;
         private HashMap<String, Boolean> likedUsersUIDs;
         private HashMap<String, Boolean> dislikedUsersUIDs;
@@ -194,6 +205,11 @@ public class Post {
             return this;
         }
 
+        public Builder setPhotoURL(String photoURL) {
+            this.photoURL = photoURL;
+            return this;
+        }
+
         //Return the finally consrcuted User object
         public Post build() {
             Post post = new Post(postUID,
@@ -204,6 +220,7 @@ public class Post {
                     likesCount,
                     dislikesCount,
                     commentsCount,
+                    photoURL,
                     mediaFiles,
                     likedUsersUIDs,
                     dislikedUsersUIDs);
