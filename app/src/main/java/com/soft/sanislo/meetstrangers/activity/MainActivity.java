@@ -177,19 +177,23 @@ public class MainActivity extends BaseActivity {
 
     private boolean onDrawerItemClick(View view, int position, IDrawerItem drawerItem) {
         Log.d(TAG, "onItemClick: position clicked " + position);
+        /** ! indexes start from 1, not from 0!!! */
         switch (position) {
             case 1:
-                startChoosenActivity(RelationshipsActivity.class);
                 mDrawer.closeDrawer();
                 return true;
             case 2:
-                startChoosenActivity(GroupsActivity.class);
+                startChoosenActivity(RelationshipsActivity.class);
+                mDrawer.closeDrawer();
                 return true;
             case 3:
+                startChoosenActivity(GroupsActivity.class);
+                return true;
+            case 4:
                 startChoosenActivity(ChatHeaderActivity.class);
                 mDrawer.closeDrawer();
                 return true;
-            case 5:
+            case 6:
                 mDrawer.closeDrawer();
                 logout();
                 return true;
