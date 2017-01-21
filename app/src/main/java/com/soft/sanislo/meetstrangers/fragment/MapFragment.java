@@ -111,9 +111,6 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
-    /**
-     * INIT LISTENERS
-     */
     private void initListeners() {
         progressListener = new ImageLoadingProgressListener() {
             @Override

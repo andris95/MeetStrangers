@@ -23,6 +23,7 @@ import com.soft.sanislo.meetstrangers.activity.authentication.LoginActivity;
 import com.soft.sanislo.meetstrangers.activity.authentication.SignupActivity;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
+import com.soft.sanislo.meetstrangers.utilities.PreferencesManager;
 
 import java.util.List;
 
@@ -60,8 +61,8 @@ public abstract class BaseActivity extends AppCompatActivity implements
                 @Override
                 public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                     if (firebaseAuth.getCurrentUser() == null) {
-                        stopService(new Intent(getApplicationContext(), LocationService.class));
-                        logout();
+                        stopLocationService();
+                        PreferencesManager.setLocationShared(BaseActivity.this, false);
                         takeUserToLoginScreenOnUnAuth();
                     } else {
                         mUID = firebaseAuth.getCurrentUser().getUid();
@@ -136,9 +137,9 @@ public abstract class BaseActivity extends AppCompatActivity implements
                                 //nothing
                             }
                         });
-            } else {
-                FirebaseAuth.getInstance().signOut();
             }
+        } else {
+            FirebaseAuth.getInstance().signOut();
         }
     }
 
@@ -166,5 +167,10 @@ public abstract class BaseActivity extends AppCompatActivity implements
 
     protected String getAuthenticatedUserUID() {
         return mUID;
+    }
+
+    protected void stopLocationService() {
+        Intent intent = new Intent(getApplicationContext(), LocationService.class);
+        stopService(intent);
     }
 }

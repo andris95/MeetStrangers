@@ -1,10 +1,14 @@
 package com.soft.sanislo.meetstrangers.activity;
 
+import android.Manifest;
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -65,6 +69,7 @@ public class NewPostActivity extends BaseActivity implements NewPostView {
 
     private static final String TAG = NewPostActivity.class.getSimpleName();
     public static final int PICK_IMAGE = 30000;
+    public static final int RC_PERMISSION_READ_EXTERNAL = 777;
     public static final String KEY_GROUP_KEY = "GROUP_KEY";
 
     private String mPostAuthorUID;
@@ -87,11 +92,26 @@ public class NewPostActivity extends BaseActivity implements NewPostView {
     }
 
     @OnClick(R.id.btn_select_photo)
-    public void selectPhoto() {
+    public void onClickSelectPhoto() {
+        if (hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            selectPhoto();
+        } else {
+            ActivityCompat.requestPermissions(NewPostActivity.this,
+                    new String[] {Manifest.permission.READ_EXTERNAL_STORAGE},
+                    RC_PERMISSION_READ_EXTERNAL);
+        }
+    }
+
+    private void selectPhoto() {
         Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
         getIntent.setType("image/*");
         Intent сhooserIntent = Intent.createChooser(getIntent, "Select Image");
         startActivityForResult(сhooserIntent, PICK_IMAGE);
+    }
+
+    private boolean hasPermission(String permission) { ///Manifest.permission.READ_CONTACTS
+        return ContextCompat.checkSelfPermission(this, permission)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     /*private void selectManyPhotos() {
@@ -150,6 +170,29 @@ public class NewPostActivity extends BaseActivity implements NewPostView {
         if (resultCode == RESULT_OK && requestCode == PICK_IMAGE) {
             mMenu.findItem(R.id.menu_send_post).setEnabled(true);
             mNewPostPresenter.onActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == RC_PERMISSION_READ_EXTERNAL) {
+            if (grantResults.length == 1 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                selectPhoto();
+            } else {
+                // showRationale = false if user clicks Never Ask Again, otherwise true
+                boolean showRationale = ActivityCompat.shouldShowRequestPermissionRationale(NewPostActivity.this,
+                        Manifest.permission.READ_CONTACTS);
+                if (showRationale) {
+                    // do something here to handle degraded mode
+                    Toast.makeText(NewPostActivity.this, "should show rationale...", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Read External Storage permission denied", Toast.LENGTH_SHORT).show();
+                }
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 

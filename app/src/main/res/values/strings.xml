@@ -30,11 +30,14 @@
     <string name="forgot_password_msg">We just need your registered Email Id to sent you password reset instructions.</string>
 
     <string name="lorem">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim uid est laborum.</string>
+
     <string name="map">Map</string>
     <string name="messages">Messages</string>
+    <string name="users">Users</string>
     <string name="friends">Friends</string>
     <string name="strangers">Strangers</string>
-
+    <string name="groups">Groups</string>
+    <string name="share_location">Share Location</string>
     <string name="write_message">Write a message...</string>
 
     <string name="gender_male">Male</string>

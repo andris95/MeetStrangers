@@ -1,5 +1,6 @@
 package com.soft.sanislo.meetstrangers.service;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
@@ -126,9 +128,7 @@ public class LocationService extends Service {
             @Override
             public void onConnected(@Nullable Bundle bundle) {
                 Log.d(TAG, "onConnected: ");
-                if (ContextCompat.checkSelfPermission(getApplicationContext(),
-                        android.Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED) {
+                if (hasPermission()) {
 
                     locationRequest = new LocationRequest();
                     locationRequest.setInterval(LOCATION_REQUEST_INTERVAL);
@@ -150,7 +150,6 @@ public class LocationService extends Service {
                                     // initialize location requests here.
                                     Log.d(TAG, "onResult: SUCCESS");
                                     requestLocationUpdates();
-
                                     break;
                                 case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                                     Log.d(TAG, "onResult: RESOLUTION_REQUIRED");
@@ -209,10 +208,17 @@ public class LocationService extends Service {
         };
     }
 
-    protected void requestLocationUpdates() {
+    private void requestLocationUpdates() {
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 googleApiClient, locationRequest, locationListener);
         isRequestingUpdates = true;
+    }
+
+    private boolean hasPermission() {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
     private void connectClient() {

@@ -31,12 +31,8 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.BaseActivity;
 import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.model.User;
-import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
-import com.soft.sanislo.meetstrangers.utilities.Utils;
-
-import java.util.HashMap;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

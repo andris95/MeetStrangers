@@ -1,11 +1,18 @@
 package com.soft.sanislo.meetstrangers.activity;
 
 
+import android.Manifest;
+import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -13,28 +20,37 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+import com.mikepenz.fontawesome_typeface_library.FontAwesome;
+import com.mikepenz.google_material_typeface_library.GoogleMaterial;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.holder.ImageHolder;
+import com.mikepenz.materialdrawer.interfaces.OnCheckedChangeListener;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
+import com.mikepenz.materialdrawer.model.SwitchDrawerItem;
+import com.mikepenz.materialdrawer.model.ToggleDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
+import com.soft.sanislo.meetstrangers.fragment.MapFragment;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.FirebaseUtils;
+import com.soft.sanislo.meetstrangers.utilities.PreferencesManager;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
+    private static final int RC_PERM_LOCATION = 300;
+    private static final int ID_LOCATION = 111;
 
     private AccountHeaderBuilder mHeaderBuilder;
     private AccountHeader mAccountHeader;
@@ -63,11 +79,49 @@ public class MainActivity extends BaseActivity {
         }
     };
 
+    private OnCheckedChangeListener mOnCheckedChangeListener = new OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(IDrawerItem drawerItem, CompoundButton buttonView, boolean isChecked) {
+            if (isChecked) {
+                if (hasPermission()) {
+                    toggleLocationSharing(true);
+                } else {
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION},
+                            RC_PERM_LOCATION);
+                }
+            } else {
+                toggleLocationSharing(false);
+            }
+        }
+    };
+
+    private void toggleLocationSharing(boolean isLocationShared) {
+        if (isLocationShared) {
+            startLocationService();
+        } else {
+            stopLocationService();
+        }
+        changeLocationItemIcon(isLocationShared);
+        PreferencesManager.setLocationShared(MainActivity.this, isLocationShared);
+    }
+
+    private void changeLocationItemIcon(boolean isChecked) {
+        GoogleMaterial.Icon icon = isChecked ?
+                GoogleMaterial.Icon.gmd_location_on
+                : GoogleMaterial.Icon.gmd_location_off;
+        SwitchDrawerItem switchDrawerItem = (SwitchDrawerItem) mDrawer.getDrawerItem(ID_LOCATION);
+        switchDrawerItem.withIcon(icon)
+                .withIconColorRes(R.color.md_black_1000);
+        mDrawer.updateItem(switchDrawerItem);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        startService(new Intent(this, LocationService.class));
+        addMapFragment();
         initFirebase();
     }
 
@@ -76,6 +130,12 @@ public class MainActivity extends BaseActivity {
         firebaseUser = firebaseAuth.getCurrentUser();
         mUID = firebaseUser.getUid();
         mDatabaseReference = FirebaseUtils.getDatabaseReference();
+    }
+
+    private void addMapFragment() {
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.replace(R.id.fl_fragment_container, MapFragment.newInstance());
+        ft.commit();
     }
 
     @Override
@@ -97,20 +157,25 @@ public class MainActivity extends BaseActivity {
     private void initDrawer() {
         initDrawerHeader();
         initDrawerItems();
-        mDrawerBuilder = new DrawerBuilder()
-                .withActivity(this)
-                .withAccountHeader(mAccountHeader)
-                .withDrawerItems(mDrawerItems)
-                .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
-                    @Override
-                    public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
-                        return onDrawerItemClick(view, position, drawerItem);
-                    }
-                })
-                .withGenerateMiniDrawer(true)
-                .withShowDrawerOnFirstLaunch(true);
-        mDrawer = mDrawerBuilder.build();
-        mDrawer.openDrawer();
+        if (mDrawer == null) {
+            mDrawerBuilder = new DrawerBuilder()
+                    .withActivity(this)
+                    .withAccountHeader(mAccountHeader)
+                    .withDrawerItems(mDrawerItems)
+                    .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
+                        @Override
+                        public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
+                            return onDrawerItemClick(view, position, drawerItem);
+                        }
+                    })
+                    .withGenerateMiniDrawer(true)
+                    .withShowDrawerOnFirstLaunch(true);
+            mDrawer = mDrawerBuilder.build();
+        } else {
+            mDrawer.setHeader(mAccountHeader.getView());
+            mDrawer.setItems(mDrawerItems);
+        }
+        //mDrawer.openDrawer();
     }
 
     private void initDrawerHeader() {
@@ -150,26 +215,49 @@ public class MainActivity extends BaseActivity {
 
     private void initDrawerItems() {
         PrimaryDrawerItem primaryItemMap = new PrimaryDrawerItem()
-                .withName(getString(R.string.map));
+                .withIcon(GoogleMaterial.Icon.gmd_add_location)
+                .withIconColorRes(R.color.md_black_1000)
+                .withName(getString(R.string.map))
+                .withSetSelected(true);
         PrimaryDrawerItem primaryItemMessages = new PrimaryDrawerItem()
+                .withIcon(GoogleMaterial.Icon.gmd_message)
+                .withIconColorRes(R.color.md_black_1000)
                 .withName(getString(R.string.messages));
         PrimaryDrawerItem primaryItemFriends = new PrimaryDrawerItem()
-                .withName("Users");
+                .withIcon(GoogleMaterial.Icon.gmd_people)
+                .withIconColorRes(R.color.md_black_1000)
+                .withName(getString(R.string.users));
         PrimaryDrawerItem primaryItemGroups = new PrimaryDrawerItem()
-                .withName("Groups");
-        SecondaryDrawerItem itemSignOut = new SecondaryDrawerItem()
+                .withIcon(GoogleMaterial.Icon.gmd_group)
+                .withIconColorRes(R.color.md_black_1000)
+                .withName(getString(R.string.groups));
+        PrimaryDrawerItem itemSignOut = new PrimaryDrawerItem()
+                .withIcon(FontAwesome.Icon.faw_sign_out)
+                .withIconColorRes(R.color.md_black_1000)
                 .withName(getString(R.string.btn_sign_out));
-        SecondaryDrawerItem testItem = new SecondaryDrawerItem()
-                .withName("TestActivity");
-        SecondaryDrawerItem testTwoItem = new SecondaryDrawerItem()
-                .withName("TestTwoActivity");
         mDrawerItems = new ArrayList<>();
         mDrawerItems.add(primaryItemMap);
         mDrawerItems.add(primaryItemFriends);
         mDrawerItems.add(primaryItemGroups);
         mDrawerItems.add(primaryItemMessages);
         mDrawerItems.add(new DividerDrawerItem());
+        mDrawerItems.add(getLocationDrawerItem());
+        mDrawerItems.add(new DividerDrawerItem());
         mDrawerItems.add(itemSignOut);
+    }
+
+    private IDrawerItem getLocationDrawerItem() {
+        boolean isLocationShared = PreferencesManager.isLocationShared(MainActivity.this);
+        GoogleMaterial.Icon icon = isLocationShared ? GoogleMaterial.Icon.gmd_location_on
+                : GoogleMaterial.Icon.gmd_location_off;
+        SwitchDrawerItem locationToggle = new SwitchDrawerItem()
+                .withIdentifier(ID_LOCATION)
+                .withIcon(icon)
+                .withIconColorRes(R.color.md_black_1000)
+                .withName(getString(R.string.share_location))
+                .withChecked(isLocationShared)
+                .withOnCheckedChangeListener(mOnCheckedChangeListener);
+        return locationToggle;
     }
 
     private boolean onDrawerItemClick(View view, int position, IDrawerItem drawerItem) {
@@ -190,12 +278,35 @@ public class MainActivity extends BaseActivity {
                 mDrawer.closeDrawer();
                 startChoosenActivity(ChatHeaderActivity.class);
                 return true;
-            case 6:
+            case 8:
                 mDrawer.closeDrawer();
                 logout();
                 return true;
             default:
                 return false;
         }
+    }
+
+    private boolean hasPermission() {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == RC_PERM_LOCATION) {
+            if (grantResults.length == 2 &&
+                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                toggleLocationSharing(true);
+            }
+        }
+    }
+
+    private void startLocationService() {
+        Intent intent = new Intent(MainActivity.this, LocationService.class);
+        startService(intent);
     }
 }
