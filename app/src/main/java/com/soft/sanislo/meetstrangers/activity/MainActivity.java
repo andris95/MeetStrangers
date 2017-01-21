@@ -70,7 +70,6 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //initNewsFragment();
         startService(new Intent(this, LocationService.class));
         initFirebase();
     }
@@ -179,35 +178,23 @@ public class MainActivity extends BaseActivity {
     private boolean onDrawerItemClick(View view, int position, IDrawerItem drawerItem) {
         Log.d(TAG, "onItemClick: position clicked " + position);
         switch (position) {
-            case 2:
-                startChoosenActivity(ChatHeaderActivity.class);
-                mDrawer.closeDrawer();
-                return true;
-            case 3:
+            case 1:
                 startChoosenActivity(RelationshipsActivity.class);
                 mDrawer.closeDrawer();
                 return true;
-            case 4:
+            case 2:
                 startChoosenActivity(GroupsActivity.class);
                 return true;
+            case 3:
+                startChoosenActivity(ChatHeaderActivity.class);
+                mDrawer.closeDrawer();
+                return true;
             case 5:
-                signOut();
                 mDrawer.closeDrawer();
-                return true;
-            case 6:
-                startChoosenActivity(TestActivity.class);
-                mDrawer.closeDrawer();
-                return true;
-            case 7:
-                startChoosenActivity(TestTwoActivity.class);
-                mDrawer.closeDrawer();
+                logout();
                 return true;
             default:
                 return false;
         }
-    }
-
-    private void signOut() {
-        firebaseAuth.signOut();
     }
 }

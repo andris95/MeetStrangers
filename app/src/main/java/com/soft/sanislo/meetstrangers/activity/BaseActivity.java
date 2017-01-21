@@ -136,6 +136,8 @@ public abstract class BaseActivity extends AppCompatActivity implements
                                 //nothing
                             }
                         });
+            } else {
+                FirebaseAuth.getInstance().signOut();
             }
         }
     }

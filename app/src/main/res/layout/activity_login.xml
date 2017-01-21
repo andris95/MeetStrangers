@@ -28,7 +28,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="10dp"
                 android:hint="@string/hint_email"
-                android:text="andrras@gmail.com"
+                android:text="andras@gmail.com"
                 android:inputType="textEmailAddress" />
         </android.support.design.widget.TextInputLayout>
 
@@ -53,7 +53,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dip"
-            android:content="@string/btn_login"
+            android:text="@string/btn_login"
             />
 
         <com.google.android.gms.common.SignInButton
@@ -81,7 +81,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dip"
             android:background="@null"
-            android:content="@string/btn_link_to_register"
+            android:text="@string/btn_link_to_register"
             android:textAllCaps="false"
             android:textSize="15dp" />
     </LinearLayout>

@@ -5,7 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="@dimen/activity_margin"
-    android:fitsSystemWindows="true"
     tools:context=".activity.authentication.SignupActivity">
 
     <LinearLayout
@@ -13,13 +12,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:orientation="vertical">
-
-        <ImageView
-            android:layout_width="@dimen/logo_w_h"
-            android:layout_height="@dimen/logo_w_h"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="30dp"
-            android:src="@mipmap/ic_launcher" />
 
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
@@ -31,8 +23,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/email"
                 android:inputType="textEmailAddress"
-                android:maxLines="1"
-                android:singleLine="true"/>
+                android:lines="1"/>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -49,8 +40,7 @@
                 android:imeActionId="@+id/edt_first_name"
                 android:imeOptions="actionUnspecified"
                 android:inputType="textPassword"
-                android:maxLines="1"
-                android:singleLine="true"/>
+                android:lines="1"/>
 
         </android.support.design.widget.TextInputLayout>
 
@@ -66,9 +56,7 @@
                 android:hint="First Name"
                 android:imeActionId="@+id/edt_last_name"
                 android:imeOptions="actionUnspecified"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:maxLines="1"/>
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
@@ -83,9 +71,7 @@
                 android:hint="Last Name"
                 android:imeActionId="@+id/login"
                 android:imeOptions="actionUnspecified"
-                android:maxLines="1"
-                android:singleLine="true"
-                android:textColor="@android:color/white" />
+                android:lines="1"/>
         </android.support.design.widget.TextInputLayout>
 
         <Button
@@ -94,8 +80,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:background="@color/colorAccent"
-            android:content="@string/action_sign_in_short"
+            android:text="@string/action_sign_in_short"
             android:textColor="@android:color/black"
             android:textStyle="bold" />
 
@@ -104,16 +89,15 @@
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:content="@string/btn_forgot_password"
-            android:textAllCaps="false"
-            android:textColor="@color/colorAccent" />
+            android:text="@string/btn_forgot_password"
+            android:textAllCaps="false"/>
 
         <Button
             android:id="@+id/sign_in_button"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:background="@null"
-            android:content="@string/btn_link_to_login"
+            android:text="@string/btn_link_to_login"
             android:textAllCaps="false"
             android:textSize="15dp" />
     </LinearLayout>
@@ -123,5 +107,6 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="center|bottom"
-        android:visibility="gone" />
+        android:visibility="gone"
+        tools:visibility="visible"/>
 </android.support.design.widget.CoordinatorLayout>

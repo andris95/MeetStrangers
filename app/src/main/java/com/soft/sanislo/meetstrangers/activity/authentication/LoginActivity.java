@@ -113,6 +113,12 @@ public class LoginActivity extends BaseActivity {
                 .build();
     }
 
+    @OnClick(R.id.btn_signup)
+    public void onClickSignUp() {
+        Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
+        startActivity(intent);
+    }
+
     @OnClick(R.id.btn_login)
     public void onClickLogin() {
         pbProgressBar.setVisibility(View.VISIBLE);
