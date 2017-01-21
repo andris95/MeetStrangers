@@ -13,6 +13,8 @@ public class Comment {
     private String commentKey;
     private String postKey;
     private String authorUID;
+    private String authorName;
+    private String authorAvatar;
     private String text;
     private long likesCount;
     private HashMap<String, Boolean> likedUsersUIDs;
@@ -20,11 +22,15 @@ public class Comment {
 
     public Comment() {}
 
-    public Comment(String commentKey, String postKey, String authorUID, String text, long timestamp) {
+    public Comment(String commentKey, String postKey, String authorUID, String authorName, String authorAvatar, String text, long likesCount, HashMap<String, Boolean> likedUsersUIDs, long timestamp) {
         this.commentKey = commentKey;
         this.postKey = postKey;
         this.authorUID = authorUID;
+        this.authorName = authorName;
+        this.authorAvatar = authorAvatar;
         this.text = text;
+        this.likesCount = likesCount;
+        this.likedUsersUIDs = likedUsersUIDs;
         this.timestamp = timestamp;
     }
 
@@ -66,6 +72,22 @@ public class Comment {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
+    }
+
+    public String getAuthorAvatar() {
+        return authorAvatar;
+    }
+
+    public void setAuthorAvatar(String authorAvatar) {
+        this.authorAvatar = authorAvatar;
     }
 
     @Override

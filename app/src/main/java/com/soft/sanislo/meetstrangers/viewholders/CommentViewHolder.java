@@ -26,7 +26,6 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     private View mRootView;
     private Comment mComment;
     private int mPosition;
-    private Context mContext;
     private String mAuthUID;
     private CommentAdapter.OnClickListener mOnClickListener;
     private boolean isExpanded;
@@ -62,9 +61,8 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
         ButterKnife.bind(this, mRootView);
     }
 
-    public void populate(Context context, final Comment comment, final int position,
+    public void populate(final Comment comment, final int position,
                          CommentAdapter.OnClickListener onClickListener) {
-        mContext = context;
         mComment = comment;
         mPosition = position;
         mOnClickListener = onClickListener;
@@ -77,10 +75,6 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setFooterVisibility() {
-        /*rlComment.setBackgroundColor(isExpanded ? mContext.getResources().getColor(R.color.md_blue_grey_50)
-                : mContext.getResources().getColor(R.color.md_white_1000));
-        rlComment.setTranslationZ(isExpanded ? mContext.getResources().getDimension(R.dimen._4sdp)
-                : 0);*/
         rlCommentFooter.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
         rlComment.setSelected(isExpanded);
         rlComment.setActivated(isExpanded);
@@ -103,11 +97,11 @@ public class CommentViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setAuthorAvatar() {
-        imageLoader.displayImage(mComment.getAuthorAvatarURL(), ivAuthorAvatar, displayImageOptions);
+        imageLoader.displayImage(mComment.getAuthorAvatar(), ivAuthorAvatar, displayImageOptions);
     }
 
     private void setAuthorName() {
-        tvAuthorName.setText(mComment.getAuthorFullName());
+        tvAuthorName.setText(mComment.getAuthorName());
     }
 
     private void setText() {

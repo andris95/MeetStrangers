@@ -31,6 +31,7 @@ import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.BaseActivity;
 import com.soft.sanislo.meetstrangers.activity.MainActivity;
 import com.soft.sanislo.meetstrangers.model.User;
+import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 
@@ -70,9 +71,6 @@ public class LoginActivity extends BaseActivity {
     private String email, password;
     private User mUser;
 
-    private SharedPreferences mSharedPreferences;
-    private GoogleSignInOptions gso;
-
     private OnCompleteListener<AuthResult> onSignInCompleteListener = new OnCompleteListener() {
         @Override
         public void onComplete(@NonNull Task task) {
@@ -104,9 +102,7 @@ public class LoginActivity extends BaseActivity {
 
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-
         initGoogleSignIn();
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     private void initGoogleSignIn() {
@@ -115,18 +111,6 @@ public class LoginActivity extends BaseActivity {
                 .requestEmail()
                 .requestProfile()
                 .build();
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mFirebaseAuth.addAuthStateListener(mAuthStateListener);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        mFirebaseAuth.removeAuthStateListener(mAuthStateListener);
     }
 
     @OnClick(R.id.btn_login)
@@ -177,7 +161,8 @@ public class LoginActivity extends BaseActivity {
             String email = resultSignInAccount.getEmail();
             String id = resultSignInAccount.getId();
             String photoURL = resultSignInAccount.getPhotoUrl().toString();
-            mUser = new User.Builder().setFullName(displayName)
+            mUser = new User.Builder()
+                    .setFullName(displayName)
                     .setFirstName(resultSignInAccount.getGivenName())
                     .setLastName(resultSignInAccount.getFamilyName())
                     .setAvatarURL(photoURL)
@@ -191,7 +176,6 @@ public class LoginActivity extends BaseActivity {
 
     private void firebaseAuthWithGoogle(GoogleSignInAccount googleSignInAccount) {
         AuthCredential authCredential = GoogleAuthProvider.getCredential(googleSignInAccount.getIdToken(), null);
-        Log.d(TAG, "firebaseAuthWithGoogle: " + authCredential.toString());
         mFirebaseAuth.signInWithCredential(authCredential).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {

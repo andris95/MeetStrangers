@@ -9,7 +9,7 @@ import java.util.List;
 public class Post {
     public static final int BY_USER = 111;
     public static final int BY_GROUP = 222;
-    private String postUID;
+    private String key;
     private String authorUID;
     private int createdBy;
     private String content;
@@ -23,8 +23,8 @@ public class Post {
 
     public Post() {}
 
-    public Post(String postUID, String authorUID, int createdBy, String content, long timestamp, long likesCount, long dislikesCount, long commentsCount, List<MediaFile> mediaFiles, HashMap<String, Boolean> likedUsersUIDs, HashMap<String, Boolean> dislikedUsersUIDs) {
-        this.postUID = postUID;
+    public Post(String key, String authorUID, int createdBy, String content, long timestamp, long likesCount, long dislikesCount, long commentsCount, List<MediaFile> mediaFiles, HashMap<String, Boolean> likedUsersUIDs, HashMap<String, Boolean> dislikedUsersUIDs) {
+        this.key = key;
         this.authorUID = authorUID;
         this.createdBy = createdBy;
         this.content = content;
@@ -45,12 +45,12 @@ public class Post {
         this.authorUID = authorUID;
     }
 
-    public String getPostUID() {
-        return postUID;
+    public String getKey() {
+        return key;
     }
 
-    public void setPostUID(String postUID) {
-        this.postUID = postUID;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getContent() {

@@ -34,7 +34,7 @@ public class CommentAdapter extends FirebaseRecyclerAdapter<Comment, CommentView
         viewHolder.setExpanded(getExpandedPos() == position);
         viewHolder.setAuthUID(mAuthUID);
         Log.d(TAG, "populateViewHolder: " + mAuthUID);
-        viewHolder.populate(mContext, model, position, mOnClickListener);
+        viewHolder.populate(model, position, mOnClickListener);
     }
 
     public int getExpandedPos() {

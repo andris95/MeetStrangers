@@ -40,23 +40,21 @@ public abstract class BaseActivity extends AppCompatActivity implements
     private FirebaseAuth mAuth;
     private String mUID;
     private String mProvider;
-    private String mEncodedEmail;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() != null) {
             mUID = mAuth.getCurrentUser().getUid();
         }
 
+        initAuthStateListener();
         initGoogleApiClient();
         initSharedPref();
-        initAuthStateListener();
     }
 
-    private void initAuthStateListener() {
+    protected void initAuthStateListener() {
         if (!((this instanceof LoginActivity) || (this instanceof SignupActivity))) {
             mAuthStateListener = new FirebaseAuth.AuthStateListener() {
                 @Override
@@ -67,9 +65,6 @@ public abstract class BaseActivity extends AppCompatActivity implements
                         takeUserToLoginScreenOnUnAuth();
                     } else {
                         mUID = firebaseAuth.getCurrentUser().getUid();
-                        List<String> providers = firebaseAuth.getCurrentUser().getProviders();
-                        Log.d(TAG, "onAuthStateChanged: providers: " + providers);
-                        Log.d(TAG, "onAuthStateChanged: provider data: " + firebaseAuth.getCurrentUser().getProviderData());
                     }
                 }
             };
@@ -96,12 +91,7 @@ public abstract class BaseActivity extends AppCompatActivity implements
     }
 
     private void initSharedPref() {
-        /**
-         * Getting mProvider and mEncodedEmail from SharedPreferences
-         */
         final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(BaseActivity.this);
-        /* Get mEncodedEmail and mProvider from SharedPreferences, use null as default value */
-        mEncodedEmail = sp.getString(Constants.KEY_ENCODED_EMAIL, null);
         mProvider = sp.getString(Constants.KEY_PROVIDER, null);
     }
 
@@ -174,12 +164,5 @@ public abstract class BaseActivity extends AppCompatActivity implements
 
     protected String getAuthenticatedUserUID() {
         return mUID;
-    }
-
-    protected void setTranslucentStatusBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            Window w = getWindow(); // in Activity's onCreate() for instance
-            w.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-        }
     }
 }

@@ -245,7 +245,7 @@ public class NewPostActivity extends BaseActivity {
         Post post = mPostBuilder.build();
         mDatabaseReference.child(Constants.F_POSTS)
                 .child(mPostAuthorUID)
-                .child(post.getPostUID())
+                .child(post.getKey())
                 .setValue(post, 0 - new Date().getTime())
                 .addOnCompleteListener(getPostCompleteListener())
                 .addOnFailureListener(postFailureListener);

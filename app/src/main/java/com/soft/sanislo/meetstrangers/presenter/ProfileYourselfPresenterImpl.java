@@ -1,8 +1,5 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
-import android.util.Log;
-import android.view.View;
-
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -12,8 +9,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
-import com.soft.sanislo.meetstrangers.R;
-import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileYourselfActivity;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
@@ -21,11 +16,8 @@ import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
-import com.soft.sanislo.meetstrangers.view.ProfileView;
 import com.soft.sanislo.meetstrangers.view.ProfileYourselfView;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -130,7 +122,7 @@ public class ProfileYourselfPresenterImpl implements ProfileYourselfPresenter {
     public void addComment(Post post, String commentText) {
         DatabaseReference newCommentRef = mDatabaseRef.child(Constants.F_POSTS_COMMENTS)
                 .child(post.getAuthorUID())
-                .child(post.getPostUID());
+                .child(post.getKey());
         String newCommentKey = newCommentRef.push().getKey();
         Comment comment = buildNewComment(post, newCommentKey, commentText);
         newCommentRef.child(newCommentKey).setValue(comment);
@@ -138,9 +130,13 @@ public class ProfileYourselfPresenterImpl implements ProfileYourselfPresenter {
 
     private Comment buildNewComment(Post post, String commentKey, String commentText) {
         Comment comment = new Comment(commentKey,
-                post.getPostUID(),
+                post.getKey(),
                 mAuthenticatedUserUID,
+                mUser.getFullName(),
+                mUser.getAvatarURL(),
                 commentText,
+                0,
+                null,
                 new Date().getTime());
         return comment;
     }

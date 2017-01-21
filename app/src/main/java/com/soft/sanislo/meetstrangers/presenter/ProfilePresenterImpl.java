@@ -1,28 +1,12 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.location.Address;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.places.PlaceLikelihood;
-import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
-import com.google.android.gms.location.places.Places;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -41,8 +25,6 @@ import com.soft.sanislo.meetstrangers.model.Post;
 import com.soft.sanislo.meetstrangers.model.Relationship;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
-import com.soft.sanislo.meetstrangers.utilities.DateUtils;
-import com.soft.sanislo.meetstrangers.utilities.LocationUtils;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
 
@@ -156,7 +138,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     public void addComment(Post post, String commentText) {
         DatabaseReference newCommentRef = mDatabaseRef.child(Constants.F_POSTS_COMMENTS)
                 .child(post.getAuthorUID())
-                .child(post.getPostUID());
+                .child(post.getKey());
         String newCommentKey = newCommentRef.push().getKey();
         Comment comment = buildNewComment(post, newCommentKey, commentText);
         newCommentRef.child(newCommentKey).setValue(comment)
@@ -165,9 +147,13 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     private Comment buildNewComment(Post post, String commentKey, String commentText) {
         Comment comment = new Comment(commentKey,
-                post.getPostUID(),
+                post.getKey(),
                 mAuthenticatedUserUID,
+                mAuthenticatedUser.getFullName(),
+                mAuthenticatedUser.getAvatarURL(),
                 commentText,
+                0,
+                null,
                 new Date().getTime());
         return comment;
     }

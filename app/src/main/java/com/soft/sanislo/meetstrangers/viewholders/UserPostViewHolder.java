@@ -137,7 +137,7 @@ public class UserPostViewHolder extends RecyclerView.ViewHolder {
         commentQuery = Utils.getDatabase().getReference()
                 .child(Constants.F_POSTS_COMMENTS)
                 .child(mPost.getAuthorUID())
-                .child(mPost.getPostUID())
+                .child(mPost.getKey())
                 .orderByPriority();
 
         setLikeIcon();

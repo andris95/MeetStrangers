@@ -29,8 +29,6 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.adapter.CommentAdapter;
-import com.soft.sanislo.meetstrangers.adapter.PhotoAdapter;
-import com.soft.sanislo.meetstrangers.adapter.PostAdapter;
 import com.soft.sanislo.meetstrangers.interfaces.PostClickListener;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.Group;
@@ -137,7 +135,7 @@ public class GroupPostViewHolder extends RecyclerView.ViewHolder {
         commentQuery = Utils.getDatabase().getReference()
                 .child(Constants.F_POSTS_COMMENTS)
                 .child(mPost.getAuthorUID())
-                .child(mPost.getPostUID())
+                .child(mPost.getKey())
                 .orderByPriority();
 
         setLikeIcon();

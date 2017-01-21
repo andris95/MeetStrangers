@@ -145,7 +145,7 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
                     makeToast("options");
                     break;
                 case R.id.iv_like_post:
-                    mProfilePresenter.likePost(post.getPostUID());
+                    mProfilePresenter.likePost(post.getKey());
                     break;
                 case R.id.iv_comment_post:
                     onClickCommentPost(position);
