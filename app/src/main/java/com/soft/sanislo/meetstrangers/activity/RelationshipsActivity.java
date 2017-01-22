@@ -8,8 +8,10 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.PagerTabStrip;
 import android.support.v4.view.ViewPager;
 
+import com.google.firebase.database.DatabaseReference;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.fragment.UserListFragment;
+import com.soft.sanislo.meetstrangers.utilities.Constants;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -25,6 +27,7 @@ public class RelationshipsActivity extends BaseActivity {
     TabLayout tlRelationships;
 
     private RelationshipsPagerAdapter mPagerAdapter;
+    private DatabaseReference mDatabaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

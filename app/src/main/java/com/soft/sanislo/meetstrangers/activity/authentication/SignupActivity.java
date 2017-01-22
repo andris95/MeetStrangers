@@ -113,6 +113,9 @@ public class SignupActivity extends BaseActivity {
                 user.setFirstName(mFirstName);
                 user.setLastName(mLastName);
                 user.setFullName(mFirstName + " " + mLastName);
+                FirebaseUtils.getDatabaseReference().child(Constants.F_USERS_ALL)
+                        .child(firebaseUser.getUid())
+                        .setValue(true);
                 FirebaseUtils.getDatabaseReference().child(Constants.F_USERS)
                         .child(firebaseUser.getUid())
                         .setValue(user)

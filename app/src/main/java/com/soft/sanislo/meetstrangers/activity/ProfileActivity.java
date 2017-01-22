@@ -292,8 +292,10 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
                     @Override
                     public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
                         super.onLoadingComplete(imageUri, view, loadedImage);
-                        setStatusBarColor(loadedImage);
                         supportStartPostponedEnterTransition();
+                        if (loadedImage != null) {
+                            setStatusBarColor(loadedImage);
+                        }
                     }
                 });
             }
