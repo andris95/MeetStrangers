@@ -99,6 +99,26 @@ public class Utils {
         return true;
     }
 
+    public static boolean isValidName(String firstName, String lastName) {
+        String regx = "^[\\p{L}\\s.’\\-,]+$";
+        Pattern pattern = Pattern.compile(regx, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(firstName);
+        if (TextUtils.isEmpty(firstName)) {
+            return false;
+        }
+        if (!matcher.find()) {
+            return false;
+        }
+        if (TextUtils.isEmpty(lastName)) {
+            return false;
+        }
+        matcher = pattern.matcher(lastName);
+        if (!matcher.find()) {
+            return false;
+        }
+        return true;
+    }
+
     public static Bitmap getCircledBitmap(Bitmap sourceBitmap) {
         Log.d(TAG, "getCircledBitmap: " + sourceBitmap.getWidth() + " x " + sourceBitmap.getHeight());
         int circleDiameter = Math.min(sourceBitmap.getWidth(), sourceBitmap.getHeight());

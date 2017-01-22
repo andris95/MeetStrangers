@@ -81,9 +81,10 @@
         <service
             android:name=".service.FetchAddressIntentService"
             android:exported="false"/>
+
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyD0LbM3Z_YrpHvWJVFxay15UAY5AiSXHEU"/>
+            android:value="AIzaSyBsbJD_oJa4LYn2Y7xpRPu2DBBFLAPkbxo"/>
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />

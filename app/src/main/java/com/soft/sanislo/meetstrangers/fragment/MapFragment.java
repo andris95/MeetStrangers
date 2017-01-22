@@ -98,6 +98,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: ");
         initListeners();
 
         firebaseAuth = FirebaseAuth.getInstance();
@@ -108,6 +109,7 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView: ");
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
@@ -118,6 +120,15 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
                 Log.d(TAG, "onProgressUpdate: current: " + current + " total: " + total);
             }
         };
+    }
+
+    public static MapFragment newInstance() {
+        
+        Bundle args = new Bundle();
+        
+        MapFragment fragment = new MapFragment();
+        fragment.setArguments(args);
+        return fragment;
     }
 
     private void moveCamera(Location location) {
@@ -139,8 +150,8 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
 
     private void moveCameraToMe(LocationSnapshot locationSnapshot) {
         if (mUid.equals(locationSnapshot.getId())) {
-            Location location = new Location("");//provider name is unecessary
-            location.setLatitude(locationSnapshot.getLat());//your coords of course
+            Location location = new Location("");
+            location.setLatitude(locationSnapshot.getLat());
             location.setLongitude(locationSnapshot.getLng());
             moveCamera(location);
         }

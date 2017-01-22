@@ -22,15 +22,7 @@
         android:layout_below="@+id/toolbar"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"/>
-    <me.zhanghai.android.materialprogressbar.MaterialProgressBar
-        android:layout_width="@dimen/_100sdp"
-        android:layout_height="@dimen/_100sdp"
-        android:layout_below="@+id/toolbar"
-        android:layout_margin="@dimen/_16sdp"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/pb_user_avatar"
-        android:visibility="visible"/>
+
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -39,6 +31,7 @@
         android:layout_toRightOf="@+id/iv_avatar"
         android:layout_toEndOf="@+id/iv_avatar"
         android:id="@+id/edt_first_name"/>
+
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

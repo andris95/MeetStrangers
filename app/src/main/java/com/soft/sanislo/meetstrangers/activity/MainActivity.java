@@ -134,7 +134,8 @@ public class MainActivity extends BaseActivity {
 
     private void addMapFragment() {
         FragmentTransaction ft = getFragmentManager().beginTransaction();
-        ft.replace(R.id.fl_fragment_container, MapFragment.newInstance());
+        MapFragment mapFragment = MapFragment.newInstance();
+        ft.replace(R.id.fl_fragment_container, mapFragment);
         ft.commit();
     }
 
