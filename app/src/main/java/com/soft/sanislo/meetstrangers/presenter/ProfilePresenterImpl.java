@@ -1,36 +1,31 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
 import android.content.Intent;
-import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.util.Log;
-import android.view.View;
 
-import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
-import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.activity.ChatActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.model.Relationship;
+import com.soft.sanislo.meetstrangers.model.RelationshipV2;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 
 /**
  * Created by root on 17.10.16.
@@ -42,21 +37,17 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private ProfileView mProfileView;
 
     private DatabaseReference mDatabaseRef = Utils.getDatabase().getReference();
-    private DatabaseReference mRelationshipRef;
-    private FirebaseAuth mFirebaseAuth;
-    private FirebaseUser mFirebaseUser;
 
     private User mAuthenticatedUser;
     private String mAuthenticatedUserUID;
     private User mDisplayedUser;
     private String mDisplayedUserUID;
 
-    /** relationship between the authenticated and displayed users */
-    private Relationship mRelationship;
-    private String mLastActionUID;
+    private DatabaseReference mAuthenticatedUserRef;
+    private DatabaseReference mDisplayedUserRef;
 
-    private ResultReceiver mResultReceiver;
-    private MaterialDialog mActionDialog;
+    /** relationship between the authenticated and displayed users */
+    private RelationshipV2 mRelationship;
 
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
         @Override
@@ -86,10 +77,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private ValueEventListener mRelationshipListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            mRelationship = dataSnapshot.getValue(Relationship.class);
-            if (mRelationship != null) {
-                mLastActionUID = mRelationship.getLastActionUserUID();
-            }
+            mRelationship = dataSnapshot.getValue(RelationshipV2.class);
         }
 
         @Override
@@ -109,8 +97,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
             mProfileView.onDatabaseError(databaseError);
         }
     };
-    private DatabaseReference mAuthenticatedUserRef;
-    private DatabaseReference mDisplayedUserRef;
 
     private OnFailureListener mOnFailureListener = new OnFailureListener() {
         @Override
@@ -119,19 +105,22 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         }
     };
 
-    public ProfilePresenterImpl(ProfileActivity context, ProfileView profileView, String displayedUserUID) {
+    public ProfilePresenterImpl(ProfileActivity context,
+                                ProfileView profileView) {
         mContext = context;
         mProfileView = profileView;
-        mDisplayedUserUID = displayedUserUID;
-        mDisplayedUserRef = mDatabaseRef.child(Constants.F_USERS).child(mDisplayedUserUID);
+    }
 
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        mAuthenticatedUserUID = mFirebaseUser.getUid();
+    @Override
+    public void setAuthenticatedUserUID(String authenticatedUserUID) {
+        mAuthenticatedUserUID = authenticatedUserUID;
         mAuthenticatedUserRef = mDatabaseRef.child(Constants.F_USERS).child(mAuthenticatedUserUID);
-        mRelationshipRef = mDatabaseRef.child(Constants.F_RELATIONSHIPS)
-                .child(mAuthenticatedUserUID)
-                .child(mDisplayedUserUID);
+    }
+
+    @Override
+    public void setDisplayedUserUID(String uid) {
+        mDisplayedUserUID = uid;
+        mDisplayedUserRef = mDatabaseRef.child(Constants.F_USERS).child(mDisplayedUserUID);
     }
 
     @Override
@@ -160,28 +149,71 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     @Override
     public void onClickFAB() {
-        String[] profileOptions = mContext.getResources().getStringArray(R.array.profile_stranger_options);
+        /*String[] profileOptions = mContext.getResources().getStringArray(R.array.profile_stranger_options);
         ArrayList<String> options = new ArrayList<>(Arrays.asList(profileOptions));
-        options.add(getRelationshipStatusString());
+        options.add(getRelationshipStatusText());*/
+        mProfileView.showDialog(getRelationshipStatusText());
+    }
 
-        mActionDialog = new MaterialDialog.Builder(mContext)
-                .items(options)
-                .itemsCallback(new MaterialDialog.ListCallback() {
-                    @Override
-                    public void onSelection(MaterialDialog dialog, View view, int which, CharSequence text) {
-                        Log.d(TAG, "onSelection: which: " + which);
-                        switch (which) {
-                            case 0:
-                                launchChatActivity();
-                                break;
-                            case 1:
-                                onClickRelationshipAction();
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                }).show();
+    @Override
+    public void onDialogItemSelected(int position) {
+        //for now, position does not matter
+        if (mRelationship == null) {
+            Log.d(TAG, "onDialogItemSelected: users are strangers, follow this user");
+            followDisplayedUser();
+        } else {
+            if (mRelationship.areFriends()) {
+                Log.d(TAG, "onDialogItemSelected: users are friends, unfriend them");
+            } else if (mRelationship.isHeFollowingMe(mAuthenticatedUserUID)) {
+                Log.d(TAG, "onDialogItemSelected: displayed user is following authenticated user," +
+                        "accept follow request, " +
+                        "or decline!");
+            } else if (mRelationship.isMeFollowingHim(mAuthenticatedUserUID)) {
+                Log.d(TAG, "onDialogItemSelected: authenticated user " +
+                        "is following the displayed user, unfollow him");
+                unfollowDisplayedUser();
+            }
+        }
+    }
+
+    private void followDisplayedUser() {
+        HashMap<String, Object> toUpdate = RelationshipV2.getFollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "onComplete: ");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "onFailure: ");
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void unfollowDisplayedUser() {
+        HashMap<String, Object> toUpdate = RelationshipV2.getUnfollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "onComplete: ");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "onFailure: ");
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private String getRelationshipStatusText() {
+        if (mRelationship == null) {
+            return "You are strangers. Follow this user";
+        } else {
+            return mRelationship.getRelationshipStatusText(mAuthenticatedUserUID);
+        }
     }
 
     private void launchChatActivity() {
@@ -190,102 +222,10 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         mContext.startActivity(intent);
     }
 
-    private String getRelationshipStatusString() {
-        if (mRelationship == null) {
-            return "Follow";
-        } else {
-            return mRelationship.getRelationshipStatusString(mAuthenticatedUserUID);
-        }
-    }
-
-    private void onClickRelationshipAction() {
-        if (mRelationship == null) {
-            startFollowingDisplayedUser();
-        } else {
-            if (mRelationship.getStatus() == Constants.RS_FRIENDS) {
-                deleteFriend();
-            } else if (mRelationship.getStatus() == Constants.RS_PENDING) {
-                if (mLastActionUID.equals(mAuthenticatedUserUID)) {
-                    stopFollowingDisplayedUser();
-                } else {
-                    addFriendDisplayedUser();
-                }
-            } else if (mRelationship.getStatus() == Constants.RS_DELETED) {
-                if (mLastActionUID.equals(mAuthenticatedUserUID)) {
-                    addFriendDisplayedUser();
-                } else {
-                    stopFollowingDisplayedUser();
-                }
-            }
-        }
-        updateRelationship();
-    }
-
-    private void setFriends(String firstUserUID, String secondUserUID, boolean areFriends) {
-        mDatabaseRef.child(Constants.F_USERS_FRIENDS)
-                .child(firstUserUID)
-                .child(secondUserUID)
-                .setValue((areFriends) ? true : null);
-        mDatabaseRef.child(Constants.F_USERS_FRIENDS)
-                .child(secondUserUID)
-                .child(firstUserUID)
-                .setValue((areFriends) ? true : null);
-    }
-
-    private void setFollowers(String userToFollowUID, String followerUID, boolean areFollowers) {
-        mDatabaseRef.child(Constants.F_USERS_FOLLOWERS)
-                .child(userToFollowUID)
-                .child(followerUID).setValue((areFollowers) ? true : null);
-        mDatabaseRef.child(Constants.F_USERS_FOLLOWING)
-                .child(followerUID)
-                .child(userToFollowUID).setValue((areFollowers) ? true : null);
-    }
-
-    private void deleteFriend() {
-        mRelationship = new Relationship(Constants.RS_DELETED,
-                new Date().getTime(),
-                mAuthenticatedUserUID,
-                mRelationship.getFirstActionUserUID());
-        setFriends(mAuthenticatedUserUID, mDisplayedUserUID, false);
-        setFollowers(mAuthenticatedUserUID, mDisplayedUserUID, true);
-    }
-
-    private void addFriendDisplayedUser() {
-        mRelationship = new Relationship(Constants.RS_FRIENDS,
-                new Date().getTime(),
-                mAuthenticatedUserUID,
-                mRelationship.getFirstActionUserUID());
-        setFriends(mAuthenticatedUserUID, mDisplayedUserUID, true);
-        setFollowers(mAuthenticatedUserUID, mDisplayedUserUID, false);
-    }
-
-    private void stopFollowingDisplayedUser() {
-        mRelationship = null;
-        setFollowers(mDisplayedUserUID, mAuthenticatedUserUID, false);
-    }
-
-    private void startFollowingDisplayedUser() {
-        mRelationship = new Relationship(Constants.RS_PENDING,
-                new Date().getTime(),
-                mAuthenticatedUserUID,
-                mAuthenticatedUserUID);
-        setFollowers(mDisplayedUserUID, mAuthenticatedUserUID, true);
-    }
-
-    private void updateRelationship() {
-        mDatabaseRef.child(Constants.F_RELATIONSHIPS)
-                .child(mAuthenticatedUserUID)
-                .child(mDisplayedUserUID)
-                .setValue(mRelationship);
-        mDatabaseRef.child(Constants.F_RELATIONSHIPS)
-                .child(mDisplayedUserUID)
-                .child(mAuthenticatedUserUID)
-                .setValue(mRelationship);
-    }
-
     @Override
     public void likeComment(Comment comment) {
-        mDatabaseRef.child(Constants.F_POSTS_COMMENTS).child(comment.getAuthorUID())
+        mDatabaseRef.child(Constants.F_POSTS_COMMENTS)
+                .child(comment.getAuthorUID())
                 .child(comment.getPostKey())
                 .child(comment.getCommentKey())
                 .runTransaction(new Transaction.Handler() {
@@ -335,9 +275,13 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     public void onResume() {
         mAuthenticatedUserRef.addValueEventListener(mAuthenticatedUserListener);
         mDisplayedUserRef.addValueEventListener(mDisplayedUserListener);
-        mDatabaseRef.child(Constants.F_LOCATIONS).child(mDisplayedUserUID)
+        mDatabaseRef.child(Constants.F_LOCATIONS)
+                .child(mDisplayedUserUID)
                 .addValueEventListener(mUserLocationListener);
-        mRelationshipRef.removeEventListener(mRelationshipListener);
+        mDatabaseRef.child(Constants.F_RELATIONSHIPS)
+                .child(mAuthenticatedUserUID)
+                .child(mDisplayedUserUID)
+                .addValueEventListener(mRelationshipListener);
     }
 
     @Override
@@ -356,5 +300,28 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     @Override
     public void onBackPressed() {
         mContext.supportFinishAfterTransition();
+    }
+
+    private void areFriends() {
+        mDatabaseRef.child(Constants.F_USERS_FRIENDS)
+                .child(mAuthenticatedUserUID)
+                .child(mDisplayedUserUID)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        boolean areFriends;
+                        Log.d(TAG, "onDataChange: " + (dataSnapshot == null));
+                        Log.d(TAG, "onDataChange: " + dataSnapshot.getValue());
+                        Log.d(TAG, "onDataChange: " + (dataSnapshot.getValue() == null));
+                        if (dataSnapshot.getValue() != null) {
+                            Log.d(TAG, "onDataChange: " + dataSnapshot.getValue().toString());
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
     }
 }

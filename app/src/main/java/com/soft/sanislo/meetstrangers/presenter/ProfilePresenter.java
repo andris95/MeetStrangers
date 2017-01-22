@@ -9,11 +9,14 @@ import com.soft.sanislo.meetstrangers.model.User;
  */
 
 public interface ProfilePresenter {
+    void setAuthenticatedUserUID(String uid);
+    void setDisplayedUserUID(String uid);
+
     void likeComment(Comment comment);
     void likePost(String postKey);
     void addComment(Post post, String commentText);
     void onClickFAB();
-
+    void onDialogItemSelected(int position);
     void onResume();
     void onPause();
     void onBackPressed();

@@ -187,7 +187,8 @@ public class LocationService extends Service {
                     Log.d(TAG, "onLocationChanged: isBetterLocation" + newLocation);
                     mCurrentLocation = newLocation;
                     LocationSnapshot locationSnapshot = new LocationSnapshot(firebaseUser.getUid(),
-                            newLocation.getLatitude(), newLocation.getLongitude(),
+                            newLocation.getLatitude(),
+                            newLocation.getLongitude(),
                             Calendar.getInstance().getTimeInMillis(),
                             mUser.getAvatarURL());
                     mDatabaseRef.child(Constants.F_LOCATIONS).child(mUid).setValue(locationSnapshot);

@@ -11,13 +11,28 @@ public class LocationSnapshot {
     private String mId;
     private double lat;
     private double lng;
+    private String address;
     private long timestamp;
     private String icon;
 
     public LocationSnapshot() {}
 
-    public LocationSnapshot(String mId, double lat, double lng, long timestamp, String icon) {
+    public LocationSnapshot(String mId,
+                            double lat,
+                            double lng,
+                            String address,
+                            long timestamp,
+                            String icon) {
         this.mId = mId;
+        this.lat = lat;
+        this.lng = lng;
+        this.address = address;
+        this.timestamp = timestamp;
+        this.icon = icon;
+    }
+
+    public LocationSnapshot(String id, double lat, double lng, long timestamp, String icon) {
+        mId = id;
         this.lat = lat;
         this.lng = lng;
         this.timestamp = timestamp;
@@ -64,17 +79,13 @@ public class LocationSnapshot {
         this.icon = icon;
     }
 
-    /*public Location getLocation() {
-        Location location = new Location("");
-        location.setLongitude(lng);
-        location.setLatitude(lat);
-        return location;
+    public String getAddress() {
+        return address;
     }
 
-    public LatLng getLatLng() {
-        LatLng latLng = new LatLng(lat, lng);
-        return latLng;
-    }*/
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
     @Override
     public String toString() {

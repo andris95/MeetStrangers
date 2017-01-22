@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseError;
@@ -42,6 +43,8 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.viewholders.UserPostViewHolder;
 import com.soft.sanislo.meetstrangers.view.ProfileView;
+
+import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -75,14 +78,9 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     @BindView(R.id.rv_posts)
     RecyclerView rvPosts;
 
-/*    @BindView(R.id.scv_profile_content)
-    NestedScrollView nscProfileContent;*/
-
     private ProfilePresenter mProfilePresenter;
     private DatabaseReference database = Utils.getDatabase().getReference();
 
-    private FirebaseAuth mFirebaseAuth;
-    private FirebaseUser mFirebaseUser;
     private String mAuthenticatedUserUID;
     private String mDisplayedUserUID;
 
@@ -134,10 +132,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     private PostAdapter.OnClickListener mPostClickListener = new PostAdapter.OnClickListener() {
         @Override
         public void onClick(View view, int position, Post post) {
-            if (view.getTag() != null) {
-                int tag = (int) view.getTag();
-                return;
-            }
             switch (view.getId()) {
                 case R.id.iv_post_author_avatar:
                     break;
@@ -163,10 +157,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         @Override
         public void onClickCancelComment() {
             mPostAdapter.setCommentsVisiblePos(RecyclerView.NO_POSITION);
-            /*if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-                TransitionManager.beginDelayedTransition(rvPosts, expandCollapse);
-                mPostAdapter.notifyDataSetChanged();
-            }*/
             mPostAdapter.notifyDataSetChanged();
         }
 
@@ -187,9 +177,6 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         } else {
             mPostAdapter.setCommentsVisiblePos(position);
         }
-        /*if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            TransitionManager.beginDelayedTransition(rvPosts);
-        }*/
         mPostAdapter.notifyItemChanged(position);
     }
 
@@ -207,11 +194,11 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
         ButterKnife.bind(this);
         setSupportActionBar(toolbar);
 
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mFirebaseUser = mFirebaseAuth.getCurrentUser();
-        mAuthenticatedUserUID = mFirebaseUser.getUid();
+        mAuthenticatedUserUID = getAuthenticatedUserUID();
         mDisplayedUserUID = getIntent().getStringExtra(KEY_UID);
-        mProfilePresenter = new ProfilePresenterImpl(this, this, mDisplayedUserUID);
+        mProfilePresenter = new ProfilePresenterImpl(this, this);
+        mProfilePresenter.setAuthenticatedUserUID(getAuthenticatedUserUID());
+        mProfilePresenter.setDisplayedUserUID(mDisplayedUserUID);
 
         initPosts();
         initPostTransition();
@@ -237,9 +224,7 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     }
 
     private void supportBegindDelayedTransition(ViewGroup sceneRoot, Transition transition) {
-        if (android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP) {
-            TransitionManager.beginDelayedTransition(sceneRoot, transition);
-        }
+        TransitionManager.beginDelayedTransition(sceneRoot, transition);
     }
 
     private void initPosts() {
@@ -315,6 +300,22 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     @Override
     public void onAddressFetchFailure(String errorMessage) {
         tvAddress.setText(errorMessage);
+    }
+
+    @Override
+    public void showDialog(String userStatus) {
+        ArrayList<String> items = new ArrayList<>();
+        items.add(userStatus);
+        new MaterialDialog.Builder(this)
+                .items(items)
+                .itemsCallback(new MaterialDialog.ListCallback() {
+                    @Override
+                    public void onSelection(MaterialDialog dialog, View itemView, int position, CharSequence text) {
+                        Log.d(TAG, "onSelection: " + position);
+                        mProfilePresenter.onDialogItemSelected(position);
+                    }
+                })
+                .show();
     }
 
     @OnClick(R.id.fab_profile)

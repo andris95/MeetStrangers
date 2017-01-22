@@ -13,7 +13,7 @@ public interface ProfileView {
 
     void onAddressFetchSuccess(String address);
     void onAddressFetchFailure(String errorMessage);
-
+    void showDialog(String userStatus);
     void onComplete(String message);
     void onError(String errorMessage);
     void onError(Exception e);
