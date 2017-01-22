@@ -164,10 +164,12 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         } else {
             if (mRelationship.areFriends()) {
                 Log.d(TAG, "onDialogItemSelected: users are friends, unfriend them");
+                removeFriend();
             } else if (mRelationship.isHeFollowingMe(mAuthenticatedUserUID)) {
                 Log.d(TAG, "onDialogItemSelected: displayed user is following authenticated user," +
                         "accept follow request, " +
                         "or decline!");
+                acceptRequest();
             } else if (mRelationship.isMeFollowingHim(mAuthenticatedUserUID)) {
                 Log.d(TAG, "onDialogItemSelected: authenticated user " +
                         "is following the displayed user, unfollow him");
@@ -194,6 +196,38 @@ public class ProfilePresenterImpl implements ProfilePresenter {
 
     private void unfollowDisplayedUser() {
         HashMap<String, Object> toUpdate = RelationshipV2.getUnfollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "onComplete: ");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "onFailure: ");
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void acceptRequest() {
+        HashMap<String, Object> toUpdate = RelationshipV2.getAcceptMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.d(TAG, "onComplete: ");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.d(TAG, "onFailure: ");
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private void removeFriend() {
+        HashMap<String, Object> toUpdate = RelationshipV2.getRemoveFriendMap(mDisplayedUserUID, mAuthenticatedUserUID);
         mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {

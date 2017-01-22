@@ -93,7 +93,7 @@ public class RelationshipV2 {
         toUpdate.put("/users_following/" + authUID + "/" + displayedUID, true);
 
         toUpdate.putAll(getTimestampMap(authUID, displayedUID));
-        toUpdate.putAll(getActionMap(authUID, displayedUID));
+        toUpdate.putAll(getLastActionByAuthenticated(authUID, displayedUID));
         toUpdate.putAll(getStatusMap(authUID, displayedUID, STATUS_PENDING));
 
         logHashMap(toUpdate);
@@ -106,6 +106,34 @@ public class RelationshipV2 {
         toUpdate.put("/users_following/" + authUID + "/" + displayedUID, null);
         toUpdate.put("/" + Constants.F_RELATIONSHIPS + "/" + displayedUID + "/" + authUID, null);
         toUpdate.put("/" + Constants.F_RELATIONSHIPS + "/" + authUID + "/" + displayedUID, null);
+        logHashMap(toUpdate);
+        return toUpdate;
+    }
+
+    public static final HashMap<String, Object> getAcceptMap(String displayedUID, String authUID) {
+        HashMap<String, Object> toUpdate = new HashMap<>();
+        toUpdate.put("/users_followers/" + authUID + "/" + displayedUID, null);
+        toUpdate.put("/users_following/" + displayedUID + "/" + authUID, null);
+        toUpdate.put("/users_friends/" + authUID + "/" + displayedUID, true);
+        toUpdate.put("/users_friends/" + displayedUID + "/" + authUID, true);
+
+        toUpdate.putAll(getTimestampMap(authUID, displayedUID));
+        toUpdate.putAll(getLastActionByAuthenticated(authUID, displayedUID));
+        toUpdate.putAll(getStatusMap(authUID, displayedUID, STATUS_FRIENDS));
+        logHashMap(toUpdate);
+        return toUpdate;
+    }
+
+    public static final HashMap<String, Object> getRemoveFriendMap(String displayedUID, String authUID) {
+        HashMap<String, Object> toUpdate = new HashMap<>();
+        toUpdate.put("/users_followers/" + authUID + "/" + displayedUID, true);
+        toUpdate.put("/users_following/" + displayedUID + "/" + authUID, true);
+        toUpdate.put("/users_friends/" + authUID + "/" + displayedUID, null);
+        toUpdate.put("/users_friends/" + displayedUID + "/" + authUID, null);
+
+        toUpdate.putAll(getTimestampMap(authUID, displayedUID));
+        toUpdate.putAll(getLastActionByDisplayed(authUID, displayedUID));
+        toUpdate.putAll(getStatusMap(authUID, displayedUID, STATUS_PENDING));
         logHashMap(toUpdate);
         return toUpdate;
     }
@@ -125,7 +153,7 @@ public class RelationshipV2 {
         return toUpdate;
     }
 
-    private static final HashMap<String, Object> getActionMap(String authUID, String displayedUID) {
+    private static final HashMap<String, Object> getLastActionByAuthenticated(String authUID, String displayedUID) {
         HashMap<String, Object> toUpdate = new HashMap<>();
         /** for last action user UID */
         toUpdate.put("/" + Constants.F_RELATIONSHIPS +
@@ -136,6 +164,20 @@ public class RelationshipV2 {
                 "/" + displayedUID +
                 "/" + authUID +
                 "/actionUserUID", authUID);
+        return toUpdate;
+    }
+
+    private static final HashMap<String, Object> getLastActionByDisplayed(String authUID, String displayedUID) {
+        HashMap<String, Object> toUpdate = new HashMap<>();
+        /** for last action user UID */
+        toUpdate.put("/" + Constants.F_RELATIONSHIPS +
+                "/" + authUID +
+                "/" + displayedUID +
+                "/actionUserUID", displayedUID);
+        toUpdate.put("/" + Constants.F_RELATIONSHIPS +
+                "/" + displayedUID +
+                "/" + authUID +
+                "/actionUserUID", displayedUID);
         return toUpdate;
     }
 
