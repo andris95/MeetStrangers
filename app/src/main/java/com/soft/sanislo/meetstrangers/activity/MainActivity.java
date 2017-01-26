@@ -4,15 +4,26 @@ package com.soft.sanislo.meetstrangers.activity;
 import android.Manifest;
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -50,6 +61,7 @@ import java.util.List;
 public class MainActivity extends BaseActivity implements MapFragment.MarkerClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int RC_PERM_LOCATION = 300;
+    private static final int RC_LOCATION_SETTINGS = 400;
     private static final int ID_LOCATION = 111;
 
     private AccountHeaderBuilder mHeaderBuilder;
@@ -64,6 +76,8 @@ public class MainActivity extends BaseActivity implements MapFragment.MarkerClic
     private FirebaseUser firebaseUser;
     private User mUser;
     private String mUID;
+
+    private GoogleApiClient mGoogleApiClient;
 
     private ValueEventListener mUserValueEventListener = new ValueEventListener() {
         @Override
@@ -99,12 +113,84 @@ public class MainActivity extends BaseActivity implements MapFragment.MarkerClic
 
     private void toggleLocationSharing(boolean isLocationShared) {
         if (isLocationShared) {
-            startLocationService();
+            Log.d(TAG, "toggleLocationSharing: ");
+            initGoogleApiClient();
+            connectGoogleApiClient();
         } else {
             stopLocationService();
         }
         changeLocationItemIcon(isLocationShared);
         PreferencesManager.setLocationShared(MainActivity.this, isLocationShared);
+    }
+
+    private void initGoogleApiClient() {
+        if (mGoogleApiClient != null) return;
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(new GoogleApiClient.ConnectionCallbacks() {
+                    @Override
+                    public void onConnected(@Nullable Bundle bundle) {
+                        checkLocationSettings();
+                    }
+
+                    @Override
+                    public void onConnectionSuspended(int i) {
+
+                    }
+                })
+                .build();
+    }
+
+    private void connectGoogleApiClient() {
+        if (mGoogleApiClient != null && !mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
+        }
+    }
+
+    private void  checkLocationSettings() {
+        LocationRequest locationRequest = new LocationRequest();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        PendingResult<LocationSettingsResult> result = LocationServices.SettingsApi.checkLocationSettings(
+                mGoogleApiClient,
+                builder.build());
+        Log.d(TAG, "checkLocationSettings: ");
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+                Log.d(TAG, "onResult: locationResult" + locationSettingsResult.toString());
+                final Status status = locationSettingsResult.getStatus();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can
+                        // initialize location requests here.
+                        Log.d(TAG, "onResult: SUCCESS");
+                        startLocationService();
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        Log.d(TAG, "onResult: RESOLUTION");
+                        showLocationResolution(status);
+                        break;
+                }
+            }
+        });
+    }
+
+    private void showLocationResolution(Status status) {
+        try {
+            // Show the dialog by calling startResolutionForResult(),
+            // and check the result in onActivityResult().
+            Log.d(TAG, "showLocationResolution: ");
+            status.startResolutionForResult(
+                    MainActivity.this,
+                    RC_LOCATION_SETTINGS);
+        } catch (IntentSender.SendIntentException e) {
+            // Ignore the error.
+        }
     }
 
     private void changeLocationItemIcon(boolean isChecked) {
@@ -302,6 +388,19 @@ public class MainActivity extends BaseActivity implements MapFragment.MarkerClic
             if (grantResults.length == 2 &&
                     grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 toggleLocationSharing(true);
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == RC_LOCATION_SETTINGS) {
+            if (resultCode == RESULT_OK) {
+                startLocationService();
+            } else {
+                makeToast(":(");
+                toggleLocationSharing(false);
             }
         }
     }

@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -23,7 +22,6 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -44,7 +42,8 @@ import java.util.Calendar;
  */
 public class LocationService extends Service {
     public static final String REQUEST_CHECK_SETTINGS = "REQUEST_CHECK_SETTINGS";
-    private static final long LOCATION_REQUEST_INTERVAL = 1000 * 5;
+    private static final long LOCATION_RC_FASTEST_INTERVAL = 1000 * 10;
+    private static final long LOCATION_RC_INTERVAL = 1000 * 15;
     private static final String TAG = LocationService.class.getSimpleName();
 
     private DatabaseReference mDatabaseRef = Utils.getDatabase().getReference();
@@ -94,16 +93,12 @@ public class LocationService extends Service {
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
-        Log.d(TAG, "onStart: ");
-        mDatabaseRef.child(Constants.F_USERS).child(mUid).addValueEventListener(mUserValueEventListener);
-    }
-
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand: ");
-        return super.onStartCommand(intent, flags, startId);
+        mDatabaseRef.child(Constants.F_USERS)
+                .child(mUid)
+                .addValueEventListener(mUserValueEventListener);
+        return START_NOT_STICKY;
     }
 
     @Override
@@ -111,7 +106,9 @@ public class LocationService extends Service {
         super.onDestroy();
         Log.d(TAG, "onDestroy: ");
         disconnectClient();
-        mDatabaseRef.child(Constants.F_USERS).child(mUid).removeEventListener(mUserValueEventListener);
+        mDatabaseRef.child(Constants.F_USERS)
+                .child(mUid)
+                .removeEventListener(mUserValueEventListener);
     }
 
     @Nullable
@@ -129,38 +126,7 @@ public class LocationService extends Service {
             public void onConnected(@Nullable Bundle bundle) {
                 Log.d(TAG, "onConnected: ");
                 if (hasPermission()) {
-
-                    locationRequest = new LocationRequest();
-                    locationRequest.setInterval(LOCATION_REQUEST_INTERVAL);
-                    locationRequest.setFastestInterval(LOCATION_REQUEST_INTERVAL * 2);
-                    locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-                    LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                            .addLocationRequest(locationRequest);
-                    result = LocationServices.SettingsApi.checkLocationSettings(googleApiClient,
-                            builder.build());
-                    result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
-                        @Override
-                        public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
-                            Log.d(TAG, "onResult: locationResult" + locationSettingsResult.toString());
-                            final Status status = locationSettingsResult.getStatus();
-                            final LocationSettingsStates states = locationSettingsResult.getLocationSettingsStates();
-                            switch (status.getStatusCode()) {
-                                case LocationSettingsStatusCodes.SUCCESS:
-                                    // All location settings are satisfied. The client can
-                                    // initialize location requests here.
-                                    Log.d(TAG, "onResult: SUCCESS");
-                                    requestLocationUpdates();
-                                    break;
-                                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                    Log.d(TAG, "onResult: RESOLUTION_REQUIRED");
-                                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                                    // Location settings are not satisfied. However, we have no way
-                                    // to fix the settings so we won't show the dialog.
-                                    Log.d(TAG, "onResult: SETTINGS_CHANGE_UNAVAILABLE");
-                                    break;
-                            }
-                        }
-                    });
+                    initLocationRequest();
                 } else {
                     Log.d(TAG, "onConnected: no permission");
                 }
@@ -184,14 +150,7 @@ public class LocationService extends Service {
                 // Called when a new location is found by the network location provider.
                 boolean isBetterLocation = LocationUtils.isBetterLocation(newLocation, mCurrentLocation);
                 if (isBetterLocation) {
-                    Log.d(TAG, "onLocationChanged: isBetterLocation" + newLocation);
-                    mCurrentLocation = newLocation;
-                    LocationSnapshot locationSnapshot = new LocationSnapshot(firebaseUser.getUid(),
-                            newLocation.getLatitude(),
-                            newLocation.getLongitude(),
-                            Calendar.getInstance().getTimeInMillis(),
-                            mUser.getAvatarURL());
-                    mDatabaseRef.child(Constants.F_LOCATIONS).child(mUid).setValue(locationSnapshot);
+                    pushNewLocation(newLocation);
                 }
             }
 
@@ -207,6 +166,24 @@ public class LocationService extends Service {
                 Log.d(TAG, "onProviderDisabled: ");
             }
         };
+    }
+
+    private void pushNewLocation(Location newLocation) {
+        mCurrentLocation = newLocation;
+        LocationSnapshot locationSnapshot = new LocationSnapshot(firebaseUser.getUid(),
+                newLocation.getLatitude(),
+                newLocation.getLongitude(),
+                Calendar.getInstance().getTimeInMillis(),
+                mUser.getAvatarURL());
+        mDatabaseRef.child(Constants.F_LOCATIONS).child(mUid).setValue(locationSnapshot);
+    }
+
+    private void initLocationRequest() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(LOCATION_RC_INTERVAL);
+        locationRequest.setFastestInterval(LOCATION_RC_FASTEST_INTERVAL);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        requestLocationUpdates();
     }
 
     private void requestLocationUpdates() {
@@ -230,19 +207,17 @@ public class LocationService extends Service {
     }
 
     private void disconnectClient() {
-        if (googleApiClient != null) {
-            if (googleApiClient.isConnected()) {
-                stopLocationUpdates();
-                googleApiClient.disconnect();
-            }
+        if (googleApiClient != null && googleApiClient.isConnected()) {
+            stopLocationUpdates();
+            googleApiClient.disconnect();
         }
     }
 
     private void stopLocationUpdates() {
         if (isRequestingUpdates) {
             LocationServices.FusedLocationApi.removeLocationUpdates(
-                    googleApiClient, locationListener);
-            Log.d(TAG, "stopLocationUpdates: ");
+                    googleApiClient,
+                    locationListener);
         }
     }
 }
