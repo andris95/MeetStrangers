@@ -4,6 +4,9 @@ package com.soft.sanislo.meetstrangers.fragment;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.app.Activity;
+import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.location.Location;
@@ -94,6 +97,19 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
 
         }
     };
+
+    private MarkerClickListener mMarkerClickListener;
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            mMarkerClickListener = (MarkerClickListener) activity;
+        } catch (ClassCastException e) {
+            throw new ClassCastException(activity.toString()
+                    + " must implement OnHeadlineSelectedListener");
+        }
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -248,14 +264,19 @@ public class MapFragment extends com.google.android.gms.maps.MapFragment impleme
     @Override
     public boolean onMarkerClick(Marker marker) {
         Log.d(TAG, "onMarkerClick: marker id " + marker.getTitle());
-        Intent intent;
+        /*Intent intent;
         if (marker.getTitle().equals(mUid)) {
             intent = new Intent(getActivity(), ProfileYourselfActivity.class);
         } else {
             intent = new Intent(getActivity(), ProfileActivity.class);
             intent.putExtra(ProfileActivity.KEY_UID, marker.getTitle());
         }
-        startActivity(intent);
+        startActivity(intent);*/
+        mMarkerClickListener.onMarkerClick(marker.getTitle());
         return true;
+    }
+
+    public interface MarkerClickListener {
+        void onMarkerClick(String uid);
     }
 }

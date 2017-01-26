@@ -8,7 +8,6 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.FragmentManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -37,6 +36,7 @@ import com.mikepenz.materialdrawer.model.ToggleDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.soft.sanislo.meetstrangers.fragment.MapFragment;
+import com.soft.sanislo.meetstrangers.fragment.UserProfileBottomSheet;
 import com.soft.sanislo.meetstrangers.service.LocationService;
 import com.soft.sanislo.meetstrangers.R;
 import com.soft.sanislo.meetstrangers.model.User;
@@ -47,7 +47,7 @@ import com.soft.sanislo.meetstrangers.utilities.PreferencesManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends BaseActivity {
+public class MainActivity extends BaseActivity implements MapFragment.MarkerClickListener {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int RC_PERM_LOCATION = 300;
     private static final int ID_LOCATION = 111;
@@ -309,5 +309,15 @@ public class MainActivity extends BaseActivity {
     private void startLocationService() {
         Intent intent = new Intent(MainActivity.this, LocationService.class);
         startService(intent);
+    }
+
+    private void openUserSheetPanel(String uid) {
+        UserProfileBottomSheet userProfileBottomSheet = UserProfileBottomSheet.newInstance(uid);
+        userProfileBottomSheet.show(getSupportFragmentManager(), null);
+    }
+
+    @Override
+    public void onMarkerClick(String uid) {
+        openUserSheetPanel(uid);
     }
 }

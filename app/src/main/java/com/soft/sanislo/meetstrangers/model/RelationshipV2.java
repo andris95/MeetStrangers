@@ -23,7 +23,8 @@ public class RelationshipV2 {
     public static final int STATUS_STRANGERS = 0;
     public static final int STATUS_FRIENDS = 1;
     public static final int STATUS_PENDING = 2;
-    public static final int STATUS_BLOCKED = 3;
+    public static final int STATUS_REJECTED = 3;
+    public static final int STATUS_BLOCKED = 4;
 
     private int status;
     private String actionUserUID;
@@ -76,15 +77,19 @@ public class RelationshipV2 {
     }
 
     public boolean areFriends() {
-        return status == 1;
+        return status == STATUS_FRIENDS;
     }
 
     public boolean isMeFollowingHim(String authenticatedUID) {
-        return actionUserUID.equals(authenticatedUID) && status == 2;
+        return actionUserUID.equals(authenticatedUID) && status == STATUS_PENDING;
     }
 
     public boolean isHeFollowingMe(String authenticatedUID) {
-        return !actionUserUID.equals(authenticatedUID) && status == 2;
+        return !actionUserUID.equals(authenticatedUID) && status == STATUS_PENDING;
+    }
+
+    public boolean isRejected(String authenticatedUID) {
+        return status == STATUS_REJECTED && actionUserUID.equals(actionUserUID);
     }
 
     public static final HashMap<String, Object> getFollowMap(String displayedUID, String authUID) {
