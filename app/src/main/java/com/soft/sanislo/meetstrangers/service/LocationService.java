@@ -58,7 +58,6 @@ public class LocationService extends Service {
     private GoogleApiClient.OnConnectionFailedListener connectionFailedListener;
     private LocationListener locationListener;
     private LocationRequest locationRequest;
-    private PendingResult<LocationSettingsResult> result;
     private boolean isRequestingUpdates;
 
     private ValueEventListener mUserValueEventListener = new ValueEventListener() {
@@ -149,7 +148,9 @@ public class LocationService extends Service {
             public void onLocationChanged(final Location newLocation) {
                 // Called when a new location is found by the network location provider.
                 boolean isBetterLocation = LocationUtils.isBetterLocation(newLocation, mCurrentLocation);
+                Log.d(TAG, "onLocationChanged: isBetterLocation: " + isBetterLocation);
                 if (isBetterLocation) {
+                    Log.d(TAG, "onLocationChanged: " + newLocation);
                     pushNewLocation(newLocation);
                 }
             }

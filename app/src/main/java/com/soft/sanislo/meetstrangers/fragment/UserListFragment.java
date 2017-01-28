@@ -1,20 +1,17 @@
 package com.soft.sanislo.meetstrangers.fragment;
 
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -50,12 +47,7 @@ public class UserListFragment extends android.support.v4.app.Fragment {
     TextView tvEmptyList;
 
     private View mRootView;
-
-    private DatabaseReference database = Utils.getDatabase().getReference();
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
-
-    private User mAuthenticatedUser;
+    private DatabaseReference mDatabaseReference = Utils.getDatabase().getReference();
     private String mAuthenticatedUserUID;
     private DatabaseReference mUserListRef;
 
@@ -82,19 +74,6 @@ public class UserListFragment extends android.support.v4.app.Fragment {
         }
     };
 
-    /** ValueEventListener for current logged in mAuthenticatedUser*/
-    private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            mAuthenticatedUser = dataSnapshot.getValue(User.class);
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-
-        }
-    };
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,9 +92,7 @@ public class UserListFragment extends android.support.v4.app.Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUser = firebaseAuth.getCurrentUser();
-        mAuthenticatedUserUID = firebaseUser.getUid();
+        mAuthenticatedUserUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mRelationshipStatus = getArguments().getInt(KEY_RELATIONSHIP_STATUS, USERS_ALL);
 
         setUserListRef();
@@ -154,8 +131,6 @@ public class UserListFragment extends android.support.v4.app.Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
-                .addValueEventListener(mAuthenticatedUserListener);
         mUserListRef.addValueEventListener(mListCountListener);
         rvUserList.setAdapter(mUserAdapter);
     }
@@ -163,8 +138,6 @@ public class UserListFragment extends android.support.v4.app.Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        database.child(Constants.F_USERS).child(mAuthenticatedUserUID)
-                .removeEventListener(mAuthenticatedUserListener);
         mUserListRef.removeEventListener(mListCountListener);
     }
 
@@ -178,26 +151,26 @@ public class UserListFragment extends android.support.v4.app.Fragment {
     private void setUserListRef() {
         switch (mRelationshipStatus) {
             case USERS_ALL:
-                mUserListRef = database.child(Constants.F_USERS_ALL);
+                mUserListRef = mDatabaseReference.child(Constants.F_USERS_ALL);
                 mEmptyListText = getString(R.string.no_users);
                 break;
             case USERS_FRIENDS:
-                mUserListRef = database.child(Constants.F_USERS_FRIENDS)
+                mUserListRef = mDatabaseReference.child(Constants.F_USERS_FRIENDS)
                     .child(mAuthenticatedUserUID);
                 mEmptyListText = getString(R.string.no_friends);
                 break;
             case USERS_INCOMING_REQUESTS:
-                mUserListRef = database.child(Constants.F_USERS_FOLLOWERS)
+                mUserListRef = mDatabaseReference.child(Constants.F_USERS_FOLLOWERS)
                         .child(mAuthenticatedUserUID);
                 mEmptyListText = getString(R.string.no_followers);
                 break;
             case USERS_OUTCOMING_REQUESTS:
-                mUserListRef = database.child(Constants.F_USERS_FOLLOWING)
+                mUserListRef = mDatabaseReference.child(Constants.F_USERS_FOLLOWING)
                         .child(mAuthenticatedUserUID);
                 mEmptyListText = getString(R.string.no_following);
                 break;
             default:
-                mUserListRef = database.child(Constants.F_USERS_ALL);
+                mUserListRef = mDatabaseReference.child(Constants.F_USERS_ALL);
                 break;
         }
     }

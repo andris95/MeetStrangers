@@ -1,6 +1,5 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
-import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -13,12 +12,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
-import com.soft.sanislo.meetstrangers.activity.ChatActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
 import com.soft.sanislo.meetstrangers.model.Post;
-import com.soft.sanislo.meetstrangers.model.RelationshipV2;
+import com.soft.sanislo.meetstrangers.model.Relationship;
 import com.soft.sanislo.meetstrangers.model.User;
 import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
@@ -47,7 +45,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private DatabaseReference mDisplayedUserRef;
 
     /** relationship between the authenticated and displayed users */
-    private RelationshipV2 mRelationship;
+    private Relationship mRelationship;
 
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
         @Override
@@ -77,7 +75,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     private ValueEventListener mRelationshipListener = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            mRelationship = dataSnapshot.getValue(RelationshipV2.class);
+            mRelationship = dataSnapshot.getValue(Relationship.class);
         }
 
         @Override
@@ -158,12 +156,16 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     @Override
     public void onDialogItemSelected(int position) {
         //for now, position does not matter
+        checkRelationshipStatus();
+    }
+
+    private void checkRelationshipStatus() {
         if (mRelationship == null) {
             Log.d(TAG, "onDialogItemSelected: users are strangers, follow this user");
             followDisplayedUser();
         } else {
             if (mRelationship.areFriends()) {
-                Log.d(TAG, "onDialogItemSelected: users are friends, unfriend them");
+                Log.d(TAG, "onDialogItemSelected: users are friends, delete displayed user from friends list");
                 removeFriend();
             } else if (mRelationship.isHeFollowingMe(mAuthenticatedUserUID)) {
                 Log.d(TAG, "onDialogItemSelected: displayed user is following authenticated user," +
@@ -179,7 +181,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     private void followDisplayedUser() {
-        HashMap<String, Object> toUpdate = RelationshipV2.getFollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        HashMap<String, Object> toUpdate = Relationship.getFollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
         mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -195,7 +197,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     private void unfollowDisplayedUser() {
-        HashMap<String, Object> toUpdate = RelationshipV2.getUnfollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        HashMap<String, Object> toUpdate = Relationship.getUnfollowMap(mDisplayedUserUID, mAuthenticatedUserUID);
         mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -211,7 +213,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     private void acceptRequest() {
-        HashMap<String, Object> toUpdate = RelationshipV2.getAcceptMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        HashMap<String, Object> toUpdate = Relationship.getAcceptMap(mDisplayedUserUID, mAuthenticatedUserUID);
         mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -227,7 +229,7 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     }
 
     private void removeFriend() {
-        HashMap<String, Object> toUpdate = RelationshipV2.getRemoveFriendMap(mDisplayedUserUID, mAuthenticatedUserUID);
+        HashMap<String, Object> toUpdate = Relationship.getRemoveFriendMap(mDisplayedUserUID, mAuthenticatedUserUID);
         mDatabaseRef.updateChildren(toUpdate).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -248,12 +250,6 @@ public class ProfilePresenterImpl implements ProfilePresenter {
         } else {
             return mRelationship.getRelationshipStatusText(mAuthenticatedUserUID);
         }
-    }
-
-    private void launchChatActivity() {
-        Intent intent = new Intent(mContext, ChatActivity.class);
-        intent.putExtra(ChatActivity.KEY_CHAT_PARTNER_UID, mDisplayedUserUID);
-        mContext.startActivity(intent);
     }
 
     @Override
@@ -334,28 +330,5 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     @Override
     public void onBackPressed() {
         mContext.supportFinishAfterTransition();
-    }
-
-    private void areFriends() {
-        mDatabaseRef.child(Constants.F_USERS_FRIENDS)
-                .child(mAuthenticatedUserUID)
-                .child(mDisplayedUserUID)
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        boolean areFriends;
-                        Log.d(TAG, "onDataChange: " + (dataSnapshot == null));
-                        Log.d(TAG, "onDataChange: " + dataSnapshot.getValue());
-                        Log.d(TAG, "onDataChange: " + (dataSnapshot.getValue() == null));
-                        if (dataSnapshot.getValue() != null) {
-                            Log.d(TAG, "onDataChange: " + dataSnapshot.getValue().toString());
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
     }
 }
