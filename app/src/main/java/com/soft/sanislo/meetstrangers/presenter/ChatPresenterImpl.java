@@ -14,22 +14,20 @@ import com.soft.sanislo.meetstrangers.utilities.Constants;
 import com.soft.sanislo.meetstrangers.utilities.Utils;
 import com.soft.sanislo.meetstrangers.view.ChatView;
 
+import java.util.Date;
+import java.util.HashMap;
+
 /**
  * Created by root on 28.10.16.
  */
 
 public class ChatPresenterImpl implements ChatPresenter {
-    private ChatActivity mContext;
     private ChatView mChatView;
     private DatabaseReference mDatabaseRef;
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
     private User mAuthenticatedUser;
     private String mAuthenticatedUserUID;
     private User mChatPartnerUser;
     private String mChatPartnerUID;
-
-    private ChatMessage mChatMessage;
 
     /** ValueEventListener for current authenticated user*/
     private ValueEventListener mAuthenticatedUserListener = new ValueEventListener() {
@@ -44,6 +42,7 @@ public class ChatPresenterImpl implements ChatPresenter {
 
         }
     };
+
     /** ValueEventListener for chat partner user*/
     private ValueEventListener mChatPartnerUserListener = new ValueEventListener() {
         @Override
@@ -59,45 +58,57 @@ public class ChatPresenterImpl implements ChatPresenter {
     };
 
     public ChatPresenterImpl(ChatActivity context, String chatPartnerUID) {
-        mContext = context;
         mChatView = context;
         mDatabaseRef = Utils.getDatabase().getReference();
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUser = firebaseAuth.getCurrentUser();
-        mAuthenticatedUserUID = firebaseUser.getUid();
+        mAuthenticatedUserUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mChatPartnerUID = chatPartnerUID;
     }
 
     @Override
-    public void pushChatMessage(ChatMessage chatMessage) {
-        mChatMessage = chatMessage;
-        mDatabaseRef.child(Constants.F_CHATS)
-                .child(chatMessage.getAuthorUID())
-                .child(chatMessage.getRecepientUID())
-                .child(mChatMessage.getKey())
-                .setValue(mChatMessage);
-        mDatabaseRef.child(Constants.F_CHATS)
-                .child(chatMessage.getRecepientUID())
-                .child(chatMessage.getAuthorUID())
-                .child(mChatMessage.getKey())
-                .setValue(mChatMessage);
-        updateChatHeader();
+    public void pushChatMessage(String message) {
+        ChatMessage chatMessage = createChatMessage(message);
+        ChatHeader chatHeader = getChatHeader(chatMessage);
+
+        HashMap<String, Object> chatMessageMap = getChatMessageMap(chatMessage);
+        HashMap<String, Object> chatHeaderMap = getChatHeaderMap(chatHeader);
+
+        HashMap<String, Object> chatDataUpdateMap = new HashMap<>();
+        chatDataUpdateMap.putAll(chatMessageMap);
+        chatDataUpdateMap.putAll(chatHeaderMap);
+
+        mDatabaseRef.updateChildren(chatDataUpdateMap);
+    }
+
+    private ChatMessage createChatMessage(String message) {
+        Date sendDate = new Date();
+        String chatMessageKey = sendDate.getTime() + "";
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setKey(chatMessageKey);
+        chatMessage.setMessage(message);
+        chatMessage.setTimestamp(sendDate.getTime());
+        chatMessage.setAuthorUID(mAuthenticatedUserUID);
+        chatMessage.setAuthorAvatarURL(mAuthenticatedUser.getAvatarURL());
+        return chatMessage;
     }
 
     @Override
     public void onResume() {
         mDatabaseRef.child(Constants.F_USERS)
-                .child(mAuthenticatedUserUID).addValueEventListener(mAuthenticatedUserListener);
+                .child(mAuthenticatedUserUID)
+                .addValueEventListener(mAuthenticatedUserListener);
         mDatabaseRef.child(Constants.F_USERS)
-                .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
+                .child(mChatPartnerUID)
+                .addValueEventListener(mChatPartnerUserListener);
     }
 
     @Override
     public void onPause() {
         mDatabaseRef.child(Constants.F_USERS)
-                .child(mAuthenticatedUserUID).removeEventListener(mAuthenticatedUserListener);
+                .child(mAuthenticatedUserUID)
+                .removeEventListener(mAuthenticatedUserListener);
         mDatabaseRef.child(Constants.F_USERS)
-                .child(mChatPartnerUID).addValueEventListener(mChatPartnerUserListener);
+                .child(mChatPartnerUID)
+                .addValueEventListener(mChatPartnerUserListener);
     }
 
     @Override
@@ -105,20 +116,36 @@ public class ChatPresenterImpl implements ChatPresenter {
 
     }
 
-    private void updateChatHeader() {
-        ChatHeader chatHeader = new ChatHeader(mChatMessage.getMessage(),
-                mChatMessage.getAuthorUID(),
+    private ChatHeader getChatHeader(ChatMessage chatMessage) {
+        ChatHeader chatHeader = new ChatHeader(chatMessage.getMessage(),
+                chatMessage.getAuthorUID(),
                 mChatPartnerUID,
-                mChatMessage.getTimestamp());
-        setChatHeader(chatHeader, mAuthenticatedUserUID, mChatPartnerUID);
-        chatHeader.setChatPartnerUID(mAuthenticatedUserUID);
-        setChatHeader(chatHeader, mChatPartnerUID, mAuthenticatedUserUID);
+                chatMessage.getTimestamp());
+        return chatHeader;
     }
 
-    private void setChatHeader(ChatHeader chatHeader, String firstUserUID, String secondUserUID) {
-        mDatabaseRef.child(Constants.F_CHATS_HEADERS)
-                .child(firstUserUID)
-                .child(secondUserUID)
-                .setValue(chatHeader);
+    private HashMap<String, Object> getChatMessageMap(ChatMessage chatMessage) {
+        HashMap<String, Object> chatMessageUpdateMap = new HashMap<>();
+        chatMessageUpdateMap.put("/chats/" + mAuthenticatedUserUID + "/" +
+                mChatPartnerUID + "/" +
+                chatMessage.getKey(), chatMessage);
+        chatMessageUpdateMap.put("/chats/" +
+                mChatPartnerUID + "/" +
+                mAuthenticatedUserUID + "/" +
+                chatMessage.getKey(), chatMessage);
+        return chatMessageUpdateMap;
+    }
+
+    private HashMap<String, Object> getChatHeaderMap(ChatHeader chatHeader) {
+        HashMap<String, Object> headerUpdateMap = new HashMap<>();
+        headerUpdateMap.put(
+                "/chats_headers/" +
+                mAuthenticatedUserUID +
+                "/" + mChatPartnerUID, chatHeader);
+        headerUpdateMap.put(
+                "/chats_headers/" +
+                mChatPartnerUID +
+                "/" + mAuthenticatedUserUID, chatHeader);
+        return headerUpdateMap;
     }
 }

@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.Query;
 import com.soft.sanislo.meetstrangers.R;
@@ -18,11 +19,7 @@ import com.soft.sanislo.meetstrangers.viewholders.ChatMessageViewHolder;
  */
 public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, ChatMessageViewHolder> {
     private Context mContext;
-    private User mAuthenticatedUser;
-    private User mChatPartnerUser;
-
     private String mAuthenticatedUID;
-    private String mChatPartnerUID;
 
     private static final int VIEW_TYPE_YOURSELF = 333;
     private static final int VIEW_TYPE_PARTNER = 444;
@@ -32,21 +29,12 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
         super(modelClass, modelLayout, viewHolderClass, ref);
         mContext = context;
         mLayoutInflater = LayoutInflater.from(mContext);
-    }
-
-    public ChatMessageAdapter(Class<ChatMessage> modelClass, int modelLayout, Class<ChatMessageViewHolder> viewHolderClass, DatabaseReference ref, Context context) {
-        super(modelClass, modelLayout, viewHolderClass, ref);
-        mContext = context;
-        mLayoutInflater = LayoutInflater.from(mContext);
+        mAuthenticatedUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
     }
 
     @Override
-    protected void populateViewHolder(ChatMessageViewHolder viewHolder, ChatMessage model, int position) {
-        if (mAuthenticatedUID.equals(getItem(position).getAuthorUID())) {
-            viewHolder.populate(mContext, mAuthenticatedUser, model, position);
-        } else {
-            viewHolder.populate(mContext, mChatPartnerUser, model, position);
-        }
+    protected void populateViewHolder(ChatMessageViewHolder viewHolder, ChatMessage chatMessage, int position) {
+        viewHolder.populate(chatMessage);
     }
 
     @Override
@@ -72,32 +60,6 @@ public class ChatMessageAdapter extends FirebaseRecyclerAdapter<ChatMessage, Cha
         } else {
             return VIEW_TYPE_PARTNER;
         }
-    }
-
-    public void setAuthenticatedUser(User authenticatedUser) {
-        mAuthenticatedUser = authenticatedUser;
-        notifyIfNeedTo();
-    }
-
-    public void setChatPartnerUser(User chatPartnerUser) {
-        mChatPartnerUser = chatPartnerUser;
-        notifyIfNeedTo();
-    }
-
-    public void setChatPartnerUID(String chatPartnerUID) {
-        mChatPartnerUID = chatPartnerUID;
-    }
-
-    private void notifyIfNeedTo() {
-        if (isNotifyNeeded()) notifyDataSetChanged();
-    }
-
-    private boolean isNotifyNeeded() {
-        return mChatPartnerUser != null && mAuthenticatedUser != null;
-    }
-
-    public void setAuthenticatedUID(String authenticatedUID) {
-        mAuthenticatedUID = authenticatedUID;
     }
 
     @Override

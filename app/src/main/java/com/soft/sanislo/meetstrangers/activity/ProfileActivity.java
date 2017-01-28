@@ -306,6 +306,7 @@ public class ProfileActivity extends BaseActivity implements ProfileView {
     public void showDialog(String userStatus) {
         ArrayList<String> items = new ArrayList<>();
         items.add(userStatus);
+        items.add(getString(R.string.message));
         new MaterialDialog.Builder(this)
                 .items(items)
                 .itemsCallback(new MaterialDialog.ListCallback() {

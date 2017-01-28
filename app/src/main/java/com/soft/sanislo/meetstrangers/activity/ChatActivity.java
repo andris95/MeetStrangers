@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,6 +17,7 @@ import android.widget.TextView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.Query;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -63,8 +65,6 @@ public class ChatActivity extends BaseActivity implements ChatView {
 
     private ChatPresenter mChatPresenter;
     private DatabaseReference mDatabaseRef;
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
 
     private String mAuthenticatedUserUID;
     private String mChatPartnerUID;
@@ -79,7 +79,6 @@ public class ChatActivity extends BaseActivity implements ChatView {
     private ImageLoader imageLoader = ImageLoader.getInstance();
 
     private static final String TAG = ChatActivity.class.getSimpleName();
-    private ChatMessage mChatMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,19 +86,21 @@ public class ChatActivity extends BaseActivity implements ChatView {
         supportPostponeEnterTransition();
         setContentView(R.layout.activity_chat);
         ButterKnife.bind(this);
-        setSupportActionBar(mToolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        initToolbar();
 
         mDatabaseRef = Utils.getDatabase().getReference();
-        firebaseAuth = FirebaseAuth.getInstance();
-        firebaseUser = firebaseAuth.getCurrentUser();
-        mAuthenticatedUserUID = firebaseUser.getUid();
+        mAuthenticatedUserUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
         mChatPartnerUID = getIntent().getStringExtra(KEY_CHAT_PARTNER_UID);
 
         mChatPresenter = new ChatPresenterImpl(this, mChatPartnerUID);
         initChat();
+    }
+
+    private void initToolbar() {
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
     @Override
@@ -112,47 +113,37 @@ public class ChatActivity extends BaseActivity implements ChatView {
     }
 
     private void initChat() {
+        Query chatQuery = mDatabaseRef
+                .child(Constants.F_CHATS)
+                .child(mAuthenticatedUserUID)
+                .child(mChatPartnerUID);
         mChatMessageAdapter = new ChatMessageAdapter(ChatMessage.class,
                 R.layout.item_chat_message,
                 ChatMessageViewHolder.class,
-                mDatabaseRef.child(Constants.F_CHATS)
-                        .child(mAuthenticatedUserUID).child(mChatPartnerUID),
-                this);
-        mChatMessageAdapter.setAuthenticatedUID(mAuthenticatedUserUID);
-        mChatMessageAdapter.setChatPartnerUID(mChatPartnerUID);
+                chatQuery,
+                ChatActivity.this);
         rvChat.setLayoutManager(new LinearLayoutManager(this));
         rvChat.setAdapter(mChatMessageAdapter);
-        rvChat.scrollToPosition(mChatMessageAdapter.getItemCount() - 1);
+        //rvChat.scrollToPosition(mChatMessageAdapter.getItemCount() - 1);
     }
 
     @OnClick(R.id.iv_send_message)
     public void onClickSendMessage() {
-        mChatMessage = createChatMessage();
-        mChatPresenter.pushChatMessage(mChatMessage);
-        edtChatMessage.setText("");
-    }
-
-    private ChatMessage createChatMessage() {
-        Date sendDate = new Date();
-        String chatMessageKey = sendDate.getTime() + "";
         String message = edtChatMessage.getText().toString();
-
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setKey(chatMessageKey);
-        chatMessage.setMessage(message);
-        chatMessage.setTimestamp(sendDate.getTime());
-        chatMessage.setAuthorUID(mAuthenticatedUserUID);
-        chatMessage.setRecepientUID(mChatPartnerUID);
-        return chatMessage;
+        if (TextUtils.isEmpty(message)) {
+            mChatPresenter.pushChatMessage(getString(R.string.lorem));
+        } else {
+            mChatPresenter.pushChatMessage(message);
+            edtChatMessage.setText("");
+        }
     }
+
+
 
     @Override
     protected void onResume() {
         super.onResume();
         mChatPresenter.onResume();
-        if (rvChat.getAdapter() == null && mChatMessageAdapter != null) {
-            rvChat.setAdapter(mChatMessageAdapter);
-        }
     }
 
     @Override
@@ -181,12 +172,11 @@ public class ChatActivity extends BaseActivity implements ChatView {
 
     @Override
     public void onAuthenticatedUserChange(User user) {
-        mChatMessageAdapter.setAuthenticatedUser(user);
+        //?
     }
 
     @Override
     public void onChatPartnerChange(User user) {
-        mChatMessageAdapter.setChatPartnerUser(user);
         tvChatPartner.setText(user.getFullName());
         imageLoader.displayImage(user.getAvatarURL(), ivChatPartnerAvatar, displayImageOptions, new SimpleImageLoadingListener() {
             @Override

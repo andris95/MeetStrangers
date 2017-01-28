@@ -8,7 +8,7 @@ import com.soft.sanislo.meetstrangers.model.User;
  */
 
 public interface ChatPresenter {
-    void pushChatMessage(ChatMessage chatMessage);
+    void pushChatMessage(String message);
 
     void onPause();
     void onResume();

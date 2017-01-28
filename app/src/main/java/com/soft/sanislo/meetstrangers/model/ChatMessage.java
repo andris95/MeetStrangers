@@ -6,18 +6,29 @@ package com.soft.sanislo.meetstrangers.model;
 public class ChatMessage {
     private String key;
     private String message;
+    private String imageURL;
     private String authorUID;
-    private String recepientUID;
+    private String authorAvatarURL;
+    //private String recepientUID;
     private long timestamp;
 
     public ChatMessage() {}
 
-    public ChatMessage(String chatMessageKey, String message, String authorUID, String recipientUID, long timestamp) {
-        this.key = chatMessageKey;
+    public ChatMessage(String key, String message, String imageURL, String authorUID, String authorAvatarURL, long timestamp) {
+        this.key = key;
         this.message = message;
+        this.imageURL = imageURL;
         this.authorUID = authorUID;
-        this.recepientUID = recipientUID;
+        this.authorAvatarURL = authorAvatarURL;
         this.timestamp = timestamp;
+    }
+
+    public String getImageURL() {
+        return imageURL;
+    }
+
+    public void setImageURL(String imageURL) {
+        this.imageURL = imageURL;
     }
 
     public String getMessage() {
@@ -36,14 +47,6 @@ public class ChatMessage {
         this.authorUID = authorUID;
     }
 
-    public String getRecepientUID() {
-        return recepientUID;
-    }
-
-    public void setRecepientUID(String recepientUID) {
-        this.recepientUID = recepientUID;
-    }
-
     public long getTimestamp() {
         return timestamp;
     }
@@ -58,5 +61,13 @@ public class ChatMessage {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    public String getAuthorAvatarURL() {
+        return authorAvatarURL;
+    }
+
+    public void setAuthorAvatarURL(String authorAvatarURL) {
+        this.authorAvatarURL = authorAvatarURL;
     }
 }

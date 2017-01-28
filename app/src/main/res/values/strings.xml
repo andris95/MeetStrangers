@@ -55,6 +55,7 @@
         <item name="opt_edit_profile">Edit profile</item>
         <item name="opt_show_on_map">Show on map</item>
     </string-array>
+    <string name="message">message</string>
     
     <string-array name="profile_stranger_options">
         <item name="opt_chat">Chat</item>

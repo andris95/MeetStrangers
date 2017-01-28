@@ -45,8 +45,6 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
             .showImageOnLoading(R.drawable.placeholder)
             .build();
     private ImageLoader imageLoader = ImageLoader.getInstance();
-    private User mUser;
-    private int mPosition;
 
     public ChatMessageViewHolder(View itemView) {
         super(itemView);
@@ -55,9 +53,7 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setMessage() {
-        if (!TextUtils.isEmpty(mChatMessage.getMessage())) {
-            tvChatMessage.setText(mChatMessage.getMessage());
-        }
+        tvChatMessage.setText(mChatMessage.getMessage());
     }
 
     private void setMessageDate() {
@@ -66,21 +62,15 @@ public class ChatMessageViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void setMessageAuthorAvatar() {
-        if (mUser != null) imageLoader.displayImage(mUser.getAvatarURL(), ivMessageAuthorAvatar, displayImageOptions);
+        imageLoader.displayImage(mChatMessage.getAuthorAvatarURL(),
+                ivMessageAuthorAvatar,
+                displayImageOptions);
     }
 
-    public void populate(Context context,
-                         User user,
-                         ChatMessage chatMessage,
-                         final int position) {
+    public void populate(ChatMessage chatMessage) {
         mChatMessage = chatMessage;
-        mPosition = position;
-        mUser = user;
-
         setMessage();
+        setMessageAuthorAvatar();
         setMessageDate();
-        if (mUser != null) {
-            setMessageAuthorAvatar();
-        }
     }
 }

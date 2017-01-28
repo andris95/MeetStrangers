@@ -1,5 +1,6 @@
 package com.soft.sanislo.meetstrangers.presenter;
 
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -12,6 +13,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
+import com.soft.sanislo.meetstrangers.activity.ChatActivity;
 import com.soft.sanislo.meetstrangers.activity.ProfileActivity;
 import com.soft.sanislo.meetstrangers.model.Comment;
 import com.soft.sanislo.meetstrangers.model.LocationSnapshot;
@@ -156,7 +158,20 @@ public class ProfilePresenterImpl implements ProfilePresenter {
     @Override
     public void onDialogItemSelected(int position) {
         //for now, position does not matter
-        checkRelationshipStatus();
+        switch (position) {
+            case 0:
+                checkRelationshipStatus();
+                break;
+            case 1:
+                launchChatActivity();
+                break;
+        }
+    }
+
+    private void launchChatActivity() {
+        Intent intent = new Intent(mContext, ChatActivity.class);
+        intent.putExtra(ChatActivity.KEY_CHAT_PARTNER_UID, mDisplayedUserUID);
+        mContext.startActivity(intent);
     }
 
     private void checkRelationshipStatus() {
